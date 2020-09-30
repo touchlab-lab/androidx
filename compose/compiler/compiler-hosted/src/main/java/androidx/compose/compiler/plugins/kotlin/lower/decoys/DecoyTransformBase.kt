@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -48,8 +49,10 @@ import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.TypeRemapper
+import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.module
+import org.jetbrains.kotlin.ir.util.withinScope
 
 internal interface DecoyTransformBase {
     val context: IrPluginContext
@@ -68,20 +71,6 @@ internal interface DecoyTransformBase {
             varargElementType = context.irBuiltIns.stringType,
             elements = valueArguments.map { it.toIrConst(context.irBuiltIns.stringType) }
         )
-    }
-
-    fun <T : IrElement> T.copyWithSymbols(source: IrFunction, target: IrFunction): T {
-        val symbolRemapper = DeepCopySymbolRemapper()
-        val typeParamRemapper = object : TypeRemapper by DeepCopyTypeRemapper(symbolRemapper) {
-            override fun remapType(type: IrType): IrType {
-                return type.remapTypeParameters(source, target)
-            }
-        }
-        val copier = DeepCopyIrTreeWithSymbols(symbolRemapper, typeParamRemapper)
-        symbolRemapper.visitElement(this)
-
-        @Suppress("UNCHECKED_CAST") // for utility, the type is always preserved anyways
-        return transform(copier, null) as T
     }
 
     @OptIn(ObsoleteDescriptorBasedAPI::class)
@@ -175,3 +164,18 @@ internal interface DecoyTransformBase {
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 fun IrDeclaration.isDecoy(): Boolean =
     hasAnnotationSafe(DecoyFqNames.Decoy)
+
+inline fun <reified T : IrElement> T.copyWithNewTypeParams(source: IrFunction, target: IrFunction): T {
+    return deepCopyWithSymbols(target) { symbolRemapper, typeRemapper ->
+        val typeParamRemapper = object : TypeRemapper by typeRemapper {
+            override fun remapType(type: IrType): IrType {
+                return typeRemapper.remapType(type)
+                    .remapTypeParameters(source, target)
+            }
+        }
+
+        val deepCopy = DeepCopyIrTreeWithSymbols(symbolRemapper, typeParamRemapper)
+        (typeRemapper as? DeepCopyTypeRemapper)?.deepCopy = deepCopy
+        deepCopy
+    }
+}

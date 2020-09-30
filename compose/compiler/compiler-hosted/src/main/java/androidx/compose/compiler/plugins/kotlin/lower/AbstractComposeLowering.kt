@@ -1257,6 +1257,7 @@ fun IrAnnotationContainer.hasAnnotationSafe(fqName: FqName): Boolean =
         fqName == it.annotationClass?.descriptor?.fqNameSafe
     }
 
+// workaround for KT-45361
 val IrConstructorCall.annotationClass get() =
     if (type.isUnit()) {
         // in js annotation type is always unit, so we use the constructed class

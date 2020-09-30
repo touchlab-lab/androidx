@@ -183,7 +183,7 @@ class CreateDecoysTransformer(
         }
 
         newFunction.body = original.moveBodyTo(newFunction)
-            ?.copyWithSymbols(original, newFunction)
+            ?.copyWithNewTypeParams(original, newFunction)
 
         newFunction.addDecoyImplementationAnnotation(newName.asString())
 
