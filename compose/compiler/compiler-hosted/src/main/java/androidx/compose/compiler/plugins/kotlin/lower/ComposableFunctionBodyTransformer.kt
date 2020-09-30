@@ -22,8 +22,8 @@ import androidx.compose.compiler.plugins.kotlin.analysis.Stability
 import androidx.compose.compiler.plugins.kotlin.analysis.knownStable
 import androidx.compose.compiler.plugins.kotlin.analysis.knownUnstable
 import androidx.compose.compiler.plugins.kotlin.hasExplicitGroupsAnnotation
-import androidx.compose.compiler.plugins.kotlin.hasReadonlyComposableAnnotation
 import androidx.compose.compiler.plugins.kotlin.hasNonRestartableComposableAnnotation
+import androidx.compose.compiler.plugins.kotlin.hasReadonlyComposableAnnotation
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -83,6 +83,7 @@ import org.jetbrains.kotlin.ir.expressions.IrElseBranch
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
+import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.expressions.IrReturn
@@ -145,6 +146,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -2493,12 +2495,22 @@ class ComposableFunctionBodyTransformer(
                 val getter = expression.symbol.owner
                 val property = getter.correspondingPropertySymbol?.owner
                 val fieldInitializer = property?.backingField?.initializer?.expression
-                val composableLambdaInstanceCall = fieldInitializer as IrCall
                 val composableLambdaScope = withScope(Scope.ComposableLambdaScope()) {
-                    property.transformChildrenVoid()
+                    property!!.transformChildrenVoid()
                 }
+                val composableLambdaInstanceCall =
+                    if (context.platform.isJs()) {
+                        (fieldInitializer as IrFunctionReference).dispatchReceiver as IrCall
+                    } else {
+                        fieldInitializer as IrCall
+                    }
+
                 if (collectSourceInformation) {
-                    recordSourceParameter(composableLambdaInstanceCall, 2, composableLambdaScope)
+                    recordSourceParameter(
+                        composableLambdaInstanceCall,
+                        2,
+                        composableLambdaScope
+                    )
                 }
                 return super.visitCall(expression)
             }
@@ -3468,6 +3480,7 @@ class ComposableFunctionBodyTransformer(
                         }
                     }
                 }
+
                 slotCount = realValueParamCount
                 if (function.extensionReceiverParameter != null) slotCount++
                 if (function.dispatchReceiverParameter != null) {

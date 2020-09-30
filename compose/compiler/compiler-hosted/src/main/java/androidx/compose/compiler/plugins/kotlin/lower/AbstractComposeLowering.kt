@@ -132,8 +132,8 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getArguments
 import org.jetbrains.kotlin.ir.util.getPrimitiveArrayElementType
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
-import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isCrossinline
+import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInlined
 import org.jetbrains.kotlin.ir.util.isNoinline
 import org.jetbrains.kotlin.ir.util.primaryConstructor
@@ -1195,6 +1195,17 @@ abstract class AbstractComposeLowering(
             }
             else -> false
         }
+    }
+
+    protected fun dexSafeName(name: Name): Name {
+        return if (name.isSpecial || name.asString().contains(' ')) {
+            val sanitized = name
+                .asString()
+                .replace(' ', '$')
+                .replace('<', '$')
+                .replace('>', '$')
+            Name.identifier(sanitized)
+        } else name
     }
 }
 

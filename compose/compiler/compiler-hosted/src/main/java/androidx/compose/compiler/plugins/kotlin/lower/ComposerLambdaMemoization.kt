@@ -72,20 +72,25 @@ import org.jetbrains.kotlin.ir.expressions.IrValueAccessExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrInstanceInitializerCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isLocal
 import org.jetbrains.kotlin.ir.util.patchDeclarationParents
 import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.ir.util.substitute
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -289,6 +294,12 @@ class ComposerLambdaMemoization(
                             .anyClass
                             .owner
                             .primaryConstructor!!
+                    )
+                    +IrInstanceInitializerCallImpl(
+                        startOffset = this.startOffset,
+                        endOffset = this.endOffset,
+                        classSymbol = it.symbol,
+                        type = it.defaultType
                     )
                 }
             }
@@ -553,7 +564,8 @@ class ComposerLambdaMemoization(
                 name = Name.identifier(lambdaName)
                 type = lambdaType
                 visibility = DescriptorVisibilities.INTERNAL
-                isStatic = true
+                origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
+                isStatic = !context.platform.isJs() // todo(KT-44943): JS doesn't have static fields
             }.also { f ->
                 f.correspondingPropertySymbol = p.symbol
                 f.parent = clazz
@@ -614,10 +626,13 @@ class ComposerLambdaMemoization(
     ): IrExpression {
         val function = expression.function
         val argumentCount = function.descriptor.valueParameters.size
-        val isJs = context.platform.isJs()
-        if (isJs) {
-            // the composable lambda optimization is ignored on JS
-            return expression
+
+        val isJvm = context.moduleDescriptor.platform.isJvm()
+        if (argumentCount > MAX_RESTART_ARGUMENT_COUNT && !isJvm) {
+            error(
+                "outside of JVM, only $MAX_RESTART_ARGUMENT_COUNT parameters " +
+                    "in lambda are supported"
+            )
         }
 
         val useComposableLambdaN = argumentCount > MAX_RESTART_ARGUMENT_COUNT
@@ -640,7 +655,7 @@ class ComposerLambdaMemoization(
         )
 
         (context as IrPluginContextImpl).linker.getDeclaration(restartFactorySymbol)
-        val composableLambdaExpression =  irBuilder.irCall(restartFactorySymbol).apply {
+        val composableLambdaExpression = irBuilder.irCall(restartFactorySymbol).apply {
             var index = 0
 
             // first parameter is the composer parameter if we are using the composable factory
@@ -686,7 +701,31 @@ class ComposerLambdaMemoization(
             putValueArgument(index, expression)
         }
 
-        return composableLambdaExpression
+        return if (isJvm) {
+            composableLambdaExpression
+        } else {
+            val invokeArgumentCount = expression.function.valueParameters.size +
+                /*composer*/ 1 +
+                changedParamCount(expression.function.valueParameters.size, 0)
+
+            val invokeSymbol = composableLambdaExpression.type.classOrNull!!
+                .functions
+                .single {
+                    it.owner.name.asString() == "invoke" &&
+                        invokeArgumentCount == it.owner.valueParameters.size
+                }
+
+            IrFunctionReferenceImpl(
+                startOffset = UNDEFINED_OFFSET,
+                endOffset = UNDEFINED_OFFSET,
+                type = expression.type,
+                symbol = invokeSymbol,
+                typeArgumentsCount = invokeSymbol.owner.typeParameters.size,
+                valueArgumentsCount = invokeSymbol.owner.valueParameters.size
+            ).also { reference ->
+                reference.dispatchReceiver = composableLambdaExpression
+            }
+        }
     }
 
     @OptIn(ObsoleteDescriptorBasedAPI::class)
@@ -763,13 +802,19 @@ class ComposerLambdaMemoization(
                 1
             }
 
+            val substitutedLambdaType = rememberFunction.valueParameters.last().type.substitute(
+                rememberFunction.typeParameters,
+                (0 until typeArgumentsCount).map {
+                    getTypeArgument(it) as IrType
+                }
+            )
             putValueArgument(
                 lambdaArgumentIndex,
                 irBuilder.irLambdaExpression(
                     descriptor = irBuilder.createFunctionDescriptor(
-                        rememberFunction.valueParameters.last().type
+                        substitutedLambdaType
                     ),
-                    type = rememberFunction.valueParameters.last().type,
+                    type = substitutedLambdaType,
                     body = {
                         +irReturn(expression)
                     }
