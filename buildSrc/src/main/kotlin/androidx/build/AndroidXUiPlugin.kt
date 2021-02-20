@@ -25,11 +25,18 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
 import org.gradle.api.tasks.ClasspathNormalizer
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.findByType
+import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePluginWrapper
 import org.jetbrains.kotlin.gradle.plugin.KotlinMultiplatformPluginWrapper
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 const val composeSourceOption =
@@ -66,20 +73,22 @@ class AndroidXUiPlugin : Plugin<Project> {
                         }
                     }.files
 
-                    project.tasks.withType(KotlinCompile::class.java).configureEach { compile ->
-                        compile.kotlinOptions.useIR = true
-                        // TODO(b/157230235): remove when this is enabled by default
-                        compile.kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-                        compile.inputs.files(kotlinPlugin)
-                            .withPropertyName("composeCompilerExtension")
-                            .withNormalizer(ClasspathNormalizer::class.java)
-                        compile.doFirst {
-                            if (!conf.isEmpty) {
-                                compile.kotlinOptions.freeCompilerArgs +=
-                                    "-Xplugin=${kotlinPlugin.first()}"
+                    project.tasks.withType(KotlinCompile::class.java)
+                        .configureEach { compile ->
+                            compile.kotlinOptions.useIR = true
+                            // TODO(b/157230235): remove when this is enabled by default
+                            compile.kotlinOptions.freeCompilerArgs +=
+                                "-Xopt-in=kotlin.RequiresOptIn"
+                            compile.inputs.files(kotlinPlugin)
+                                .withPropertyName("composeCompilerExtension")
+                                .withNormalizer(ClasspathNormalizer::class.java)
+                            compile.doFirst {
+                                if (!conf.isEmpty) {
+                                    compile.kotlinOptions.freeCompilerArgs +=
+                                        "-Xplugin=${kotlinPlugin.first()}"
+                                }
                             }
                         }
-                    }
 
                     project.afterEvaluate {
                         val androidXExtension =
@@ -107,6 +116,12 @@ class AndroidXUiPlugin : Plugin<Project> {
         @JvmStatic
         fun Project.isMultiplatformEnabled(): Boolean {
             return properties.get(COMPOSE_MPP_ENABLED)?.toString()?.toBoolean() ?: false
+        }
+
+        @JvmStatic
+        fun Project.isJsCompilerTestsEnabled(): Boolean {
+            return properties.get(COMPOSE_JS_COMPILER_TESTS_ENABLED)?.toString()?.toBoolean()
+                ?: false
         }
 
         @JvmStatic
@@ -260,6 +275,43 @@ class AndroidXUiPlugin : Plugin<Project> {
                 }
                 if (multiplatformExtension.targets.findByName("desktop") != null) {
                     tasks.named("desktopTestClasses").also(::addToBuildOnServer)
+                }
+            }
+        }
+
+        @JvmStatic
+        fun Project.configureJsCompilerIntegrationTests() {
+            if (!isMultiplatformEnabled() || !isJsCompilerTestsEnabled()) return
+
+            val jsClasspath = configurations.create("testJsRuntimeOnly") { conf ->
+                conf.isCanBeConsumed = false
+                conf.isCanBeResolved = true
+
+                conf.attributes {
+                    it.attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
+                    it.attribute(
+                        KotlinJsCompilerAttribute.jsCompilerAttribute,
+                        KotlinJsCompilerAttribute.ir)
+                    it.attribute(
+                        Usage.USAGE_ATTRIBUTE,
+                        objects.named(KotlinUsages.KOTLIN_RUNTIME)
+                    )
+                }
+            }
+
+            afterEvaluate {
+                val dependencies by lazy {
+                    jsClasspath.files { true }.joinToString(separator = ":")
+                }
+
+                tasks.withType<Test>().all { task ->
+                    // force dependency on compilation for klibs built from the source
+                    task.inputs.files(jsClasspath)
+                    // use system property to provide files path to the runtime
+                    task.systemProperty(
+                        "androidx.compose.js.classpath",
+                        dependencies
+                    )
                 }
             }
         }
