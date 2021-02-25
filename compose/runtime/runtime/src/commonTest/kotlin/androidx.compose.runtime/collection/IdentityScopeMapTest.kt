@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package androidx.compose.runtime.collection
 
-import org.junit.After
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -29,7 +29,7 @@ class IdentityScopeMapTest {
     private val map = IdentityScopeMap<Scope>()
 
     private val scopeList = listOf(Scope(10), Scope(12), Scope(1), Scope(30), Scope(10))
-    private val valueList = listOf("A", "B")
+    private val valueList = listOf(Value("A"), Value("B"))
 
     @Test
     fun emptyConstruction() {
@@ -89,7 +89,7 @@ class IdentityScopeMapTest {
 
     @Test
     fun removeScope() {
-        val valueC = "C"
+        val valueC = Value("C")
         map.add(valueList[0], scopeList[0])
         map.add(valueList[0], scopeList[1])
         map.add(valueList[1], scopeList[2])
@@ -108,7 +108,7 @@ class IdentityScopeMapTest {
 
     @Test
     fun removeValueIf() {
-        val valueC = "C"
+        val valueC = Value("C")
         map.add(valueList[0], scopeList[0])
         map.add(valueList[0], scopeList[1])
         map.add(valueList[1], scopeList[2])
@@ -135,7 +135,7 @@ class IdentityScopeMapTest {
     /**
      * Validate the test maintains the internal assumptions of the map.
      */
-    @After
+    @AfterTest
     fun validateMap() {
         // Ensure that no duplicates exist in value-order and all indexes are represented
         val pendingRepresentation = mutableSetOf(*map.values.indices.toList().toTypedArray())
@@ -166,4 +166,5 @@ class IdentityScopeMapTest {
     }
 
     data class Scope(val item: Int)
+    data class Value(val s: String)
 }

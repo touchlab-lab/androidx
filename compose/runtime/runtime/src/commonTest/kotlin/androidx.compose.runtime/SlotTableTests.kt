@@ -1231,7 +1231,7 @@ class SlotTableTests {
         sourceTable.verifyWellFormed()
     }
 
-    @org.junit.Test
+    @Test
     fun testMovingMultipleRootGroups() {
         val sourceTable = SlotTable()
         val anchors = mutableListOf<Anchor>()

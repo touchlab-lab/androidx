@@ -98,9 +98,18 @@ if(AndroidXUiPlugin.isMultiplatformEnabled(project)) {
                     implementation(kotlin("stdlib-js"))
                 }
             }
-            jvmTest.dependencies {
-                implementation kotlin("test-junit")
-                implementation(KOTLIN_COROUTINES_TEST)
+            commonTest {
+                dependencies {
+                    implementation(KOTLIN_TEST_JUNIT)
+                    implementation(KOTLIN_COROUTINES_CORE)
+                }
+            }
+            jvmTest {
+                dependsOn commonTest
+                dependencies {
+                    implementation kotlin("test-junit")
+                    implementation(KOTLIN_COROUTINES_TEST)
+                }
             }
             desktopTest {
                 dependsOn jvmTest

@@ -23,6 +23,7 @@ import androidx.compose.runtime.insert
 import androidx.compose.runtime.nodeGroup
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 @OptIn(InternalComposeApi::class)
@@ -167,21 +168,56 @@ class CompositionDataTests {
         assertEquals(List(40) { "$it" }, collected)
     }
 
-    @Test(expected = ConcurrentModificationException::class)
+    @Test
     fun writeDuringIterationCausesException() {
-        val slots = SlotTable().also {
-            it.write { writer ->
-                writer.insert {
-                    writer.group(0) {
-                        repeat(10) { index ->
-                            writer.group(100 + index) { }
+        assertFailsWith(ConcurrentModificationException::class) {
+            val slots = SlotTable().also {
+                it.write { writer ->
+                    writer.insert {
+                        writer.group(0) {
+                            repeat(10) { index ->
+                                writer.group(100 + index) { }
+                            }
                         }
                     }
                 }
             }
-        }
 
-        fun insertAGroup() {
+            fun insertAGroup() {
+                slots.write { writer ->
+                    writer.group {
+                        repeat(3) { writer.group { } }
+                        writer.insert {
+                            writer.group(200) { }
+                        }
+                        writer.skipToGroupEnd()
+                    }
+                }
+            }
+
+            val groups = slots.compositionGroups.iterator()
+            insertAGroup()
+
+            // Expect this to cause an exception
+            groups.next()
+        }
+    }
+
+    @Test
+    fun iterationDuringWriteCausesException() {
+        assertFailsWith(ConcurrentModificationException::class) {
+            val slots = SlotTable().also {
+                it.write { writer ->
+                    writer.insert {
+                        writer.group(0) {
+                            repeat(10) { index ->
+                                writer.group(100 + index) { }
+                            }
+                        }
+                    }
+                }
+            }
+
             slots.write { writer ->
                 writer.group {
                     repeat(3) { writer.group { } }
@@ -189,41 +225,10 @@ class CompositionDataTests {
                         writer.group(200) { }
                     }
                     writer.skipToGroupEnd()
+
+                    // Expect this to throw an exception
+                    slots.compositionGroups.first()
                 }
-            }
-        }
-
-        val groups = slots.compositionGroups.iterator()
-        insertAGroup()
-
-        // Expect this to cause an exception
-        groups.next()
-    }
-
-    @Test(expected = ConcurrentModificationException::class)
-    fun iterationDuringWriteCausesException() {
-        val slots = SlotTable().also {
-            it.write { writer ->
-                writer.insert {
-                    writer.group(0) {
-                        repeat(10) { index ->
-                            writer.group(100 + index) { }
-                        }
-                    }
-                }
-            }
-        }
-
-        slots.write { writer ->
-            writer.group {
-                repeat(3) { writer.group { } }
-                writer.insert {
-                    writer.group(200) { }
-                }
-                writer.skipToGroupEnd()
-
-                // Expect this to throw an exception
-                slots.compositionGroups.first()
             }
         }
     }

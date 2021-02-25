@@ -16,6 +16,12 @@
 
 package androidx.compose.runtime
 
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
+import java.util.concurrent.Executors
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.asCoroutineDispatcher
+
 internal actual typealias AtomicReference<V> = java.util.concurrent.atomic.AtomicReference<V>
 
 internal actual open class ThreadLocal<T> actual constructor(
@@ -43,3 +49,10 @@ internal actual inline fun <R> synchronized(lock: Any, block: () -> R): R {
 }
 
 internal actual typealias TestOnly = org.jetbrains.annotations.TestOnly
+
+private val testCoroutineContext: CoroutineContext by lazy {
+    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+}
+
+actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) =
+    runBlocking(testCoroutineContext) { this.block() }

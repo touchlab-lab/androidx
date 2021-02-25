@@ -17,6 +17,10 @@
 package androidx.compose.runtime
 
 import kotlinx.browser.window
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.promise
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.DurationUnit
@@ -112,3 +116,7 @@ private class MonotonicClockImpl : MonotonicFrameClock {
         }
     }
 }
+
+private val testScope = MainScope()
+actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit): dynamic =
+    testScope.promise { this.block() }
