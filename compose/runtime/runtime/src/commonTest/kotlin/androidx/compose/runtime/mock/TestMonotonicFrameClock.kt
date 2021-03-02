@@ -21,13 +21,13 @@
 package androidx.compose.runtime.mock
 
 import androidx.compose.runtime.MonotonicFrameClock
+import androidx.compose.runtime.cor.DelayController
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.test.DelayController
 import kotlin.coroutines.ContinuationInterceptor
 
 private const val DefaultFrameDelay = 16_000_000L
@@ -89,7 +89,7 @@ class TestMonotonicFrameClock(
 
     override suspend fun <R> withFrameNanos(onFrame: (frameTimeNanos: Long) -> R): R =
         suspendCancellableCoroutine { co ->
-            synchronized(lock) {
+            androidx.compose.runtime.synchronized(lock) {
                 awaiters.add(Awaiter(onFrame, co))
                 maybeLaunchTickRunner()
             }
@@ -100,7 +100,7 @@ class TestMonotonicFrameClock(
             posted = true
             coroutineScope.launch {
                 delay(frameDelayMillis)
-                synchronized(lock) {
+                androidx.compose.runtime.synchronized(lock) {
                     posted = false
                     val toRun = awaiters.toList()
                     awaiters.clear()

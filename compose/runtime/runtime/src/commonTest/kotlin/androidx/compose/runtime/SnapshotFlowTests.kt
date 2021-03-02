@@ -16,6 +16,7 @@
 
 package androidx.compose.runtime
 
+import androidx.compose.runtime.cor.runBlockingTest
 import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn

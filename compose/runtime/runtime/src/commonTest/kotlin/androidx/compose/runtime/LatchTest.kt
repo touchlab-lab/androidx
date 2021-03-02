@@ -16,6 +16,7 @@
 
 package androidx.compose.runtime
 
+import androidx.compose.runtime.cor.runBlockingTest
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch

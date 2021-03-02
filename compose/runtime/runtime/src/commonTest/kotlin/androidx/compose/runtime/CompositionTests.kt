@@ -17,6 +17,7 @@
 @file:OptIn(InternalComposeApi::class)
 package androidx.compose.runtime
 
+import androidx.compose.runtime.cor.runBlockingTest
 import androidx.compose.runtime.mock.Contact
 import androidx.compose.runtime.mock.ContactModel
 import androidx.compose.runtime.mock.Edit
@@ -44,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runBlockingTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -2476,6 +2476,7 @@ class CompositionTests {
     @OptIn(ComposeCompilerApi::class)
     @Test
     fun testApplierBeginEndCallbacks() = compositionTest {
+        error("This doesn't compile for JS. Need to fix compiler plugin. the problem is with remember<RememberObserver>")
         val checks = mutableListOf<String>()
         compose {
             val myComposer = currentComposer
@@ -2496,31 +2497,31 @@ class CompositionTests {
             // expression in a unit lambda (the argument to `compose {}`). The remember lambda is in
             // turn interpreted as returning Unit, the object expression is dropped on the floor for
             // the gc, and Unit is written into the slot table.
-            remember<RememberObserver> {
-                object : RememberObserver {
-                    override fun onRemembered() {
-                        assertEquals(
-                            1,
-                            myApplier.onBeginChangesCalled,
-                            "onBeginChanges during lifecycle observer"
-                        )
-                        assertEquals(
-                            1,
-                            myApplier.onEndChangesCalled,
-                            "onEndChanges during lifecycle observer"
-                        )
-                        checks += "RememberObserver"
-                    }
-
-                    override fun onForgotten() {
-                        // Nothing to do
-                    }
-
-                    override fun onAbandoned() {
-                        // Nothing to do
-                    }
-                }
-            }
+//            remember<RememberObserver> {
+//                object : RememberObserver {
+//                    override fun onRemembered() {
+//                        assertEquals(
+//                            1,
+//                            myApplier.onBeginChangesCalled,
+//                            "onBeginChanges during lifecycle observer"
+//                        )
+//                        assertEquals(
+//                            1,
+//                            myApplier.onEndChangesCalled,
+//                            "onEndChanges during lifecycle observer"
+//                        )
+//                        checks += "RememberObserver"
+//                    }
+//
+//                    override fun onForgotten() {
+//                        // Nothing to do
+//                    }
+//
+//                    override fun onAbandoned() {
+//                        // Nothing to do
+//                    }
+//                }
+//            }
         }
         assertEquals(
             listOf(
@@ -2681,8 +2682,8 @@ class CompositionTests {
                 }
                 scope.invalidate()
                 advanceUntilIdle()
-                assert(parentReferences.size > 1) { "expected to be composed more than once" }
-                assert(parentReferences.toSet().size == 1) {
+                check(parentReferences.size > 1) { "expected to be composed more than once" }
+                check(parentReferences.toSet().size == 1) {
                     "expected all parentReferences to be the same; saw $parentReferences"
                 }
             } finally {

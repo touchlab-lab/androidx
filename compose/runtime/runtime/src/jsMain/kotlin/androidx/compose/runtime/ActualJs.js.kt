@@ -116,7 +116,3 @@ private class MonotonicClockImpl : MonotonicFrameClock {
         }
     }
 }
-
-private val testScope = MainScope()
-actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit): dynamic =
-    testScope.promise { this.block() }

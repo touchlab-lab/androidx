@@ -70,5 +70,3 @@ expect annotation class CheckResult(
 // default display. Without this synchronization, any usage of this default clock will result
 // in inconsistent animation frame timing and associated visual artifacts.
 expect val DefaultMonotonicFrameClock: MonotonicFrameClock
-
-expect fun runBlockingTest(block: suspend CoroutineScope.()-> Unit)

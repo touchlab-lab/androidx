@@ -49,10 +49,3 @@ internal actual inline fun <R> synchronized(lock: Any, block: () -> R): R {
 }
 
 internal actual typealias TestOnly = org.jetbrains.annotations.TestOnly
-
-private val testCoroutineContext: CoroutineContext by lazy {
-    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-}
-
-actual fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) =
-    runBlocking(testCoroutineContext) { this.block() }

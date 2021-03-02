@@ -20,11 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Composition
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.Recomposer
+import androidx.compose.runtime.cor.TestCoroutineScope
+import androidx.compose.runtime.cor.runBlockingTest
 import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withContext
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
