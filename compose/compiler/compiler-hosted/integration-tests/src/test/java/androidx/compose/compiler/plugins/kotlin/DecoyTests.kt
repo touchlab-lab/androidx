@@ -820,11 +820,13 @@ class DecoyTests : ComposeIrTransformTest() {
                 }
             """.trimIndent(),
             """
+                @StabilityInferred(parameters = 0)
                 class Test(param: @[Composable] Function0<Unit>) {
                   @Decoy(targetName = "%init%%composable0", signature = "", "Test.<init>", "-5419686343446778487", "0")
                   constructor(int: Int, param: @[Composable] Function0<Unit>){
                     return decoy("<init>")
                   }
+                  val %stable: Int = 0
                   @DecoyImplementation(targetName = "%init%%composable")
                   constructor(param: Function2<Composer, Int, Unit>){
                     ctor<Any>()
@@ -1061,8 +1063,7 @@ class DecoyTests : ComposeIrTransformTest() {
                 }
               }
             }
-        """.trimIndent(),
-        dumpTree = true
+        """.trimIndent()
     )
 
     @Test

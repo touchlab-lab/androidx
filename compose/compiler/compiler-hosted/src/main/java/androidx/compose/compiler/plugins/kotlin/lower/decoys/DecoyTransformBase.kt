@@ -16,6 +16,7 @@
 
 package androidx.compose.compiler.plugins.kotlin.lower.decoys
 
+import androidx.compose.compiler.plugins.kotlin.lower.hasAnnotationSafe
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.ir.isTopLevel
@@ -41,19 +42,14 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
-import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.TypeRemapper
-import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.getAnnotation
-import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.module
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 internal interface DecoyTransformBase {
     val context: IrPluginContext
@@ -178,16 +174,4 @@ internal interface DecoyTransformBase {
 
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 fun IrDeclaration.isDecoy(): Boolean =
-    annotations.any {
-        // getAnnotation fails during remapping in [ComposableTypeRemapper], so we use this impl
-        //
-        // on jvm we can rely on type, but the symbol can be unbound
-        // in js annotation always has a type of unit
-        val fqName = if (it.type.classifierOrFail.descriptor.defaultType.isUnit()) {
-            it.symbol.owner.constructedClass.kotlinFqName
-        } else {
-            it.type.classifierOrFail.descriptor.fqNameSafe
-        }
-
-        fqName == DecoyFqNames.Decoy
-    }
+    hasAnnotationSafe(DecoyFqNames.Decoy)

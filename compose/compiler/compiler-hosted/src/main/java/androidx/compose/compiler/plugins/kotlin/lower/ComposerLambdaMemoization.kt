@@ -90,7 +90,6 @@ import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.js.isJs
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -625,13 +624,13 @@ class ComposerLambdaMemoization(
         collector: CaptureCollector
     ): IrExpression {
         val function = expression.function
-        val argumentCount = function.descriptor.valueParameters.size
+        val argumentCount = function.valueParameters.size
 
-        val isJvm = context.moduleDescriptor.platform.isJvm()
-        if (argumentCount > MAX_RESTART_ARGUMENT_COUNT && !isJvm) {
+        val isJs = context.moduleDescriptor.platform.isJs()
+        if (argumentCount > MAX_RESTART_ARGUMENT_COUNT && isJs) {
             error(
-                "outside of JVM, only $MAX_RESTART_ARGUMENT_COUNT parameters " +
-                    "in lambda are supported"
+                "only $MAX_RESTART_ARGUMENT_COUNT parameters " +
+                    "in @Composable lambda are supported on JS"
             )
         }
 
@@ -701,12 +700,15 @@ class ComposerLambdaMemoization(
             putValueArgument(index, expression)
         }
 
-        return if (isJvm) {
+        return if (!isJs) {
             composableLambdaExpression
         } else {
-            val invokeArgumentCount = expression.function.valueParameters.size +
+            val realArgumentCount = argumentCount +
+                if (function.extensionReceiverParameter != null) 1 else 0
+
+            val invokeArgumentCount = realArgumentCount +
                 /*composer*/ 1 +
-                changedParamCount(expression.function.valueParameters.size, 0)
+                changedParamCount(realArgumentCount, 0)
 
             val invokeSymbol = composableLambdaExpression.type.classOrNull!!
                 .functions

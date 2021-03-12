@@ -17,10 +17,6 @@
 package androidx.compose.runtime
 
 import kotlinx.browser.window
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.promise
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.DurationUnit
@@ -35,6 +31,16 @@ internal actual open class ThreadLocal<T> actual constructor(
     actual fun get(): T = value
 
     actual fun set(value: T) {
+        this.value = value
+    }
+}
+
+internal actual class SnapshotThreadLocal<T> actual constructor() {
+    private var value: T? = null
+
+    actual fun get() = value
+
+    actual fun set(value: T?) {
         this.value = value
     }
 }
