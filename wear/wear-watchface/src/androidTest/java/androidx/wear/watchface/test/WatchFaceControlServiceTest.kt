@@ -40,7 +40,9 @@ import androidx.wear.watchface.data.DeviceConfig
 import androidx.wear.watchface.data.IdAndComplicationDataWireFormat
 import androidx.wear.watchface.samples.EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID
 import androidx.wear.watchface.samples.EXAMPLE_CANVAS_WATCHFACE_RIGHT_COMPLICATION_ID
+import androidx.wear.watchface.samples.EXAMPLE_OPENGL_COMPLICATION_ID
 import androidx.wear.watchface.samples.ExampleCanvasAnalogWatchFaceService
+import androidx.wear.watchface.samples.ExampleOpenGLWatchFaceService
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -80,10 +82,36 @@ class WatchFaceControlServiceTest {
         )
     }
 
+    private fun createOpenGlInstance(width: Int, height: Int): IHeadlessWatchFace {
+        val instanceService = IWatchFaceControlService.Stub.asInterface(
+            WatchFaceControlService().apply {
+                setContext(ApplicationProvider.getApplicationContext<Context>())
+            }.onBind(
+                Intent(WatchFaceControlService.ACTION_WATCHFACE_CONTROL_SERVICE)
+            )
+        )
+        return instanceService.createHeadlessWatchFaceInstance(
+            HeadlessWatchFaceInstanceParams(
+                ComponentName(
+                    ApplicationProvider.getApplicationContext<Context>(),
+                    ExampleOpenGLWatchFaceService::class.java
+                ),
+                DeviceConfig(
+                    false,
+                    false,
+                    0,
+                    0
+                ),
+                width,
+                height
+            )
+        )
+    }
+
     @Test
     fun createHeadlessWatchFaceInstance() {
         val instance = createInstance(100, 100)
-        val bitmap = SharedMemoryImage.ashmemCompressedImageBundleToBitmap(
+        val bitmap = SharedMemoryImage.ashmemReadImageBundle(
             instance.takeWatchFaceScreenshot(
                 WatchfaceScreenshotParams(
                     RenderParameters(
@@ -92,7 +120,6 @@ class WatchFaceControlServiceTest {
                         null,
                         Color.RED
                     ).toWireFormat(),
-                    100,
                     1234567890,
                     null,
                     listOf(
@@ -125,9 +152,43 @@ class WatchFaceControlServiceTest {
     }
 
     @Test
+    fun createHeadlessOpenglWatchFaceInstance() {
+        val instance = createOpenGlInstance(400, 400)
+        val bitmap = SharedMemoryImage.ashmemReadImageBundle(
+            instance.takeWatchFaceScreenshot(
+                WatchfaceScreenshotParams(
+                    RenderParameters(
+                        DrawMode.INTERACTIVE,
+                        RenderParameters.DRAW_ALL_LAYERS,
+                        null,
+                        Color.RED
+                    ).toWireFormat(),
+                    1234567890,
+                    null,
+                    listOf(
+                        IdAndComplicationDataWireFormat(
+                            EXAMPLE_OPENGL_COMPLICATION_ID,
+                            ShortTextComplicationData.Builder(
+                                PlainComplicationText.Builder("Mon").build()
+                            )
+                                .setTitle(PlainComplicationText.Builder("23rd").build())
+                                .build()
+                                .asWireComplicationData()
+                        )
+                    )
+                )
+            )
+        )
+
+        bitmap.assertAgainstGolden(screenshotRule, "opengl_headless")
+
+        instance.release()
+    }
+
+    @Test
     fun testCommandTakeComplicationScreenShot() {
         val instance = createInstance(400, 400)
-        val bitmap = SharedMemoryImage.ashmemCompressedImageBundleToBitmap(
+        val bitmap = SharedMemoryImage.ashmemReadImageBundle(
             instance.takeComplicationScreenshot(
                 ComplicationScreenshotParams(
                     EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID,
@@ -137,7 +198,6 @@ class WatchFaceControlServiceTest {
                         null,
                         Color.RED
                     ).toWireFormat(),
-                    100,
                     123456789,
                     ShortTextComplicationData.Builder(PlainComplicationText.Builder("Mon").build())
                         .setTitle(PlainComplicationText.Builder("23rd").build())

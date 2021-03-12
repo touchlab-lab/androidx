@@ -200,7 +200,8 @@ class ResourceInspectionProcessorTest {
                 fakeR(
                     "androidx.pkg", "testBoolean", "testByte", "testCharacter", "testDouble",
                     "testFloat", "testInt", "testLong", "testShort", "testString",
-                    "colorInt", "colorLong", "colorObject", "layoutResourceId", "anyResourceId"
+                    "colorInt", "colorLong", "colorObject", "layoutResourceId", "anyResourceId",
+                    "gravityInt"
                 ),
                 java(
                     "androidx.pkg.SimpleTypesTestView",
@@ -214,6 +215,7 @@ class ResourceInspectionProcessorTest {
                         import androidx.annotation.AnyRes;
                         import androidx.annotation.ColorInt;
                         import androidx.annotation.ColorLong;
+                        import androidx.annotation.GravityInt;
                         import androidx.annotation.NonNull;
                         import androidx.annotation.LayoutRes;
                         import androidx.resourceinspection.annotation.Attribute;
@@ -298,6 +300,12 @@ class ResourceInspectionProcessorTest {
                             public int getAnyResourceId() {
                                 return 13;
                             }
+
+                            @GravityInt
+                            @Attribute("androidx.pkg:gravityInt")
+                            public int getGravityInt() {
+                                return 14;
+                            }
                         }
                     """
                 )
@@ -327,6 +335,7 @@ class ResourceInspectionProcessorTest {
                             private int mColorIntId;
                             private int mColorLongId;
                             private int mColorObjectId;
+                            private int mGravityIntId;
                             private int mLayoutResourceIdId;
                             private int mTestBooleanId;
                             private int mTestByteId;
@@ -348,6 +357,8 @@ class ResourceInspectionProcessorTest {
                                     .mapColor("colorLong", R.attr.colorLong);
                                 mColorObjectId = propertyMapper
                                     .mapColor("colorObject", R.attr.colorObject);
+                                mGravityIntId = propertyMapper
+                                    .mapGravity("gravityInt", R.attr.gravityInt)
                                 mLayoutResourceIdId = propertyMapper
                                     .mapResourceId("layoutResourceId", R.attr.layoutResourceId);
                                 mTestBooleanId = propertyMapper
@@ -390,6 +401,9 @@ class ResourceInspectionProcessorTest {
                                 propertyReader.readColor(
                                     mColorObjectId,
                                     simpleTypesTestView.getColorObject());
+                                propertyReader.readGravity(
+                                    mGravityIntId,
+                                    simpleTypesTestView.getGravityInt());
                                 propertyReader.readResourceId(
                                     mLayoutResourceIdId,
                                     simpleTypesTestView.getLayoutResourceId());
@@ -784,6 +798,49 @@ class ResourceInspectionProcessorTest {
                 )
             )
         ).hadErrorContaining("@Attribute getter must be public")
+    }
+
+    @Test
+    fun `fails on duplicate attributes`() {
+        val compilation = compile(
+            fakeR("androidx.pkg", "duplicated"),
+            java(
+                "androidx.pkg.DuplicateAttributesTestView",
+                """
+                    package androidx.pkg;
+
+                    import android.content.Context;
+                    import android.util.AttributeSet;
+                    import android.view.View;
+                    import androidx.annotation.ColorInt;
+                    import androidx.resourceinspection.annotation.Attribute;
+
+                    public final class DuplicateAttributesTestView extends View {
+                        public DuplicateAttributesTestView(Context context, AttributeSet attrs) {
+                            super(context, attrs);
+                        }
+
+                        @Attribute("androidx.pkg:duplicated")
+                        public int getDuplicated1() {
+                            return 1;
+                        }
+
+                        @Attribute("androidx.pkg:duplicated")
+                        public int getDuplicated2() {
+                            return 2;
+                        }
+                    }
+                """
+            )
+        )
+
+        assertThat(compilation).hadErrorContaining(
+            "Duplicate attribute androidx.pkg:duplicated is also present on getDuplicated1()"
+        )
+
+        assertThat(compilation).hadErrorContaining(
+            "Duplicate attribute androidx.pkg:duplicated is also present on getDuplicated2()"
+        )
     }
 
     private fun compile(vararg sources: JavaFileObject): Compilation {

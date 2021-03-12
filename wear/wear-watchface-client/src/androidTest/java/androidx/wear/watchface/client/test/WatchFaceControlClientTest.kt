@@ -24,6 +24,7 @@ import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.service.wallpaper.WallpaperService
+import android.view.Surface
 import android.view.SurfaceHolder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -88,6 +89,8 @@ class WatchFaceControlClientTest {
 
     @Mock
     private lateinit var surfaceHolder: SurfaceHolder
+    @Mock
+    private lateinit var surface: Surface
     private lateinit var engine: WallpaperService.Engine
     private val handler = Handler(Looper.getMainLooper())
     private val engineLatch = CountDownLatch(1)
@@ -100,6 +103,7 @@ class WatchFaceControlClientTest {
 
         Mockito.`when`(surfaceHolder.surfaceFrame)
             .thenReturn(Rect(0, 0, 400, 400))
+        Mockito.`when`(surfaceHolder.surface).thenReturn(surface)
     }
 
     @After
@@ -141,6 +145,12 @@ class WatchFaceControlClientTest {
     private fun createEngine() {
         handler.post {
             engine = wallpaperService.onCreateEngine()
+            engine.onSurfaceChanged(
+                surfaceHolder,
+                0,
+                surfaceHolder.surfaceFrame.width(),
+                surfaceHolder.surfaceFrame.height()
+            )
             engineLatch.countDown()
         }
         engineLatch.await(CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
@@ -169,7 +179,6 @@ class WatchFaceControlClientTest {
                 null,
                 Color.RED
             ),
-            100,
             1234567,
             null,
             complications
@@ -207,7 +216,6 @@ class WatchFaceControlClientTest {
                 null,
                 Color.YELLOW
             ),
-            100,
             1234567,
             null,
             complications
@@ -326,7 +334,6 @@ class WatchFaceControlClientTest {
                 null,
                 Color.RED
             ),
-            100,
             1234567,
             null,
             complications
@@ -372,7 +379,6 @@ class WatchFaceControlClientTest {
                 null,
                 Color.RED
             ),
-            100,
             1234567,
             null,
             complications
@@ -541,7 +547,15 @@ class WatchFaceControlClientTest {
         assertFalse(deferredExistingInstance.isCompleted)
 
         // We don't want to leave a pending request or it'll mess up subsequent tests.
-        handler.post { engine = wallpaperService.onCreateEngine() }
+        handler.post {
+            engine = wallpaperService.onCreateEngine()
+            engine.onSurfaceChanged(
+                surfaceHolder,
+                0,
+                surfaceHolder.surfaceFrame.width(),
+                surfaceHolder.surfaceFrame.height()
+            )
+        }
         runBlocking {
             withTimeout(CONNECT_TIMEOUT_MILLIS) {
                 deferredExistingInstance.await()
@@ -589,10 +603,12 @@ class WatchFaceControlClientTest {
         assertThat(contentDescriptionLabels[2].bounds).isEqualTo(Rect(240, 160, 320, 240))
         assertThat(contentDescriptionLabels[2].getTextAt(context.resources, 0))
             .isEqualTo("ID Right")
+
+        sysUiInterface.close()
     }
 
     @Test
-    fun setUserStyle() {
+    fun updateInstance() {
         val deferredInteractiveInstance =
             service.getOrCreateWallpaperServiceBackedInteractiveWatchFaceWcsClientAsync(
                 "testId",
@@ -617,15 +633,35 @@ class WatchFaceControlClientTest {
             }
         }
 
+        assertThat(interactiveInstance.instanceId).isEqualTo("testId")
+
         // Note this map doesn't include all the categories, which is fine the others will be set
         // to their defaults.
-        interactiveInstance.setUserStyle(
+        interactiveInstance.updateInstance(
+            "testId2",
             mapOf(
                 COLOR_STYLE_SETTING to BLUE_STYLE,
                 WATCH_HAND_LENGTH_STYLE_SETTING to "0.9",
             )
         )
 
+        assertThat(interactiveInstance.instanceId).isEqualTo("testId2")
+
+        // The complications should have been cleared.
+        val leftComplication =
+            interactiveInstance.complicationState[EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID]!!
+        val rightComplication =
+            interactiveInstance.complicationState[EXAMPLE_CANVAS_WATCHFACE_RIGHT_COMPLICATION_ID]!!
+        assertThat(leftComplication.currentType).isEqualTo(ComplicationType.NO_DATA)
+        assertThat(rightComplication.currentType).isEqualTo(ComplicationType.NO_DATA)
+
+        // It should be possible to create a SysUI instance with the updated id.
+        val sysUiInterface =
+            service.getInteractiveWatchFaceSysUiClientInstance("testId2")
+        assertThat(sysUiInterface).isNotNull()
+        sysUiInterface?.close()
+
+        interactiveInstance.updateComplicationData(complications)
         val bitmap = interactiveInstance.takeWatchFaceScreenshot(
             RenderParameters(
                 DrawMode.INTERACTIVE,
@@ -633,7 +669,6 @@ class WatchFaceControlClientTest {
                 null,
                 Color.RED
             ),
-            100,
             1234567,
             null,
             complications

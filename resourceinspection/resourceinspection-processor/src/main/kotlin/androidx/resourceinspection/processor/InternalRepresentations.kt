@@ -38,7 +38,9 @@ internal data class AttributeIR(
     val name: String,
     val type: AttributeTypeIR,
     val intMapping: List<IntMapIR>
-)
+) {
+    val qualifiedName: String = "$namespace:$name"
+}
 
 /** Represents an [Attribute.IntMap] entry. */
 internal data class IntMapIR(
@@ -60,8 +62,7 @@ internal enum class AttributeTypeIR(val apiSuffix: String) {
     OBJECT("Object"),
 
     COLOR("Color"),
-    // TODO(b/180040871): Gravity support
-    // GRAVITY("Gravity"),
+    GRAVITY("Gravity"),
     RESOURCE_ID("ResourceId"),
     INT_FLAG("IntFlag"),
     INT_ENUM("IntEnum")

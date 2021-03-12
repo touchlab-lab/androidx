@@ -20,7 +20,7 @@ package androidx.compose.runtime.snapshots
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
-import androidx.compose.runtime.ThreadLocal
+import androidx.compose.runtime.SnapshotThreadLocal
 import androidx.compose.runtime.synchronized
 
 /**
@@ -588,7 +588,7 @@ open class MutableSnapshot internal constructor(
                 takeNewGlobalSnapshot(previousGlobalSnapshot, emptyLambda)
                 val globalModified = previousGlobalSnapshot.modified
                 if (globalModified != null && globalModified.isNotEmpty())
-                    applyObservers.toList() to globalModified
+                    applyObservers.toMutableList() to globalModified
                 else
                     emptyList<(Set<Any>, Snapshot) -> Unit>() to null
             } else {
@@ -609,7 +609,7 @@ open class MutableSnapshot internal constructor(
                 this.modified = null
                 previousGlobalSnapshot.modified = null
 
-                applyObservers.toList() to globalModified
+                applyObservers.toMutableList() to globalModified
             }
         }
 
@@ -646,13 +646,18 @@ open class MutableSnapshot internal constructor(
     override fun takeNestedSnapshot(readObserver: ((Any) -> Unit)?): Snapshot {
         validateNotDisposed()
         validateNotApplied()
+        val previousId = id
         return advance {
             sync {
                 val readonlyId = nextSnapshotId++
                 openSnapshots = openSnapshots.set(readonlyId)
+                var currentInvalid = invalid
+                for (invalidId in previousId + 1 until readonlyId) {
+                    currentInvalid = currentInvalid.set(invalidId)
+                }
                 NestedReadonlySnapshot(
                     readonlyId,
-                    invalid,
+                    currentInvalid,
                     readObserver,
                     this
                 )
@@ -1071,7 +1076,7 @@ internal class NestedReadonlySnapshot(
     override val readOnly get() = true
     override val root: Snapshot get() = parent.root
     override fun takeNestedSnapshot(readObserver: ((Any) -> Unit)?) =
-        parent.takeNestedSnapshot(readObserver)
+        NestedReadonlySnapshot(id, invalid, readObserver, parent)
     override fun notifyObjectsInitialized() {
         // Nothing to do for read-only snapshots
     }
@@ -1124,7 +1129,7 @@ internal class GlobalSnapshot(id: Int, invalid: SnapshotIdSet) :
                 } else null
                 )?.let {
                 it.firstOrNull() ?: { state: Any ->
-                    it.forEach { it(state) }
+                    it.fastForEach { it(state) }
                 }
             }
         }
@@ -1350,7 +1355,10 @@ private fun mergedWriteObserver(
  */
 private const val INVALID_SNAPSHOT = 0
 
-private val threadSnapshot = ThreadLocal<Snapshot>()
+/**
+ * Current thread snapshot
+ */
+private val threadSnapshot = SnapshotThreadLocal<Snapshot>()
 
 // A global synchronization object. This synchronization object should be taken before modifying any
 // of the fields below.
@@ -1421,8 +1429,8 @@ private fun <T> advanceGlobalSnapshot(block: (invalid: SnapshotIdSet) -> T): T {
     // observers.
     val modified = previousGlobalSnapshot.modified
     if (modified != null) {
-        val observers = sync { applyObservers.toList() }
-        for (observer in observers) {
+        val observers: List<(Set<Any>, Snapshot) -> Unit> = sync { applyObservers.toMutableList() }
+        observers.fastForEach { observer ->
             observer(modified, previousGlobalSnapshot)
         }
     }

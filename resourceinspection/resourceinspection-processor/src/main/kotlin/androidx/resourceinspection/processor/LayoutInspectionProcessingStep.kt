@@ -18,6 +18,7 @@ package androidx.resourceinspection.processor
 
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorLong
+import androidx.annotation.GravityInt
 import androidx.resourceinspection.annotation.Attribute
 import com.google.auto.common.AnnotationMirrors.getAnnotationValue
 import com.google.auto.common.BasicAnnotationProcessor
@@ -86,13 +87,36 @@ internal class LayoutInspectionProcessingStep(
         }
 
         val attributes = getters.map(::parseAttribute)
+
+        val duplicateAttributes = attributes
+            .filterNotNull()
+            .groupBy { it.qualifiedName }
+            .values
+            .filter { it.size > 1 }
+
+        if (duplicateAttributes.any()) {
+            duplicateAttributes.forEach { duplicates ->
+                duplicates.forEach { attribute ->
+                    val qualifiedName = attribute.qualifiedName
+                    val otherGetters = duplicates
+                        .filter { it.getter != attribute.getter }
+                        .joinToString { it.getter.toString() }
+
+                    printError(
+                        "Duplicate attribute $qualifiedName is also present on $otherGetters",
+                        attribute.getter,
+                        attribute.annotation
+                    )
+                }
+            }
+            return null
+        }
+
         if (attributes.any { it == null }) {
             return null
         }
 
-        // TODO(b/180039786): Validate uniqueness of attributes
-
-        return ViewIR(type, attributes = attributes.filterNotNull().sortedBy { it.name })
+        return ViewIR(type, attributes = attributes.filterNotNull().sortedBy { it.qualifiedName })
     }
 
     /** Get an [AttributeIR] from a method known to have an [Attribute] annotation. */
@@ -158,10 +182,10 @@ internal class LayoutInspectionProcessingStep(
             TypeKind.SHORT -> AttributeTypeIR.SHORT
             TypeKind.INT -> when {
                 isAnnotationPresent(getter, ColorInt::class.java) -> AttributeTypeIR.COLOR
+                isAnnotationPresent(getter, GravityInt::class.java) -> AttributeTypeIR.GRAVITY
                 getter.hasResourceIdAnnotation() -> AttributeTypeIR.RESOURCE_ID
                 intMapping.any { it.mask != 0 } -> AttributeTypeIR.INT_FLAG
                 intMapping.isNotEmpty() -> AttributeTypeIR.INT_ENUM
-                // TODO(b/180040871): Detect gravity
                 else -> AttributeTypeIR.INT
             }
             TypeKind.LONG ->

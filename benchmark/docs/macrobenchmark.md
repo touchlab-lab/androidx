@@ -4,6 +4,8 @@ This documentation for the Jetpack Macrobenchmark library will move to
 [developer.android.com](https://developer.android.com) when the library is ready
 for public release.
 
+NOTE: See [Known Issues](#known-issues) for workarounds for library issues.
+
 [TOC]
 
 ## Jetpack Macrobenchmark
@@ -48,8 +50,6 @@ Macrobenchmark instead measures end-user experience by actually starting up, and
 scrolling your app, providing direct control over the performance environment
 you're testing (e.g. you can specify cold, first-time install startup
 performance).
-
-
 
 <!-- Below table doesn't work on android.googlesource.com, using image as workaround
 <table>
@@ -100,26 +100,6 @@ dependencies {
 }
 ```
 
-The macrobenchmark module needs to declare that it is going to `query` the app being benchmarked
-(called the *target* of the macrobenchmark). This is to account for
-[Package visibility restrictions](https://developer.android.com/about/versions/11/privacy/package-visibility)
-in Android 11.
-
-Add the following snippet to the module's `AndroidManifest.xml`.
-
-```xml
-<!-- This snippet needs be in `src/main/AndroidManifest.xml` for the macrobenchmark module -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.macrobenchmark">
-
-    <queries>
-        <!-- The macrobenchmark target package -->
-        <package android:name="com.example.macrobenchmark.target" />
-    </queries>
-    <!-- ... -->
-</manifest>
-```
-
 See the [sample macrobenchmark module](https://github.com/android/performance-samples/tree/macrobenchmark/MacrobenchmarkSample/macrobenchmark)
 for reference.
 
@@ -157,10 +137,34 @@ class SampleStartupBenchmark {
 
 To macrobenchmark an app (called the *target* of the macrobenchmark), that app
 should be configured as close to user experience as possible - non-debuggable,
-preferabbly with minification on (which is beneficial for performance). This is
+preferably with minification on (which is beneficial for performance). This is
 typically done by installing the `release` variant of the target apk.
 
-It will also need to be profileable, to enable reading detailed trace
+As it is necessary to sign your app's `release` variant before building, you can
+sign it locally with `debug` keys:
+
+```groovy
+    buildTypes {
+        release {
+            // You'll be unable to release with this config, but it can
+            // be useful for local performance testing
+            signingConfig signingConfigs.debug
+        }
+    }
+```
+
+Every Activity to be launched by a Macrobenchmark must
+[exported](https://developer.android.com/guide/topics/manifest/activity-element#exported).
+As of Android 11, this must be enabled explicitly in the app's
+AndroidManifest.xml:
+
+```xml
+    <activity
+        android:name=".MyActivity"
+        android:exported="true">
+```
+
+Your app will also need to be profileable, to enable reading detailed trace
 information. This is enabled in the `<application>` tag of the app's
 AndroidManifest.xml:
 
@@ -185,7 +189,7 @@ speed).
 ## Run the Macrobenchmark
 
 Run the test from within Studio to measure the performance of your app on your
-device. Note that you must run the test on a physical device, and not an
+device. Note that you **must run the test on a physical device**, and not an
 emulator, as emulators do not produce performance numbers representative of
 end-user experience.
 
@@ -296,8 +300,17 @@ traces to inspect them after a benchmark run, e.g.:
 
 ```shell
 # the following command will pull all files ending in .trace
-adb shell 'ls /storage/emulated/0/Download/*.trace' \
+# if you have not overriden the output directory
+adb shell ls '/storage/emulated/0/Android/data/*/*/*.trace' \
     | tr -d '\r' | xargs -n1 adb pull
+```
+
+Note that your output file path may be different if you customize it with the
+`additionalTestOutputDir` argument. You can look for trace path logs in logcat
+to see where there are written, for example:
+
+```
+I PerfettoCapture: Writing to /storage/emulated/0/Android/data/androidx.benchmark.integration.macrobenchmark.test/cache/TrivialStartupBenchmark_startup[mode=COLD]_iter002.trace.
 ```
 
 If you invoke the tests instead via gradle command line (e.g. `./gradlew
@@ -375,6 +388,12 @@ of scoped storage by setting `requestLegacyExternalStorage` to `true` in your
 </manifest>
 ```
 
+Or pass an instrumentation arg to bypass scoped storage for the test:
+
+```shell
+-e no-isolated-storage 1
+```
+
 NOTE: The file extension of these trace files is currently `.trace`, but will
 likely change in the future to clarify that these are perfetto traces.
 
@@ -435,6 +454,17 @@ macrobenchmark branch.
 
 For guidance in how to detect performance regressions, see the blogpost
 [Fighting Regressions with Benchmarks in CI](https://medium.com/androiddevelopers/fighting-regressions-with-benchmarks-in-ci-6ea9a14b5c71).
+
+
+## Known Issues
+
+### Missing Metrics
+
+If you see exceptions with the text: `Unable to read any metrics during
+benchmark` or `Error, different metrics observed in different iterations.` in a
+startup benchmark, these can be caused by the library failing to wait for
+Activity launch. As a temporary workaround, you can add a
+`Thread.sleep(5000/*ms*/)` at the end of your `measureRepeated {}` block.
 
 ## Feedback
 

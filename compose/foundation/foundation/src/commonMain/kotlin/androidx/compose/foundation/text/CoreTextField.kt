@@ -299,10 +299,7 @@ internal fun CoreTextField(
             .then(selectionModifier)
             .then(focusRequestTapModifier)
     } else {
-        Modifier.mouseDragGestureFilter(
-            manager.mouseSelectionObserver(onStart = { focusRequester.requestFocus() }),
-            enabled = enabled
-        )
+        Modifier.mouseDragGestureDetector(manager::mouseSelectionDetector, enabled = enabled)
     }
 
     val drawModifier = Modifier.drawBehind {
@@ -432,6 +429,16 @@ internal fun CoreTextField(
         onDispose { manager.hideSelectionToolbar() }
     }
 
+    val textKeyInputModifier =
+        Modifier.textFieldKeyInput(
+            state = state,
+            manager = manager,
+            value = value,
+            editable = !readOnly,
+            singleLine = maxLines == 1,
+            offsetMapping = offsetMapping
+        )
+
     // Modifiers that should be applied to the outer text field container. Usually those include
     // gesture and semantics modifiers.
     val decorationBoxModifier = modifier
@@ -439,6 +446,7 @@ internal fun CoreTextField(
         .then(pointerModifier)
         .then(semanticsModifier)
         .then(focusModifier)
+        .then(textKeyInputModifier)
         .onGloballyPositioned {
             state.layoutResult?.decorationBoxCoordinates = it
         }
@@ -459,7 +467,6 @@ internal fun CoreTextField(
                 .then(drawModifier)
                 .then(onPositionedModifier)
                 .textFieldMinSize(textStyle)
-                .textFieldKeyboardModifier(manager)
 
             SimpleLayout(coreTextFieldModifier) {
                 Layout({ }) { _, constraints ->
@@ -497,8 +504,6 @@ internal fun CoreTextField(
         }
     }
 }
-
-internal expect fun Modifier.textFieldKeyboardModifier(manager: TextFieldSelectionManager): Modifier
 
 @OptIn(InternalFoundationTextApi::class)
 internal class TextFieldState(

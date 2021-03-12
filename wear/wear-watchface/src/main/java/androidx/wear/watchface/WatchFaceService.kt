@@ -52,6 +52,7 @@ import androidx.wear.complications.data.ComplicationType
 import androidx.wear.complications.data.IdAndComplicationData
 import androidx.wear.complications.data.NoDataComplicationData
 import androidx.wear.complications.data.asApiComplicationData
+import androidx.wear.utility.AsyncTraceEvent
 import androidx.wear.utility.TraceEvent
 import androidx.wear.watchface.control.HeadlessWatchFaceImpl
 import androidx.wear.watchface.control.IInteractiveWatchFaceSysUI
@@ -230,7 +231,11 @@ public abstract class WatchFaceService : WallpaperService() {
         watchState: WatchState
     ): WatchFace
 
-    final override fun onCreateEngine(): Engine = EngineWrapper(getHandler())
+    // Creates an interactive engine for WallpaperService.
+    final override fun onCreateEngine(): Engine = EngineWrapper(getHandler(), false)
+
+    // Creates a headless engine.
+    internal fun createHeadlessEngine(): Engine = EngineWrapper(getHandler(), true)
 
     // This is open to allow mocking.
     internal open fun getHandler() = Handler(Looper.getMainLooper())
@@ -284,9 +289,10 @@ public abstract class WatchFaceService : WallpaperService() {
     }
 
     internal inner class EngineWrapper(
-        private val uiThreadHandler: Handler
+        private val uiThreadHandler: Handler,
+        headless: Boolean
     ) : WallpaperService.Engine(), WatchFaceHostApi {
-        internal val coroutineScope = CoroutineScope(getHandler().asCoroutineDispatcher())
+        internal val coroutineScope = CoroutineScope(getHandler().asCoroutineDispatcher().immediate)
         private val _context = this@WatchFaceService as Context
 
         internal lateinit var iWatchFaceService: IWatchFaceService
@@ -299,6 +305,7 @@ public abstract class WatchFaceService : WallpaperService() {
             // That's supposed to get sent very quickly, but in case it doesn't we initially
             // assume we're not in ambient mode which should be correct most of the time.
             isAmbient.value = false
+            isHeadless = headless
         }
 
         /**
@@ -345,17 +352,19 @@ public abstract class WatchFaceService : WallpaperService() {
         private var pendingVisibilityChanged: Boolean? = null
         private var pendingComplicationDataUpdates = ArrayList<PendingComplicationData>()
         private var complicationsActivated = false
+        private var watchFaceInitStarted = false
 
         // Only valid after onSetBinder has been called.
         private var systemApiVersion = -1
 
         internal var firstSetSystemState = true
         internal var immutableSystemStateDone = false
+        private var ignoreNextOnVisibilityChanged = false
 
         internal var lastActiveComplications: IntArray? = null
         internal var lastA11yLabels: Array<ContentDescriptionLabel>? = null
 
-        private var watchFaceInitStarted = false
+        private var firstOnSurfaceChangedReceived = false
         private var asyncWatchFaceConstructionPending = false
 
         private var initialUserStyle: UserStyleWireFormat? = null
@@ -363,12 +372,14 @@ public abstract class WatchFaceService : WallpaperService() {
 
         private var createdBy = "?"
 
-        init {
-            maybeCreateWCSApi()
-        }
-
+        /** Note this function should only be called once. */
         @SuppressWarnings("NewApi")
-        private fun maybeCreateWCSApi() {
+        private fun maybeCreateWCSApi(): Unit = TraceEvent("EngineWrapper.maybeCreateWCSApi").use {
+            // If this is a headless instance then we don't want to create a WCS instance.
+            if (mutableWatchState.isHeadless) {
+                return
+            }
+
             val pendingWallpaperInstance =
                 InteractiveInstanceManager.takePendingWallpaperInteractiveWatchFaceInstance()
 
@@ -376,6 +387,7 @@ public abstract class WatchFaceService : WallpaperService() {
             if (pendingWallpaperInstance == null && !expectPreRInitFlow()) {
                 directBootParams = readDirectBootPrefs(_context, DIRECT_BOOT_PREFS)
                 if (directBootParams != null) {
+                    val asyncTraceEvent = AsyncTraceEvent("DirectBoot")
                     coroutineScope.launch {
                         // In tests a watchface may already have been created.
                         if (!watchFaceCreatedOrPending()) {
@@ -383,6 +395,7 @@ public abstract class WatchFaceService : WallpaperService() {
                                 directBootParams!!,
                                 "DirectBoot"
                             ).createWCSApi()
+                            asyncTraceEvent.close()
                         }
                     }
                 }
@@ -390,6 +403,14 @@ public abstract class WatchFaceService : WallpaperService() {
 
             // If there's a pending WallpaperInteractiveWatchFaceInstance then create it.
             if (pendingWallpaperInstance != null) {
+                val asyncTraceEvent =
+                    AsyncTraceEvent("Create PendingWallpaperInteractiveWatchFaceInstance")
+                // The WallpaperService works around bugs in wallpapers (see b/5233826 and
+                // b/5209847) by sending onVisibilityChanged(true), onVisibilityChanged(false)
+                // after onSurfaceChanged during creation. This is unfortunate for us since we
+                // perform work in response (see WatchFace.visibilityObserver). So here we
+                // workaround the workaround...
+                ignoreNextOnVisibilityChanged = true
                 coroutineScope.launch {
                     pendingWallpaperInstance.callback.onInteractiveWatchFaceWcsCreated(
                         createInteractiveInstance(
@@ -397,13 +418,22 @@ public abstract class WatchFaceService : WallpaperService() {
                             "Boot with pendingWallpaperInstance"
                         ).createWCSApi()
                     )
+                    asyncTraceEvent.close()
                     val params = pendingWallpaperInstance.params
                     directBootParams = params
                     // We don't want to display complications in direct boot mode so replace with an
                     // empty list. NB we can't actually serialise complications anyway so that's
                     // just as well...
                     params.idAndComplicationDataWireFormats = emptyList()
-                    writeDirectBootPrefs(_context, DIRECT_BOOT_PREFS, params)
+
+                    // Writing even small amounts of data to storage is quite slow and if we did
+                    // that immediately, we'd delay the first frame which is rendered via
+                    // onSurfaceRedrawNeeded. By posting this task we expedite first frame
+                    // rendering. There is a small window where the direct boot could be stale if
+                    // the watchface crashed but this seems unlikely in practice.
+                    uiThreadHandler.post {
+                        writeDirectBootPrefs(_context, DIRECT_BOOT_PREFS, params)
+                    }
                 }
             }
         }
@@ -492,6 +522,13 @@ public abstract class WatchFaceService : WallpaperService() {
             }
         }
 
+        fun clearComplicationData() {
+            require(watchFaceCreated()) {
+                "WatchFace must have been created first"
+            }
+            watchFaceImpl.clearComplicationData()
+        }
+
         @UiThread
         fun getComplicationState(): List<IdAndComplicationStateWireFormat> =
             uiThreadHandler.runOnHandlerWithTracing("EngineWrapper.getComplicationState") {
@@ -506,6 +543,7 @@ public abstract class WatchFaceService : WallpaperService() {
                             it.value.defaultProviderPolicy.systemProviderFallback,
                             it.value.defaultProviderType.asWireComplicationType(),
                             it.value.enabled,
+                            it.value.initiallyEnabled,
                             it.value.renderer.getIdAndData()?.complicationData?.type
                                 ?.asWireComplicationType()
                                 ?: ComplicationType.NO_DATA.asWireComplicationType(),
@@ -606,10 +644,7 @@ public abstract class WatchFaceService : WallpaperService() {
                 }
             }
 
-            return SharedMemoryImage.ashmemCompressedImageBundle(
-                bitmap,
-                params.compressionQuality
-            )
+            return SharedMemoryImage.ashmemWriteImageBundle(bitmap)
         }
 
         @UiThread
@@ -665,10 +700,7 @@ public abstract class WatchFaceService : WallpaperService() {
                     watchFaceImpl.onSetStyleInternal(UserStyle(oldStyle))
                 }
 
-                SharedMemoryImage.ashmemCompressedImageBundle(
-                    complicationBitmap,
-                    params.compressionQuality
-                )
+                SharedMemoryImage.ashmemWriteImageBundle(complicationBitmap)
             }
         }
 
@@ -718,6 +750,23 @@ public abstract class WatchFaceService : WallpaperService() {
                     }
                 }
             )
+        }
+
+        override fun onSurfaceChanged(
+            holder: SurfaceHolder?,
+            format: Int,
+            width: Int,
+            height: Int
+        ): Unit = TraceEvent("EngineWrapper.onSurfaceChanged").use {
+            super.onSurfaceChanged(holder, format, width, height)
+
+            // We can only call maybeCreateWCSApi once. For OpenGL watch faces we need to wait for
+            // onSurfaceChanged before bootstrapping because the surface isn't valid for creating
+            // an EGL context until then.
+            if (!firstOnSurfaceChangedReceived) {
+                maybeCreateWCSApi()
+                firstOnSurfaceChangedReceived = true
+            }
         }
 
         override fun onDestroy(): Unit = TraceEvent("EngineWrapper.onDestroy").use {
@@ -906,7 +955,7 @@ public abstract class WatchFaceService : WallpaperService() {
             }
 
             allowWatchfaceToAnimate = false
-            mutableWatchState.isHeadless = true
+            require(mutableWatchState.isHeadless)
             val watchState = mutableWatchState.asWatchState()
 
             createWatchFaceInternal(
@@ -933,6 +982,7 @@ public abstract class WatchFaceService : WallpaperService() {
             require(!watchFaceCreatedOrPending()) {
                 "WatchFace already exists! Created by $createdBy"
             }
+            require(!mutableWatchState.isHeadless)
 
             setImmutableSystemState(params.deviceConfig)
             setSystemState(params.systemState)
@@ -975,8 +1025,14 @@ public abstract class WatchFaceService : WallpaperService() {
         }
 
         override fun onSurfaceRedrawNeeded(holder: SurfaceHolder) {
+            if (TRACE_DRAW) {
+                Trace.beginSection("onSurfaceRedrawNeeded")
+            }
             if (watchFaceCreated()) {
                 watchFaceImpl.onSurfaceRedrawNeeded()
+            }
+            if (TRACE_DRAW) {
+                Trace.endSection()
             }
         }
 
@@ -1047,23 +1103,37 @@ public abstract class WatchFaceService : WallpaperService() {
             pendingSetWatchFaceStyle = false
         }
 
-        override fun onVisibilityChanged(visible: Boolean) {
+        override fun onVisibilityChanged(visible: Boolean): Unit = TraceEvent(
+            "onVisibilityChanged"
+        ).use {
             super.onVisibilityChanged(visible)
 
-            // We are requesting state every time the watch face changes its visibility because
-            // wallpaper commands have a tendency to be dropped. By requesting it on every
-            // visibility change, we ensure that we don't become a victim of some race condition.
-            sendBroadcast(
-                Intent(Constants.ACTION_REQUEST_STATE).apply {
-                    putExtra(Constants.EXTRA_WATCH_FACE_VISIBLE, visible)
-                }
-            )
-
-            // We can't guarantee the binder has been set and onSurfaceChanged called before this
-            // command.
-            if (!watchFaceCreated()) {
-                pendingVisibilityChanged = visible
+            if (ignoreNextOnVisibilityChanged) {
+                ignoreNextOnVisibilityChanged = false
                 return
+            }
+
+            // In the WSL flow Home doesn't know when WallpaperService has actually launched a
+            // watchface after requesting a change. It used [Constants.ACTION_REQUEST_STATE] as a
+            // signal to trigger the old boot flow (sending the binder etc). This is no longer
+            // required from android R onwards. See (b/181965946).
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                // We are requesting state every time the watch face changes its visibility because
+                // wallpaper commands have a tendency to be dropped. By requesting it on every
+                // visibility change, we ensure that we don't become a victim of some race
+                // condition.
+                sendBroadcast(
+                    Intent(Constants.ACTION_REQUEST_STATE).apply {
+                        putExtra(Constants.EXTRA_WATCH_FACE_VISIBLE, visible)
+                    }
+                )
+
+                // We can't guarantee the binder has been set and onSurfaceChanged called before
+                // this command.
+                if (!watchFaceCreated()) {
+                    pendingVisibilityChanged = visible
+                    return
+                }
             }
 
             mutableWatchState.isVisible.value = visible
@@ -1237,8 +1307,10 @@ public abstract class WatchFaceService : WallpaperService() {
                 }
             }
             writer.println("createdBy=$createdBy")
+            writer.println("firstOnSurfaceChanged=$firstOnSurfaceChangedReceived")
             writer.println("watchFaceInitStarted=$watchFaceInitStarted")
             writer.println("asyncWatchFaceConstructionPending=$asyncWatchFaceConstructionPending")
+            writer.println("ignoreNextOnVisibilityChanged=$ignoreNextOnVisibilityChanged")
 
             if (this::interactiveInstanceId.isInitialized) {
                 writer.println("interactiveInstanceId=$interactiveInstanceId")

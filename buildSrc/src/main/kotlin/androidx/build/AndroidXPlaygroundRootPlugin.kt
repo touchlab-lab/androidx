@@ -16,9 +16,10 @@
 
 package androidx.build
 
+import androidx.build.AndroidXRootPlugin.Companion.PREBUILT_OR_SNAPSHOT_EXT_NAME
+import androidx.build.AndroidXRootPlugin.Companion.PROJECT_OR_ARTIFACT_EXT_NAME
 import androidx.build.gradle.isRoot
-import groovy.util.XmlParser
-import groovy.xml.QName
+import groovy.xml.DOMBuilder
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -37,10 +38,12 @@ import java.net.URL
 @Suppress("unused") // used in Playground Projects
 class AndroidXPlaygroundRootPlugin : Plugin<Project> {
     private lateinit var rootProject: Project
+
     /**
      * List of snapshot repositories to fetch AndroidX artifacts
      */
     private lateinit var repos: PlaygroundRepositories
+
     /**
      * The configuration for the plugin read from the gradle properties
      */
@@ -49,6 +52,12 @@ class AndroidXPlaygroundRootPlugin : Plugin<Project> {
     private val projectOrArtifactClosure = KotlinClosure1<String, Any>(
         function = {
             projectOrArtifact(this)
+        }
+    )
+
+    private val prebuiltOrSnapshotClosure = KotlinClosure1<String, String>(
+        function = {
+            prebuiltOrSnapshot(this)
         }
     )
 
@@ -72,7 +81,8 @@ class AndroidXPlaygroundRootPlugin : Plugin<Project> {
 
     private fun configureSubProject(project: Project) {
         project.repositories.addPlaygroundRepositories()
-        project.extra.set(AndroidXRootPlugin.PROJECT_OR_ARTIFACT_EXT_NAME, projectOrArtifactClosure)
+        project.extra.set(PROJECT_OR_ARTIFACT_EXT_NAME, projectOrArtifactClosure)
+        project.extra.set(PREBUILT_OR_SNAPSHOT_EXT_NAME, prebuiltOrSnapshotClosure)
         project.configurations.all { configuration ->
             configuration.resolutionStrategy.dependencySubstitution.all { substitution ->
                 substitution.allowAndroidxSnapshotReplacement()
@@ -118,6 +128,21 @@ class AndroidXPlaygroundRootPlugin : Plugin<Project> {
         }
     }
 
+    private fun prebuiltOrSnapshot(path: String): String {
+        val sections = path.split(":")
+
+        if (sections.size != 3) {
+            throw GradleException(
+                "Expected prebuiltOrSnapshot path to be of the form " +
+                    "<group>:<artifact>:<version>, but was $path"
+            )
+        }
+
+        val group = sections[0]
+        val artifact = sections[1]
+        return "$group:$artifact:$SNAPSHOT_MARKER"
+    }
+
     private fun DependencySubstitution.allowAndroidxSnapshotReplacement() {
         val requested = this.requested
         if (requested is ModuleComponentSelector && requested.group.startsWith("androidx") &&
@@ -154,10 +179,15 @@ class AndroidXPlaygroundRootPlugin : Plugin<Project> {
         } else {
             val metadataUrl = "${repos.snapshots}/$groupPath/$modulePath/maven-metadata.xml"
             URL(metadataUrl).openStream().use {
-                val parsedMetadata = XmlParser().parse(it)
-                val snapshotVersion = parsedMetadata
-                    .getAt(QName.valueOf("versioning"))
-                    .getAt("latest").text()
+                val parsedMetadata = DOMBuilder.parse(it.reader())
+                val versionNodes = parsedMetadata.getElementsByTagName("latest")
+                if (versionNodes.length != 1) {
+                    throw GradleException(
+                        "AndroidXPlaygroundRootPlugin#findSnapshotVersion expected exactly one " +
+                            "latest version in $metadataUrl, but got ${versionNodes.length}"
+                    )
+                }
+                val snapshotVersion = versionNodes.item(0).textContent
                 metadataCacheFile.parentFile.mkdirs()
                 metadataCacheFile.writeText(snapshotVersion, Charsets.UTF_8)
                 snapshotVersion

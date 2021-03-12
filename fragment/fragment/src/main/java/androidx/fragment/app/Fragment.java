@@ -72,6 +72,7 @@ import androidx.arch.core.util.Function;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.app.SharedElementCallback;
 import androidx.core.view.LayoutInflaterCompat;
+import androidx.fragment.app.strictmode.FragmentStrictMode;
 import androidx.lifecycle.HasDefaultViewModelProviderFactory;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
@@ -683,16 +684,15 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
         sb.append("}");
         sb.append(" (");
         sb.append(mWho);
-        sb.append(")");
         if (mFragmentId != 0) {
             sb.append(" id=0x");
             sb.append(Integer.toHexString(mFragmentId));
         }
         if (mTag != null) {
-            sb.append(" ");
+            sb.append(" tag=");
             sb.append(mTag);
         }
-        sb.append('}');
+        sb.append(")");
         return sb.toString();
     }
 
@@ -1320,6 +1320,7 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
      */
     @Deprecated
     public void setUserVisibleHint(boolean isVisibleToUser) {
+        FragmentStrictMode.onSetUserVisibleHint(this);
         if (!mUserVisibleHint && isVisibleToUser && mState < STARTED
                 && mFragmentManager != null && isAdded() && mIsCreated) {
             mFragmentManager.performPendingDeferredStart(
@@ -2949,7 +2950,7 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
             @Nullable Bundle savedInstanceState) {
         mChildFragmentManager.noteStateNotSaved();
         mPerformedCreateView = true;
-        mViewLifecycleOwner = new FragmentViewLifecycleOwner();
+        mViewLifecycleOwner = new FragmentViewLifecycleOwner(getViewModelStore());
         mView = onCreateView(inflater, container, savedInstanceState);
         if (mView != null) {
             // Initialize the view lifecycle
@@ -2958,7 +2959,7 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
             // to mViewLifecycleOwnerLiveData and before onViewCreated, so that calls to
             // ViewTree get() methods return something meaningful
             ViewTreeLifecycleOwner.set(mView, mViewLifecycleOwner);
-            ViewTreeViewModelStoreOwner.set(mView, this);
+            ViewTreeViewModelStoreOwner.set(mView, mViewLifecycleOwner);
             ViewTreeSavedStateRegistryOwner.set(mView, mViewLifecycleOwner);
             // Then inform any Observers of the new LifecycleOwner
             mViewLifecycleOwnerLiveData.setValue(mViewLifecycleOwner);

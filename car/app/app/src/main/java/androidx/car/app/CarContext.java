@@ -46,8 +46,12 @@ import androidx.car.app.utils.RemoteUtils;
 import androidx.car.app.utils.ThreadUtils;
 import androidx.car.app.versioning.CarAppApiLevel;
 import androidx.car.app.versioning.CarAppApiLevels;
+import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -256,11 +260,11 @@ public class CarContext extends ContextWrapper {
 
         mHostDispatcher.dispatch(
                 CarContext.CAR_SERVICE,
-                (ICarHost host) -> {
+                "startCarApp", (ICarHost host) -> {
                     host.startCarApp(intent);
                     return null;
-                },
-                "startCarApp");
+                }
+        );
     }
 
     /**
@@ -294,12 +298,12 @@ public class CarContext extends ContextWrapper {
 
         IStartCarApp startCarAppInterface = requireNonNull(IStartCarApp.Stub.asInterface(binder));
 
-        RemoteUtils.call(
-                () -> {
+        RemoteUtils.dispatchCallToHost(
+                "startCarApp from notification", () -> {
                     startCarAppInterface.startCarApp(appIntent);
                     return null;
-                },
-                "startCarApp from notification");
+                }
+        );
     }
 
     /**
@@ -313,11 +317,11 @@ public class CarContext extends ContextWrapper {
     public void finishCarApp() {
         mHostDispatcher.dispatch(
                 CarContext.CAR_SERVICE,
-                (ICarHost host) -> {
+                "finish", (ICarHost host) -> {
                     host.finish();
                     return null;
-                },
-                "finish");
+                }
+        );
     }
 
     /**
@@ -368,9 +372,12 @@ public class CarContext extends ContextWrapper {
     void onCarConfigurationChanged(@NonNull Configuration configuration) {
         ThreadUtils.checkMainThread();
 
-        Log.d(TAG,
-                "Car configuration changed, configuration: " + configuration + ", displayMetrics: "
-                        + getResources().getDisplayMetrics());
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG,
+                    "Car configuration changed, configuration: " + configuration
+                            + ", displayMetrics: "
+                            + getResources().getDisplayMetrics());
+        }
 
         getResources()
                 .updateConfiguration(requireNonNull(configuration),
@@ -406,8 +413,7 @@ public class CarContext extends ContextWrapper {
         ThreadUtils.checkMainThread();
 
         // If this is the first time attaching the base, actually attach it, otherwise, just
-        // update the
-        // configuration.
+        // update the configuration.
         if (getBaseContext() == null) {
             // Create the virtual display with the proper dimensions.
             VirtualDisplay display =
@@ -436,14 +442,6 @@ public class CarContext extends ContextWrapper {
     void setCarHost(@NonNull ICarHost carHost) {
         ThreadUtils.checkMainThread();
         mHostDispatcher.setCarHost(requireNonNull(carHost));
-    }
-
-    /** @hide */
-    @RestrictTo(LIBRARY_GROUP) // Restrict to testing library
-    @MainThread
-    void resetHosts() {
-        ThreadUtils.checkMainThread();
-        mHostDispatcher.resetHosts();
     }
 
     /**
@@ -489,10 +487,20 @@ public class CarContext extends ContextWrapper {
         super(null);
 
         mHostDispatcher = hostDispatcher;
-        mAppManager = AppManager.create(this, hostDispatcher);
-        mNavigationManager = NavigationManager.create(this, hostDispatcher);
+        mAppManager = AppManager.create(this, hostDispatcher, lifecycle);
+        mNavigationManager = NavigationManager.create(this, hostDispatcher, lifecycle);
         mScreenManager = ScreenManager.create(this, lifecycle);
         mOnBackPressedDispatcher =
                 new OnBackPressedDispatcher(() -> getCarService(ScreenManager.class).pop());
+
+        LifecycleObserver observer = new DefaultLifecycleObserver() {
+            @Override
+            public void onDestroy(@NonNull @NotNull LifecycleOwner owner) {
+                hostDispatcher.resetHosts();
+                owner.getLifecycle().removeObserver(this);
+            }
+        };
+
+        lifecycle.addObserver(observer);
     }
 }

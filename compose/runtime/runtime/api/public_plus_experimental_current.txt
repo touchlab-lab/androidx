@@ -41,8 +41,7 @@ package androidx.compose.runtime {
   }
 
   public final class BroadcastFrameClock implements androidx.compose.runtime.MonotonicFrameClock {
-    ctor public BroadcastFrameClock(kotlin.jvm.functions.Function0<kotlin.Unit>? onNewAwaiters);
-    ctor public BroadcastFrameClock();
+    ctor public BroadcastFrameClock(optional kotlin.jvm.functions.Function0<kotlin.Unit>? onNewAwaiters);
     method public void cancel(optional java.util.concurrent.CancellationException cancellationException);
     method public boolean getHasAwaiters();
     method public void sendFrame(long timeNanos);
@@ -543,6 +542,9 @@ package androidx.compose.runtime.internal {
   @androidx.compose.runtime.ComposeCompilerApi @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention) @kotlin.annotation.Target(allowedTargets=kotlin.annotation.AnnotationTarget) public @interface StabilityInferred {
     method public abstract int parameters();
     property public abstract int parameters;
+  }
+
+  public final class ThreadMapKt {
   }
 
 }

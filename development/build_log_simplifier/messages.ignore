@@ -327,6 +327,7 @@ In file included from \$CHECKOUT/external/protobuf/src/google/protobuf/util/inte
 # > Task :support-preference-demos:compileDebugJavaWithJavac
 # > Task :startup:integration-tests:first-library:processDebugManifest
 \$SUPPORT/startup/integration\-tests/first\-library/src/main/AndroidManifest\.xml:[0-9]+:[0-9]+\-[0-9]+:[0-9]+ Warning:
+meta\-data\#androidx\.work\.impl\.WorkManagerInitializer was tagged at AndroidManifest\.xml\:[0-9]+ to remove other declarations but no other declaration present
 provider\#androidx\.work\.impl\.WorkManagerInitializer was tagged at AndroidManifest\.xml:[0-9]+ to remove other declarations but no other declaration present
 # > Task :camera:integration-tests:camera-testapp-extensions:compileDebugJavaWithJavac
 # > Task :camera:integration-tests:camera-testapp-core:compileDebugJavaWithJavac
@@ -525,13 +526,15 @@ There were failing tests\. See the report at: .*.html
 # > Task :compose:ui:ui:processDebugUnitTestManifest
 \$OUT_DIR/androidx/compose/ui/ui/build/intermediates/tmp/manifest/test/debug/manifestMerger[0-9]+\.xml Warning:
 # > Task *:lintDebug
-\$SUPPORT/.*/build\.gradle: Ignore: Unknown issue id "ComposableNaming" \[UnknownIssueId\]
-\$SUPPORT/.*/build\.gradle: Ignore: Unknown issue id "ComposableLambdaParameterNaming" \[UnknownIssueId\]
-\$SUPPORT/.*/build\.gradle: Ignore: Unknown issue id "ComposableLambdaParameterPosition" \[UnknownIssueId\]
-\$SUPPORT/.*/build\.gradle: Ignore: Unknown issue id "CompositionLocalNaming" \[UnknownIssueId\]
-Explanation for issues of type "UnknownIssueId":
-Lint will report this issue if it is configured with an issue id it does
-not recognize in for example Gradle files or lint\.xml configuration files\.
+# TODO: b/182321297 remove when this message isn't printed
+Lint: Unknown issue id "ComposableNaming"
+Lint: Unknown issue id "ComposableLambdaParameterNaming"
+Lint: Unknown issue id "ComposableLambdaParameterPosition"
+Lint: Unknown issue id "CompositionLocalNaming"
+Lint: Unknown issue id "ComposableModifierFactory"
+Lint: Unknown issue id "ModifierFactoryExtensionFunction"
+Lint: Unknown issue id "ModifierFactoryReturnType"
+Lint: Unknown issue id "ModifierParameter"
 # > Task :compose:foundation:foundation:reportLibraryMetrics
 Stripped invalid locals information from [0-9]+ methods\.
 Methods with invalid locals information:
@@ -587,3 +590,19 @@ Error processing \$CHECKOUT\/prebuilts\/androidx\/external\/org\/bouncycastle\/b
 Error processing \$CHECKOUT\/prebuilts\/androidx\/external\/org\/bouncycastle\/bcprov\-jdk[0-9]+on\/[0-9]+\.[0-9]+\/bcprov\-jdk[0-9]+on\-[0-9]+\.[0-9]+\.jar\:META\-INF\/versions\/[0-9]+\/org\/bouncycastle\/jcajce\/provider\/asymmetric\/edec\/KeyPairGeneratorSpi\$X[0-9]+\.class\: broken class file\? \(This feature requires ASM[0-9]+\)
 Error processing \$CHECKOUT\/prebuilts\/androidx\/external\/org\/bouncycastle\/bcprov\-jdk[0-9]+on\/[0-9]+\.[0-9]+\/bcprov\-jdk[0-9]+on\-[0-9]+\.[0-9]+\.jar\:META\-INF\/versions\/[0-9]+\/org\/bouncycastle\/jcajce\/provider\/asymmetric\/edec\/KeyPairGeneratorSpi\$XDH\.class\: broken class file\? \(This feature requires ASM[0-9]+\)
 Error processing \$CHECKOUT\/prebuilts\/androidx\/external\/org\/bouncycastle\/bcprov\-jdk[0-9]+on\/[0-9]+\.[0-9]+\/bcprov\-jdk[0-9]+on\-[0-9]+\.[0-9]+\.jar\:META\-INF\/versions\/[0-9]+\/module\-info\.class\: broken class file\? \(This feature requires ASM[0-9]+\)
+# > Task :compose:foundation:foundation-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/foundation\/foundation\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:material:material-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/material\/material\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:foundation:foundation-layout:foundation-layout-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/foundation\/foundation\-layout\/foundation\-layout\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:ui:ui-text:ui-text-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/ui\/ui\-text\/ui\-text\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:benchmark-utils:benchmark-utils-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/benchmark\-utils\/benchmark\-utils\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:ui:ui-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/ui\/ui\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:animation:animation-core:animation-core-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/animation\/animation\-core\/animation\-core\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
+# > Task :compose:ui:ui-graphics:ui-graphics-benchmark:processReleaseAndroidTestManifest
+\$OUT_DIR\/androidx\/compose\/ui\/ui\-graphics\/ui\-graphics\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:

@@ -178,7 +178,7 @@ public abstract class EditorSession : AutoCloseable {
             "EditorSession.createOnWatchEditingSessionAsyncImpl"
         ).use {
             val coroutineScope =
-                CoroutineScope(Handler(Looper.getMainLooper()).asCoroutineDispatcher())
+                CoroutineScope(Handler(Looper.getMainLooper()).asCoroutineDispatcher().immediate)
             return EditorRequest.createFromIntent(editIntent)?.let { editorRequest ->
                 // We need to respect the lifecycle and register the ActivityResultListener now.
                 val session = OnWatchFaceEditorSessionImpl(
@@ -228,7 +228,9 @@ public abstract class EditorSession : AutoCloseable {
                     object : ProviderInfoRetrieverProvider {
                         override fun getProviderInfoRetriever() = ProviderInfoRetriever(activity)
                     },
-                    CoroutineScope(Handler(Looper.getMainLooper()).asCoroutineDispatcher())
+                    CoroutineScope(
+                        Handler(Looper.getMainLooper()).asCoroutineDispatcher().immediate
+                    )
                 )
             }
         }
@@ -485,6 +487,7 @@ internal class OnWatchFaceEditorSessionImpl(
                 it.value.defaultProviderPolicy,
                 it.value.defaultProviderType,
                 it.value.enabled,
+                it.value.initiallyEnabled,
                 it.value.renderer.getIdAndData()?.complicationData?.type
                     ?: ComplicationType.NO_DATA,
                 it.value.fixedComplicationProvider
@@ -574,7 +577,6 @@ internal class HeadlessEditorSession(
         requireNotClosed()
         return headlessWatchFaceClient.takeWatchFaceScreenshot(
             renderParameters,
-            100,
             calendarTimeMillis,
             userStyle,
             idToComplicationData

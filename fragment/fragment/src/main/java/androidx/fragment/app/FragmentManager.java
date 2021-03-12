@@ -440,6 +440,9 @@ public abstract class FragmentManager implements FragmentResultOwner {
 
     private final AtomicInteger mBackStackIndex = new AtomicInteger();
 
+    private final Map<String, BackStackState> mBackStackStates =
+            Collections.synchronizedMap(new HashMap<String, BackStackState>());
+
     private final Map<String, Bundle> mResults =
             Collections.synchronizedMap(new HashMap<String, Bundle>());
     private final Map<String, LifecycleAwareResultListener> mResultListeners =
@@ -2646,6 +2649,27 @@ public abstract class FragmentManager implements FragmentResultOwner {
             }
         }
 
+        // Ensure that there are no retained fragments in the affected fragments or
+        // their transitive set of child fragments
+        ArrayDeque<Fragment> fragmentsToSearch = new ArrayDeque<>(allFragments);
+        while (!fragmentsToSearch.isEmpty()) {
+            Fragment currentFragment = fragmentsToSearch.removeFirst();
+            if (currentFragment.mRetainInstance) {
+                throwException(new IllegalArgumentException("saveBackStack(\"" + name + "\") "
+                        + "must not contain retained fragments. Found "
+                        + (allFragments.contains(currentFragment)
+                        ? "direct reference to retained "
+                        : "retained child ")
+                        + "fragment " + currentFragment));
+            }
+            // Then recursively check the child fragments for retained fragments
+            for (Fragment f : currentFragment.mChildFragmentManager.getActiveFragments()) {
+                if (f != null) {
+                    fragmentsToSearch.addLast(f);
+                }
+            }
+        }
+
         // Now actually record each save
         for (int i = mBackStack.size() - 1; i >= index; i--) {
             // TODO: Pre-process each BackStackRecord so that they actually save state
@@ -2794,6 +2818,8 @@ public abstract class FragmentManager implements FragmentResultOwner {
         if (mPrimaryNav != null) {
             fms.mPrimaryNavActiveWho = mPrimaryNav.mWho;
         }
+        fms.mBackStackStateKeys.addAll(mBackStackStates.keySet());
+        fms.mBackStackStates.addAll(mBackStackStates.values());
         fms.mResultKeys.addAll(mResults.keySet());
         fms.mResults.addAll(mResults.values());
         fms.mLaunchedFragments = new ArrayList<>(mLaunchedFragments);
@@ -2899,6 +2925,13 @@ public abstract class FragmentManager implements FragmentResultOwner {
             dispatchParentPrimaryNavigationFragmentChanged(mPrimaryNav);
         }
 
+        ArrayList<String> savedBackStackStateKeys = fms.mBackStackStateKeys;
+        if (savedBackStackStateKeys != null) {
+            for (int i = 0; i < savedBackStackStateKeys.size(); i++) {
+                mBackStackStates.put(savedBackStackStateKeys.get(i), fms.mBackStackStates.get(i));
+            }
+        }
+
         ArrayList<String> savedResultKeys = fms.mResultKeys;
         if (savedResultKeys != null) {
             for (int i = 0; i < savedResultKeys.size(); i++) {
@@ -2908,8 +2941,10 @@ public abstract class FragmentManager implements FragmentResultOwner {
         mLaunchedFragments = new ArrayDeque<>(fms.mLaunchedFragments);
     }
 
+    /** @hide */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     @NonNull
-    FragmentHostCallback<?> getHost() {
+    public FragmentHostCallback<?> getHost() {
         return mHost;
     }
 
@@ -3582,6 +3617,12 @@ public abstract class FragmentManager implements FragmentResultOwner {
                 break;
             case FragmentTransaction.TRANSIT_FRAGMENT_FADE:
                 rev = FragmentTransaction.TRANSIT_FRAGMENT_FADE;
+                break;
+            case FragmentTransaction.TRANSIT_FRAGMENT_MATCH_ACTIVITY_OPEN:
+                rev = FragmentTransaction.TRANSIT_FRAGMENT_MATCH_ACTIVITY_CLOSE;
+                break;
+            case FragmentTransaction.TRANSIT_FRAGMENT_MATCH_ACTIVITY_CLOSE:
+                rev = FragmentTransaction.TRANSIT_FRAGMENT_MATCH_ACTIVITY_OPEN;
                 break;
         }
         return rev;

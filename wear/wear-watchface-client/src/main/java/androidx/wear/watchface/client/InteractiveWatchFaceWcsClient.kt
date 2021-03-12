@@ -19,7 +19,6 @@ package androidx.wear.watchface.client
 import android.graphics.Bitmap
 import android.os.IBinder
 import android.support.wearable.watchface.SharedMemoryImage
-import androidx.annotation.IntRange
 import androidx.annotation.Px
 import androidx.annotation.RequiresApi
 import androidx.wear.complications.data.ComplicationData
@@ -59,23 +58,20 @@ public interface InteractiveWatchFaceWcsClient : AutoCloseable {
     public fun updateComplicationData(idToComplicationData: Map<Int, ComplicationData>)
 
     /**
-     * Requests for a WebP compressed shared memory backed [Bitmap] containing a screenshot of
-     * the watch face with the given settings.
+     * Requests a shared memory backed [Bitmap] containing a screenshot of the watch face with the
+     * given settings.
      *
      * @param renderParameters The [RenderParameters] to draw with.
-     * @param compressionQuality The WebP compression quality, 100 = loss less.
      * @param calendarTimeMillis The UTC time in milliseconds since the epoch to render with.
      * @param userStyle Optional [UserStyle] to render with, if null the current style is used.
      * @param idAndComplicationData Map of complication ids to [ComplicationData] to render with, or
      *     if null then the existing complication data if any is used.
-     * @return A WebP compressed shared memory backed [Bitmap] containing a screenshot of the watch
-     *     face with the given settings.
+     * @return A shared memory backed [Bitmap] containing a screenshot of the watch  face with the
+     *     given settings.
      */
     @RequiresApi(27)
     public fun takeWatchFaceScreenshot(
         renderParameters: RenderParameters,
-        @IntRange(from = 0, to = 100)
-        compressionQuality: Int,
         calendarTimeMillis: Long,
         userStyle: UserStyle?,
         idAndComplicationData: Map<Int, ComplicationData>?
@@ -85,16 +81,21 @@ public interface InteractiveWatchFaceWcsClient : AutoCloseable {
     public val previewReferenceTimeMillis: Long
 
     /**
-     * Sets the watch face's current [UserStyle]. Note this may alter [complicationState].
+     * Renames this instance to [newInstanceId] (must be unique, usually this would be different
+     * from the old ID but that's not a requirement). Sets the current [UserStyle] and clears
+     * any complication data. Setting the new UserStyle may have a side effect of enabling or
+     * disabling complications, which will be visible via [ComplicationState.isEnabled].
      */
-    public fun setUserStyle(userStyle: UserStyle)
+    public fun updateInstance(newInstanceId: String, userStyle: UserStyle)
 
     /**
-     * Sets the watch face's current UserStyle represented as a Map<String, String>.  This can be
-     * helpful to avoid having to construct a [UserStyle] which requires the [UserStyleSchema]
-     * which is an additional IPC. Note this may alter [complicationState].
+     * Renames this instance to [newInstanceId] (must be unique, usually this would be different
+     * from the old ID but that's not a requirement). Sets the current [UserStyle] represented as a
+     * Map<String, String> and clears any complication data. Setting the new UserStyle may have
+     * a side effect of enabling or disabling complications, which will be visible via
+     * [ComplicationState.isEnabled].
      */
-    public fun setUserStyle(userStyle: Map<String, String>)
+    public fun updateInstance(newInstanceId: String, userStyle: Map<String, String>)
 
     /** Returns the ID of this watch face instance. */
     public val instanceId: String
@@ -150,17 +151,14 @@ internal class InteractiveWatchFaceWcsClientImpl internal constructor(
     @RequiresApi(27)
     override fun takeWatchFaceScreenshot(
         renderParameters: RenderParameters,
-        @IntRange(from = 0, to = 100)
-        compressionQuality: Int,
         calendarTimeMillis: Long,
         userStyle: UserStyle?,
         idAndComplicationData: Map<Int, ComplicationData>?
     ): Bitmap = TraceEvent("InteractiveWatchFaceWcsClientImpl.takeWatchFaceScreenshot").use {
-        SharedMemoryImage.ashmemCompressedImageBundleToBitmap(
+        SharedMemoryImage.ashmemReadImageBundle(
             iInteractiveWatchFaceWcs.takeWatchFaceScreenshot(
                 WatchfaceScreenshotParams(
                     renderParameters.toWireFormat(),
-                    compressionQuality,
                     calendarTimeMillis,
                     userStyle?.toWireFormat(),
                     idAndComplicationData?.map {
@@ -177,16 +175,16 @@ internal class InteractiveWatchFaceWcsClientImpl internal constructor(
     override val previewReferenceTimeMillis: Long
         get() = iInteractiveWatchFaceWcs.previewReferenceTimeMillis
 
-    override fun setUserStyle(userStyle: UserStyle) = TraceEvent(
-        "InteractiveWatchFaceWcsClientImpl.setUserStyle"
+    override fun updateInstance(newInstanceId: String, userStyle: UserStyle) = TraceEvent(
+        "InteractiveWatchFaceWcsClientImpl.updateInstance"
     ).use {
-        iInteractiveWatchFaceWcs.setCurrentUserStyle(userStyle.toWireFormat())
+        iInteractiveWatchFaceWcs.updateInstance(newInstanceId, userStyle.toWireFormat())
     }
 
-    override fun setUserStyle(userStyle: Map<String, String>) = TraceEvent(
-        "InteractiveWatchFaceWcsClientImpl.setUserStyle"
+    override fun updateInstance(newInstanceId: String, userStyle: Map<String, String>) = TraceEvent(
+        "InteractiveWatchFaceWcsClientImpl.updateInstance"
     ).use {
-        iInteractiveWatchFaceWcs.setCurrentUserStyle(UserStyleWireFormat(userStyle))
+        iInteractiveWatchFaceWcs.updateInstance(newInstanceId, UserStyleWireFormat(userStyle))
     }
 
     override val instanceId: String

@@ -25,21 +25,12 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Attribute
-import org.gradle.api.attributes.Usage
 import org.gradle.api.tasks.ClasspathNormalizer
-import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.findByType
-import org.gradle.kotlin.dsl.named
-import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePluginWrapper
 import org.jetbrains.kotlin.gradle.plugin.KotlinMultiplatformPluginWrapper
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 const val composeSourceOption =
     "plugin:androidx.compose.compiler.plugins.kotlin:sourceInformation=true"
@@ -73,41 +64,35 @@ class AndroidXUiPlugin : Plugin<Project> {
                                 ArtifactTypeDefinition.JAR_TYPE
                             )
                         }
-                    }.files
+                    }
 
                     val configure: (KotlinCompile<*>) -> Unit = { compile ->
                         // TODO(b/157230235): remove when this is enabled by default
-                        compile.kotlinOptions.freeCompilerArgs +=
-                            "-Xopt-in=kotlin.RequiresOptIn"
-                        compile.inputs.files(kotlinPlugin)
+                        compile.kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+                        compile.inputs.files({ kotlinPlugin.files })
                             .withPropertyName("composeCompilerExtension")
                             .withNormalizer(ClasspathNormalizer::class.java)
                         compile.doFirst {
                             if (!conf.isEmpty) {
                                 compile.kotlinOptions.freeCompilerArgs +=
-                                    "-Xplugin=${kotlinPlugin.first()}"
+                                    "-Xplugin=${kotlinPlugin.files.first()}"
                             }
                         }
                     }
-
-                    project.tasks.withType(KotlinJvmCompile::class.java)
-                        .configureEach { compile ->
-                            compile.kotlinOptions.useIR = true
-                            configure(compile)
-                        }
-
-                    project.tasks.withType(KotlinJsCompile::class.java)
-                        .configureEach(configure)
 
                     project.afterEvaluate {
                         val androidXExtension =
                             project.extensions.findByType(AndroidXExtension::class.java)
                         if (androidXExtension != null) {
-                            if (!conf.isEmpty && androidXExtension.publish.shouldPublish()) {
-                                project.tasks.withType(KotlinJvmCompile::class.java)
+                            if (androidXExtension.publish.shouldPublish()) {
+                                project.tasks.withType(KotlinCompile::class.java)
                                     .configureEach { compile ->
-                                        compile.kotlinOptions.freeCompilerArgs +=
-                                            listOf("-P", composeSourceOption)
+                                        compile.doFirst {
+                                            if (!conf.isEmpty) {
+                                                compile.kotlinOptions.freeCompilerArgs +=
+                                                    listOf("-P", composeSourceOption)
+                                            }
+                                        }
                                     }
                             }
                         }
@@ -128,12 +113,6 @@ class AndroidXUiPlugin : Plugin<Project> {
         }
 
         @JvmStatic
-        fun Project.isJsCompilerTestsEnabled(): Boolean {
-            return properties.get(COMPOSE_JS_COMPILER_TESTS_ENABLED)?.toString()?.toBoolean()
-                ?: false
-        }
-
-        @JvmStatic
         fun Project.applyAndConfigureKotlinPlugin() {
             if (isMultiplatformEnabled()) {
                 apply(plugin = "kotlin-multiplatform")
@@ -151,12 +130,6 @@ class AndroidXUiPlugin : Plugin<Project> {
                 // Needed to enable `expect` and `actual` keywords
                 compile.kotlinOptions.freeCompilerArgs += "-Xmulti-platform"
             }
-
-            tasks.withType(KotlinJsCompile::class.java).configureEach { compile ->
-                compile.kotlinOptions.freeCompilerArgs += listOf(
-                    "-P", "plugin:androidx.compose.compiler.plugins.kotlin:generateDecoys=true"
-                )
-            }
         }
 
         private fun Project.configureAndroidCommonOptions(testedExtension: TestedExtension) {
@@ -166,17 +139,49 @@ class AndroidXUiPlugin : Plugin<Project> {
                 // Too many Kotlin features require synthetic accessors - we want to rely on R8 to
                 // remove these accessors
                 disable("SyntheticAccessor")
-                // Composable naming is normally a warning, but we ignore (in AndroidX)
+                // These lint checks are normally a warning (or lower), but we ignore (in AndroidX)
                 // warnings in Lint, so we make it an error here so it will fail the build.
                 // Note that this causes 'UnknownIssueId' lint warnings in the build log when
-                // Lint tries to apply this rule to modules that do not have this lint check.
-                // Unfortunately suppressing this doesn't seem to work, and disabling it causes
-                // it just to log `Lint: Unknown issue id "ComposableNaming"`, which will still
-                // cause the build log simplifier to fail.
+                // Lint tries to apply this rule to modules that do not have this lint check, so
+                // we disable that check too
+                disable("UnknownIssueId")
                 error("ComposableNaming")
                 error("ComposableLambdaParameterNaming")
                 error("ComposableLambdaParameterPosition")
                 error("CompositionLocalNaming")
+                error("ComposableModifierFactory")
+                error("ModifierFactoryReturnType")
+                error("ModifierFactoryExtensionFunction")
+                error("ModifierParameter")
+
+                // Paths we want to enable ListIterator checks for - for higher level levels it
+                // won't have a noticeable performance impact, and we don't want developers
+                // reading high level library code to worry about this.
+                val listIteratorPaths = listOf(
+                    "compose:foundation",
+                    "compose:runtime",
+                    "compose:ui",
+                    "text"
+                )
+
+                // Paths we want to disable ListIteratorChecks for - these are not runtime
+                // libraries and so Iterator allocation is not relevant.
+                val ignoreListIteratorFilter = listOf(
+                    "benchmark",
+                    "inspection",
+                    "samples",
+                    "test",
+                    "tooling"
+                )
+
+                // Disable ListIterator if we are not in a matching path, or we are in a
+                // non-runtime project
+                if (
+                    listIteratorPaths.none { path.contains(it) } ||
+                    ignoreListIteratorFilter.any { path.contains(it) }
+                ) {
+                    disable("ListIterator")
+                }
             }
 
             // TODO(148540713): remove this exclusion when Lint can support using multiple lint jars
@@ -292,43 +297,6 @@ class AndroidXUiPlugin : Plugin<Project> {
                 }
                 if (multiplatformExtension.targets.findByName("desktop") != null) {
                     tasks.named("desktopTestClasses").also(::addToBuildOnServer)
-                }
-            }
-        }
-
-        @JvmStatic
-        fun Project.configureJsCompilerIntegrationTests() {
-            if (!isMultiplatformEnabled() || !isJsCompilerTestsEnabled()) return
-
-            val jsClasspath = configurations.create("testJsRuntimeOnly") { conf ->
-                conf.isCanBeConsumed = false
-                conf.isCanBeResolved = true
-
-                conf.attributes {
-                    it.attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
-                    it.attribute(
-                        KotlinJsCompilerAttribute.jsCompilerAttribute,
-                        KotlinJsCompilerAttribute.ir)
-                    it.attribute(
-                        Usage.USAGE_ATTRIBUTE,
-                        objects.named(KotlinUsages.KOTLIN_RUNTIME)
-                    )
-                }
-            }
-
-            afterEvaluate {
-                val dependencies by lazy {
-                    jsClasspath.files { true }.joinToString(separator = ":")
-                }
-
-                tasks.withType<Test>().all { task ->
-                    // force dependency on compilation for klibs built from the source
-                    task.inputs.files(jsClasspath)
-                    // use system property to provide files path to the runtime
-                    task.systemProperty(
-                        "androidx.compose.js.classpath",
-                        dependencies
-                    )
                 }
             }
         }

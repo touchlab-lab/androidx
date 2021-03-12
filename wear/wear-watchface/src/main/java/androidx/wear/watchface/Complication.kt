@@ -95,6 +95,9 @@ public interface CanvasComplication {
         idAndComplicationData: IdAndComplicationData?,
         loadDrawablesAsynchronous: Boolean
     )
+
+    /** The [IdAndComplicationData] should be cleared. */
+    public fun clearIdAndData()
 }
 
 /**
@@ -197,7 +200,7 @@ public open class CanvasComplicationDrawable(
         @ColorInt color: Int
     ) {
         if (!attachedComplication!!.fixedComplicationProvider) {
-            ComplicationOutlineRenderer.drawComplicationSelectOutline(
+            ComplicationOutlineRenderer.drawComplicationOutline(
                 canvas,
                 bounds,
                 color
@@ -235,6 +238,11 @@ public open class CanvasComplicationDrawable(
             loadDrawablesAsynchronous
         )
     }
+
+    override fun clearIdAndData() {
+        _idAndData = null
+        drawable.setComplicationData(null, false)
+    }
 }
 
 /**
@@ -254,7 +262,8 @@ public class Complication internal constructor(
      * The initial state of the complication. Note complications can be enabled / disabled by
      * [UserStyleSetting.ComplicationsUserStyleSetting].
      */
-    initiallyEnabled: Boolean,
+    @get:JvmName("isInitiallyEnabled")
+    public val initiallyEnabled: Boolean,
 
     /** Extras to be merged into the Intent sent when invoking the provider chooser activity. */
     public val complicationConfigExtras: Bundle?,

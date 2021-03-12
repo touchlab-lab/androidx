@@ -988,7 +988,11 @@ public final class LayoutElementBuilders {
         }
     }
 
-    /** A portion of text which can be added to a {@link Span}. */
+    /**
+     * A portion of text which can be added to a {@link Span}. Two different {@link SpanText}
+     * elements on the same line will be aligned to the same baseline, regardless of the size of
+     * each {@link SpanText}.
+     */
     public static final class SpanText implements Span {
         private final LayoutElementProto.SpanText mImpl;
 
@@ -1808,8 +1812,7 @@ public final class LayoutElementBuilders {
             }
 
             /**
-             * Sets how to align the contents of this container relative to anchor_angle. See the
-             * descriptions of options in {@link ArcAnchorType} for more information. If not
+             * Sets how to align the contents of this container relative to anchor_angle. If not
              * defined, defaults to ARC_ANCHOR_CENTER.
              */
             @SuppressLint("MissingGetterMatchingBuilder")

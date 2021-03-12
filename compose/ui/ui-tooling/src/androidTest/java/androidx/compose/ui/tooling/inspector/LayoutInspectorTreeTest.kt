@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.filters.MediumTest
 import androidx.test.filters.SdkSuppress
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -63,7 +64,7 @@ import kotlin.math.roundToInt
 
 private const val DEBUG = false
 
-@LargeTest
+@MediumTest
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = 29) // Render id is not returned for api < 29
 @OptIn(UiToolingDataApi::class)
@@ -106,6 +107,12 @@ class LayoutInspectorTreeTest : ToolingTest() {
         dumpNodes(nodes, builder)
 
         validate(nodes, builder, checkParameters = false) {
+            node(
+                name = "Inspectable",
+                fileName = "LayoutInspectorTreeTest.kt",
+                left = 0.0.dp, top = 0.0.dp, width = 72.0.dp, height = 78.9.dp,
+                children = listOf("Column")
+            )
             node(
                 name = "Column",
                 fileName = "LayoutInspectorTreeTest.kt",
@@ -172,10 +179,16 @@ class LayoutInspectorTreeTest : ToolingTest() {
 
         validate(nodes, builder, checkParameters = false) {
             node(
+                name = "Inspectable",
+                hasTransformations = true,
+                fileName = "LayoutInspectorTreeTest.kt",
+                children = listOf("MaterialTheme")
+            )
+            node(
                 name = "MaterialTheme",
                 hasTransformations = true,
                 fileName = "LayoutInspectorTreeTest.kt",
-                left = 68.0.dp, top = 49.7.dp, width = 88.6.dp, height = 21.7.dp,
+                left = 65.0.dp, top = 49.7.dp, width = 86.dp, height = 21.7.dp,
                 children = listOf("Text")
             )
             node(
@@ -183,7 +196,7 @@ class LayoutInspectorTreeTest : ToolingTest() {
                 isRenderNode = true,
                 hasTransformations = true,
                 fileName = "LayoutInspectorTreeTest.kt",
-                left = 68.0.dp, top = 49.7.dp, width = 88.6.dp, height = 21.7.dp,
+                left = 65.0.dp, top = 49.7.dp, width = 86.dp, height = 21.7.dp,
             )
         }
     }
@@ -213,6 +226,7 @@ class LayoutInspectorTreeTest : ToolingTest() {
 
         if (DEBUG) {
             validate(nodes, builder, checkParameters = false) {
+                node("Inspectable", children = listOf("Box"))
                 node("Box", children = listOf("ModalDrawer"))
                 node("ModalDrawer", children = listOf("Column", "Text"))
                 node("Column", children = listOf("Text", "Button"))
@@ -225,6 +239,7 @@ class LayoutInspectorTreeTest : ToolingTest() {
         assertThat(nodes.size).isEqualTo(1)
     }
 
+    @LargeTest
     @Test
     fun testStitchTreeFromModelDrawerLayoutWithSystemNodes() {
         val slotTableRecord = CompositionDataRecord.create()
@@ -251,6 +266,7 @@ class LayoutInspectorTreeTest : ToolingTest() {
 
         if (DEBUG) {
             validate(nodes, builder, checkParameters = false) {
+                node("Inspectable", children = listOf("Box"))
                 node("Box", children = listOf("ModalDrawer"))
                 node("ModalDrawer", children = listOf("WithConstraints"))
                 node("WithConstraints", children = listOf("SubcomposeLayout"))
@@ -403,15 +419,16 @@ class LayoutInspectorTreeTest : ToolingTest() {
                 assertWithMessage(message).that(node.bounds).isEmpty()
             }
             if (left != Dp.Unspecified) {
+                val tolerance = 5.0f
                 with(density) {
                     assertWithMessage(message).that(node.left.toDp().value)
-                        .isWithin(2.0f).of(left.value)
+                        .isWithin(tolerance).of(left.value)
                     assertWithMessage(message).that(node.top.toDp().value)
-                        .isWithin(2.0f).of(top.value)
+                        .isWithin(tolerance).of(top.value)
                     assertWithMessage(message).that(node.width.toDp().value)
-                        .isWithin(2.0f).of(width.value)
+                        .isWithin(tolerance).of(width.value)
                     assertWithMessage(message).that(node.height.toDp().value)
-                        .isWithin(2.0f).of(height.value)
+                        .isWithin(tolerance).of(height.value)
                 }
             }
 

@@ -17,14 +17,25 @@
 package androidx.room.vo
 
 import androidx.room.compiler.processing.XTypeElement
+import androidx.room.migration.bundle.EntityBundle
 import androidx.room.migration.bundle.FieldBundle
+import com.squareup.javapoet.ClassName
 
 data class AutoMigrationResult(
     val element: XTypeElement,
     val from: Int?,
     val to: Int?,
-    val addedColumns: List<AddedColumn>
+    val addedColumns: List<AddedColumn>,
+    val addedTables: List<AddedTable>
 ) {
+
+    val implTypeName: ClassName by lazy {
+        ClassName.get(
+            element.className.packageName(),
+            "${element.className.simpleNames().joinToString("_")}_Impl"
+        )
+    }
+
     /**
      * Stores the table name and the relevant field bundle of a column that was added to a
      * database in a newer version.
@@ -51,4 +62,18 @@ data class AutoMigrationResult(
      * renamed.
      */
     data class RemovedColumn(val tableName: String, val fieldBundle: FieldBundle)
+
+    /**
+     * Stores the table that was added to a database in a newer version.
+     */
+    data class AddedTable(val entityBundle: EntityBundle)
+
+    /**
+     * Stores the table that was present in the old version of a database but is not present in a
+     * new version of the same database, either because it was removed or renamed.
+     *
+     * In the current implementation, we cannot differ between whether the table was removed or
+     * renamed.
+     */
+    data class RemovedTable(val entityBundle: EntityBundle)
 }

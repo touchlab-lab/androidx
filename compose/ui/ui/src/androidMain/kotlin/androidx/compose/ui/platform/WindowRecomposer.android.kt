@@ -108,11 +108,13 @@ object WindowRecomposerPolicy {
     )
 
     // Don't expose the actual AtomicReference as @PublishedApi; we might convert to atomicfu later
+    @Suppress("ShowingMemberInHiddenClass")
     @PublishedApi
     internal fun getAndSetFactory(
         factory: WindowRecomposerFactory
     ): WindowRecomposerFactory = this.factory.getAndSet(factory)
 
+    @Suppress("ShowingMemberInHiddenClass")
     @PublishedApi
     internal fun compareAndSetFactory(
         expected: WindowRecomposerFactory,

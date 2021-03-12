@@ -116,6 +116,9 @@ package androidx.compose.foundation {
     property public final androidx.compose.runtime.saveable.Saver<androidx.compose.foundation.ScrollState,?> Saver;
   }
 
+  public final class TempListUtilsKt {
+  }
+
 }
 
 package androidx.compose.foundation.gestures {
@@ -163,8 +166,7 @@ package androidx.compose.foundation.gestures {
   }
 
   public final class GestureCancellationException extends java.util.concurrent.CancellationException {
-    ctor public GestureCancellationException(String? message);
-    ctor public GestureCancellationException();
+    ctor public GestureCancellationException(optional String? message);
   }
 
   public enum Orientation {
@@ -338,9 +340,6 @@ package androidx.compose.foundation.interaction {
 
 package androidx.compose.foundation.lazy {
 
-  public final class CachingItemContentFactoryKt {
-  }
-
   @androidx.compose.foundation.ExperimentalFoundationApi public abstract sealed class GridCells {
   }
 
@@ -383,6 +382,9 @@ package androidx.compose.foundation.lazy {
     method public androidx.compose.ui.Modifier fillParentMaxWidth(androidx.compose.ui.Modifier, optional float fraction);
   }
 
+  public final class LazyListItemContentFactoryKt {
+  }
+
   public interface LazyListItemInfo {
     method public int getIndex();
     method public Object getKey();
@@ -421,8 +423,7 @@ package androidx.compose.foundation.lazy {
   }
 
   @androidx.compose.runtime.Stable public final class LazyListState implements androidx.compose.foundation.gestures.ScrollableState {
-    ctor public LazyListState(int firstVisibleItemIndex, int firstVisibleItemScrollOffset);
-    ctor public LazyListState();
+    ctor public LazyListState(optional int firstVisibleItemIndex, optional int firstVisibleItemScrollOffset);
     method public suspend Object? animateScrollToItem(int index, optional int scrollOffset, optional kotlin.coroutines.Continuation<? super kotlin.Unit> p);
     method public float dispatchRawDelta(float delta);
     method public int getFirstVisibleItemIndex();
@@ -450,6 +451,9 @@ package androidx.compose.foundation.lazy {
   }
 
   @kotlin.DslMarker public @interface LazyScopeMarker {
+  }
+
+  public final class Lazy_androidKt {
   }
 
 }
@@ -590,9 +594,6 @@ package androidx.compose.foundation.shape {
 
 package androidx.compose.foundation.text {
 
-  public final class AndroidCoreTextField_androidKt {
-  }
-
   public final class BasicTextFieldKt {
     method @androidx.compose.runtime.Composable public static void BasicTextField(String value, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onValueChange, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional boolean readOnly, optional androidx.compose.ui.text.TextStyle textStyle, optional androidx.compose.foundation.text.KeyboardOptions keyboardOptions, optional androidx.compose.foundation.text.KeyboardActions keyboardActions, optional boolean singleLine, optional int maxLines, optional androidx.compose.ui.text.input.VisualTransformation visualTransformation, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.text.TextLayoutResult,kotlin.Unit> onTextLayout, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional androidx.compose.ui.graphics.Brush cursorBrush, optional kotlin.jvm.functions.Function1<? super kotlin.jvm.functions.Function0<kotlin.Unit>,kotlin.Unit> decorationBox);
     method @androidx.compose.runtime.Composable public static void BasicTextField(androidx.compose.ui.text.input.TextFieldValue value, kotlin.jvm.functions.Function1<? super androidx.compose.ui.text.input.TextFieldValue,kotlin.Unit> onValueChange, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional boolean readOnly, optional androidx.compose.ui.text.TextStyle textStyle, optional androidx.compose.foundation.text.KeyboardOptions keyboardOptions, optional androidx.compose.foundation.text.KeyboardActions keyboardActions, optional boolean singleLine, optional int maxLines, optional androidx.compose.ui.text.input.VisualTransformation visualTransformation, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.text.TextLayoutResult,kotlin.Unit> onTextLayout, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional androidx.compose.ui.graphics.Brush cursorBrush, optional kotlin.jvm.functions.Function1<? super kotlin.jvm.functions.Function0<kotlin.Unit>,kotlin.Unit> decorationBox);
@@ -628,13 +629,18 @@ package androidx.compose.foundation.text {
   @kotlin.RequiresOptIn(message="Internal/Unstable API for use only between foundation modules sharing " + "the same exact version, subject to change without notice.") @kotlin.annotation.Target(allowedTargets={kotlin.annotation.AnnotationTarget, kotlin.annotation.AnnotationTarget, kotlin.annotation.AnnotationTarget, kotlin.annotation.AnnotationTarget, kotlin.annotation.AnnotationTarget}) public @interface InternalFoundationTextApi {
   }
 
+  public final class KeyMappingKt {
+  }
+
+  public final class KeyMapping_androidKt {
+  }
+
   public interface KeyboardActionScope {
     method public void defaultKeyboardAction(androidx.compose.ui.text.input.ImeAction imeAction);
   }
 
   public final class KeyboardActions {
-    ctor public KeyboardActions(kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onDone, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onGo, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onNext, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onPrevious, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onSearch, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onSend);
-    ctor public KeyboardActions();
+    ctor public KeyboardActions(optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onDone, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onGo, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onNext, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onPrevious, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onSearch, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? onSend);
     method public kotlin.jvm.functions.Function1<androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? getOnDone();
     method public kotlin.jvm.functions.Function1<androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? getOnGo();
     method public kotlin.jvm.functions.Function1<androidx.compose.foundation.text.KeyboardActionScope,kotlin.Unit>? getOnNext();
@@ -660,8 +666,7 @@ package androidx.compose.foundation.text {
   }
 
   @androidx.compose.runtime.Immutable public final class KeyboardOptions {
-    ctor public KeyboardOptions(androidx.compose.ui.text.input.KeyboardCapitalization capitalization, boolean autoCorrect, androidx.compose.ui.text.input.KeyboardType keyboardType, androidx.compose.ui.text.input.ImeAction imeAction);
-    ctor public KeyboardOptions();
+    ctor public KeyboardOptions(optional androidx.compose.ui.text.input.KeyboardCapitalization capitalization, optional boolean autoCorrect, optional androidx.compose.ui.text.input.KeyboardType keyboardType, optional androidx.compose.ui.text.input.ImeAction imeAction);
     method public androidx.compose.foundation.text.KeyboardOptions copy(optional androidx.compose.ui.text.input.KeyboardCapitalization capitalization, optional boolean autoCorrect, optional androidx.compose.ui.text.input.KeyboardType keyboardType, optional androidx.compose.ui.text.input.ImeAction imeAction);
     method public boolean getAutoCorrect();
     method public androidx.compose.ui.text.input.KeyboardCapitalization getCapitalization();
@@ -682,6 +687,9 @@ package androidx.compose.foundation.text {
   public final class MaxLinesHeightModifierKt {
   }
 
+  public final class StringHelpers_jvmKt {
+  }
+
   public final class TextFieldCursorKt {
   }
 
@@ -689,6 +697,12 @@ package androidx.compose.foundation.text {
   }
 
   public final class TextFieldGestureModifiersKt {
+  }
+
+  public final class TextFieldKeyInputKt {
+  }
+
+  public final class TextFieldKeyInput_androidKt {
   }
 
   public final class TextFieldPressGestureFilterKt {
@@ -740,6 +754,9 @@ package androidx.compose.foundation.text.selection {
   }
 
   public final class TextFieldSelectionManagerKt {
+  }
+
+  public final class TextFieldSelectionManager_androidKt {
   }
 
   @androidx.compose.runtime.Immutable public final class TextSelectionColors {

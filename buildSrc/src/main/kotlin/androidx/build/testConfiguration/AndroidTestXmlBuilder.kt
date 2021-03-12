@@ -150,7 +150,7 @@ class MediaConfigBuilder {
         )
             .append(WIFI_DISABLE_OPTION)
             .append(SETUP_INCLUDE)
-            .append(TARGET_PREPARER_OPEN)
+            .append(MEDIA_TARGET_PREPARER_OPEN)
             .append(APK_INSTALL_OPTION.replace("APK_NAME", clientApkName))
             .append(APK_INSTALL_OPTION.replace("APK_NAME", serviceApkName))
         sb.append(TARGET_PREPARER_CLOSE)
@@ -270,7 +270,17 @@ private val SETUP_INCLUDE = """
 
 """.trimIndent()
 
+/**
+ * We can't remove the apk on API < 27 due to a platform crash that occurs
+ * when handling a PACKAGE_CHANGED broadcast after the package has been removed. b/37264334
+ */
 private val TARGET_PREPARER_OPEN = """
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+    <option name="cleanup-apks" value="false" />
+
+""".trimIndent()
+
+private val MEDIA_TARGET_PREPARER_OPEN = """
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
     <option name="cleanup-apks" value="true" />
 
