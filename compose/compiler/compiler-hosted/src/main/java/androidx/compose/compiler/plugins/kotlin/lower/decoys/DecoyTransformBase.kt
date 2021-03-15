@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.IdSignature
+import org.jetbrains.kotlin.ir.util.SymbolRemapper
 import org.jetbrains.kotlin.ir.util.TypeRemapper
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.getAnnotation
@@ -166,11 +167,11 @@ fun IrDeclaration.isDecoy(): Boolean =
     hasAnnotationSafe(DecoyFqNames.Decoy)
 
 inline fun <reified T : IrElement> T.copyWithNewTypeParams(source: IrFunction, target: IrFunction): T {
-    return deepCopyWithSymbols(target) { symbolRemapper, typeRemapper ->
+    val copier : (SymbolRemapper, TypeRemapper) -> DeepCopyIrTreeWithSymbols = { symbolRemapper, typeRemapper ->
         val typeParamRemapper = object : TypeRemapper by typeRemapper {
             override fun remapType(type: IrType): IrType {
-                return typeRemapper.remapType(type)
-                    .remapTypeParameters(source, target)
+                val t = type.remapTypeParameters(source, target)
+                return typeRemapper.remapType(t)
             }
         }
 
@@ -178,4 +179,6 @@ inline fun <reified T : IrElement> T.copyWithNewTypeParams(source: IrFunction, t
         (typeRemapper as? DeepCopyTypeRemapper)?.deepCopy = deepCopy
         deepCopy
     }
+
+    return deepCopyWithSymbols(target, copier)
 }
