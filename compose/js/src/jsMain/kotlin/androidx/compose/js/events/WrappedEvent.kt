@@ -22,6 +22,6 @@ interface WrappedEvent {
     val nativeEvent: Event
 }
 
-internal class WrappedEventImpl(
+class WrappedEventImpl(
     override val nativeEvent: Event
 ) : WrappedEvent

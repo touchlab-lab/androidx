@@ -16,65 +16,66 @@
 
 package androidx.compose.js.sample
 
-import androidx.compose.js.MppModifier
-import androidx.compose.js.Element
-import androidx.compose.js.Text
-import androidx.compose.js.attr
-import androidx.compose.js.classes
-import androidx.compose.js.compose
-import androidx.compose.js.div
-import androidx.compose.js.events.onClick
-import androidx.compose.js.inlineStyles
+import androidx.compose.js.attributes.Draggable
+import androidx.compose.js.elements.A
+import androidx.compose.js.elements.Button
+import androidx.compose.js.elements.Div
+import androidx.compose.js.elements.Text
+import androidx.compose.js.elements.TextArea
 import androidx.compose.js.renderComposable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.browser.document
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-@Composable
-fun Button(modifier: MppModifier = MppModifier, content: @Composable () -> Unit) {
-    Element("button", modifier = modifier, content = content)
+class State {
+    var isDarkTheme by mutableStateOf(false)
 }
 
-@Composable
-fun SimpleTextButton(text: String, modifier: MppModifier = MppModifier) {
-    Button(modifier = modifier) {
-        Text(text)
-    }
-}
+val globalState = State()
+val globalInt = mutableStateOf(1)
 
 @Composable
 fun CounterApp(counter: MutableState<Int>) {
-
     Counter(counter.value)
 
-    SimpleTextButton(
-        text = "Increment ${counter.value}",
-        modifier = MppModifier.onClick {
-            counter.value = counter.value + 1
-        }.inlineStyles(
-            """
+    Button(
+        style = {
+            cssText = """
             color: ${if (counter.value % 2 == 0) "green" else "red"};
             width: ${counter.value + 200}px;
             font-size: ${if (counter.value % 2 == 0) "25px" else "30px"};
             margin: 15px;
-            """.trimIndent()
-        )
-    )
+        """.trimIndent().replace("\n", "")
+        },
+        attrs = {
+            onClick { counter.value = counter.value + 1 }
+        }
+    ) {
+        Text("Increment ${counter.value}")
+    }
 }
+
 
 @Composable
 fun Counter(value: Int) {
-    div(
-        modifier = MppModifier
-            .inlineStyles("color:red;")
-            .classes("counter")
-            .attr("id", "counter")
-            .attr("title", "This a counter!")
-    ) {
+    Div(attrs = {
+        classes("counter")
+        id("counter")
+        draggable(Draggable.True)
+        attr("title", "This is a counter!")
+        onDrag { println("DRAGGING NOW!!!!") }
+    }, style = {
+        cssText = "color: red;"
+    }) {
         Text("Counter = $value")
     }
 }
@@ -85,18 +86,87 @@ fun main() {
     renderComposable(
         root = root
     ) {
+        println("renderComposable")
         val counter = remember { mutableStateOf(0) }
 
         CounterApp(counter)
 
-        if (counter.value % 2 == 0) {
-            div(
-                modifier = MppModifier.inlineStyles(
-                    "background: red; width: 200px; height: 200px"
-                )
-            ) {
-                Text("Text in a box")
+        val inputValue = remember { mutableStateOf("") }
+
+        smallColoredTextWithState(
+            text = derivedStateOf {
+                if (inputValue.value.isNotEmpty()) {
+                    " ___ " + inputValue.value
+                } else {
+                    ""
+                }
             }
+        )
+
+        A(href = "http://127.0.0.1") {
+            Text("Click Me")
+        }
+
+        MyInputComponent(text = inputValue) {
+            inputValue.value = it
+        }
+    }
+
+    MainScope().launch {
+        while (true) {
+            delay(3000)
+            globalState.isDarkTheme = !globalState.isDarkTheme
+        }
+    }
+}
+
+@Composable
+fun MyInputComponent(text: State<String>, onChange: (String) -> Unit) {
+    Div {
+        TextArea(value = text.value, attrs = {
+            onInput {
+                onChange(it.nativeEvent.target.asDynamic().value)
+            }
+        })
+    }
+}
+
+@Composable
+fun smallColoredTextWithState(text: State<String>) {
+    smallColoredText(text = text.value)
+}
+
+@Composable
+fun smallColoredText(text: String) {
+    if (globalInt.value < 5) {
+        Div(
+            attrs = {
+                if (globalInt.value > 2) {
+                    id("someId-${globalInt.value}")
+                }
+
+                classes("someClass")
+
+                attr("customAttr", "customValue")
+
+                onClick {
+                    globalInt.value = globalInt.value + 1
+                }
+
+                ref { element ->
+                    println("DIV CREATED ${element.id}")
+                    onDispose { println("DIV REMOVED ${element.id}") }
+                }
+            },
+            style = {
+                cssText = if (globalState.isDarkTheme) {
+                    "color: black;"
+                } else {
+                    "color: green;"
+                }
+            }
+        ) {
+            Text("Text = $text")
         }
     }
 }

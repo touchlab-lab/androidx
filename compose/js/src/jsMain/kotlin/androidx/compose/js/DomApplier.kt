@@ -16,7 +16,9 @@
 
 package androidx.compose.js
 
+import androidx.compose.js.attributes.EventsListenerBuilder
 import androidx.compose.js.events.EventModifier
+import androidx.compose.js.events.WrappedEventImpl
 import androidx.compose.runtime.AbstractApplier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
@@ -34,6 +36,7 @@ import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
 import org.w3c.dom.Text
+import org.w3c.dom.events.EventListener
 import org.w3c.dom.get
 
 fun renderComposable(root: Element, content: @Composable () -> Unit): Composition {
@@ -85,6 +88,10 @@ class DomNodeWrapper(val node: Node) {
 
     private var currentModifier: MppModifier = MppModifier
 
+    private var currentListeners: List<Pair<EventsListenerBuilder.EventListener, EventListener>> =
+        emptyList()
+    private var currentAttrs: Map<String, String?> = emptyMap()
+
     private fun HTMLElement.updateInlineStyles(
         old: InlineStylesModifier?,
         new: InlineStylesModifier?
@@ -93,6 +100,43 @@ class DomNodeWrapper(val node: Node) {
             return
         }
         style.cssText = new?.styles ?: ""
+    }
+
+    fun updateProperties(list: List<Pair<(HTMLElement, Any) -> Unit, Any>>) {
+        val htmlElement = node as? HTMLElement ?: return
+        list.forEach { it.first(htmlElement, it.second) }
+    }
+
+    fun updateEventListeners(list: List<EventsListenerBuilder.EventListener>) {
+        val htmlElement = node as? HTMLElement ?: return
+
+        currentListeners.forEach {
+            htmlElement.removeEventListener(it.first.event, it.second)
+        }
+
+        currentListeners = list.map { l ->
+            l to EventListener { l.listener(WrappedEventImpl(it)) }
+        }
+
+        currentListeners.forEach {
+            htmlElement.addEventListener(it.first.event, it.second)
+        }
+    }
+
+    fun updateAttrs(attrs: Map<String, String?>) {
+        val htmlElement = node as? HTMLElement ?: return
+        currentAttrs.forEach {
+            htmlElement.removeAttribute(it.key)
+        }
+        currentAttrs = attrs
+        currentAttrs.forEach {
+            if (it.value != null) htmlElement.setAttribute(it.key, it.value ?: "")
+        }
+    }
+
+    fun updateStyle(style: String?) {
+        val htmlElement = node as? HTMLElement ?: return
+        htmlElement.style.cssText = style ?: ""
     }
 
     fun updateModifier(modifier: MppModifier) {
@@ -167,16 +211,21 @@ class DomNodeWrapper(val node: Node) {
             node.insertBefore(child, node.childNodes[toIndex]!!)
         }
     }
-}
 
-@Composable
-fun Text(value: String) {
-    ComposeNode<DomNodeWrapper, DomApplier>(
-        factory = { DomNodeWrapper(document.createTextNode("")) },
-        update = {
-            set(value) { value -> (node as Text).data = value }
-        },
-    )
+    companion object {
+        val UpdateAttrs: DomNodeWrapper.(Map<String, String?>) -> Unit = {
+            this.updateAttrs(it)
+        }
+        val UpdateListeners: DomNodeWrapper.(List<EventsListenerBuilder.EventListener>) -> Unit = {
+            this.updateEventListeners(it)
+        }
+        val UpdateProperties: DomNodeWrapper.(List<Pair<(HTMLElement, Any) -> Unit, Any>>) -> Unit = {
+            this.updateProperties(it)
+        }
+        val UpdateStyle: DomNodeWrapper.(String?) -> Unit = {
+            this.updateStyle(it)
+        }
+    }
 }
 
 @Composable
@@ -194,12 +243,3 @@ fun Element(tagName: String, modifier: MppModifier = MppModifier, content: @Comp
 fun div(modifier: MppModifier = MppModifier, content: @Composable () -> Unit) {
     Element(tagName = "div", modifier = modifier, content = content)
 }
-
-/*
-  classes vs inline
-
-  inline styles -> string (or as objects?)
-  styles as Composables?
-
-
- */
