@@ -29,3 +29,7 @@ fun MppModifier.attributes(configure: MutableMap<String, String>.() -> Unit) =
 fun MppModifier.compose(b: @Composable MppModifier.() -> MppModifier): MppModifier {
     return this.then(b())
 }
+
+fun check(a: List<String>) {
+    if (a.isEmpty()) { }
+}

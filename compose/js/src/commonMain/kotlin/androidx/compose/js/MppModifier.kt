@@ -16,7 +16,6 @@
 
 package androidx.compose.js
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 
 @Stable

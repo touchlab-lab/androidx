@@ -20,10 +20,8 @@ import androidx.compose.js.MppModifier
 import androidx.compose.js.Element
 import androidx.compose.js.Text
 import androidx.compose.js.attr
-import androidx.compose.js.attributes
 import androidx.compose.js.classes
 import androidx.compose.js.compose
-import androidx.compose.js.css
 import androidx.compose.js.div
 import androidx.compose.js.events.onClick
 import androidx.compose.js.inlineStyles
@@ -63,11 +61,10 @@ fun CounterApp(counter: MutableState<Int>) {
             width: ${counter.value + 200}px;
             font-size: ${if (counter.value % 2 == 0) "25px" else "30px"};
             margin: 15px;
-        """.trimIndent()
+            """.trimIndent()
         )
     )
 }
-
 
 @Composable
 fun Counter(value: Int) {

@@ -19,16 +19,25 @@ package androidx.compose.js.events
 import androidx.compose.js.MppModifier
 import org.w3c.dom.events.EventListener
 
-
 /**
  * Adds an event listener for the target node which is applied on node recomposition
  */
-internal class EventModifier(val eventName: String, val listener: EventListener) : MppModifier.Element
+internal class EventModifier(
+    val eventName: String,
+    val listener: EventListener
+) : MppModifier.Element
 
 fun MppModifier.event(eventName: String, listener: EventListener): MppModifier =
     this.then(EventModifier(eventName, listener))
 
 fun MppModifier.onClick(action: (WrappedEvent) -> Unit): MppModifier =
-    this.then(EventModifier("click", EventListener {
-        action(WrappedEventImpl(it))
-    }))
+    this.then(
+        EventModifier(
+            "click",
+            EventListener {
+                action(
+                    WrappedEventImpl(it)
+                )
+            }
+        )
+    )
