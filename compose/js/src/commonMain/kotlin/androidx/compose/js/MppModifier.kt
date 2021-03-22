@@ -125,6 +125,6 @@ class CombinedModifier(
     override fun hashCode(): Int = outer.hashCode() + 31 * inner.hashCode()
 
     override fun toString() = "[" + foldIn("") { acc, element ->
-        if (acc.isEmpty()) element.toString() else "$acc, $element"
+        "$acc, $element"
     } + "]"
 }
