@@ -18,10 +18,9 @@ package androidx.compose.js
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import org.w3c.dom.css.CSSStyleDeclaration
 
 @Stable
-interface DomModifier {
+interface MppModifier {
     /**
      * Accumulates a value starting with [initial] and applying [operation] to the current value
      * and each element from outside in.
@@ -45,28 +44,28 @@ interface DomModifier {
     fun <R> foldOut(initial: R, operation: (Element, R) -> R): R
 
     /**
-     * Returns `true` if [predicate] returns true for any [Element] in this [DomModifier].
+     * Returns `true` if [predicate] returns true for any [Element] in this [MppModifier].
      */
     fun any(predicate: (Element) -> Boolean): Boolean
 
     /**
-     * Returns `true` if [predicate] returns true for all [Element]s in this [DomModifier] or if
-     * this [DomModifier] contains no [Element]s.
+     * Returns `true` if [predicate] returns true for all [Element]s in this [MppModifier] or if
+     * this [MppModifier] contains no [Element]s.
      */
     fun all(predicate: (Element) -> Boolean): Boolean
 
     /**
      * Concatenates this modifier with another.
      *
-     * Returns a [DomModifier] representing this modifier followed by [other] in sequence.
+     * Returns a [MppModifier] representing this modifier followed by [other] in sequence.
      */
-    infix fun then(other: DomModifier): DomModifier =
-        if (other === DomModifier) this else CombinedModifier(this, other)
+    infix fun then(other: MppModifier): MppModifier =
+        if (other === MppModifier) this else CombinedModifier(this, other)
 
     /**
-     * A single element contained within a [DomModifier] chain.
+     * A single element contained within a [MppModifier] chain.
      */
-    interface Element : DomModifier {
+    interface Element : MppModifier {
         override fun <R> foldIn(initial: R, operation: (R, Element) -> R): R =
             operation(initial, this)
 
@@ -79,46 +78,46 @@ interface DomModifier {
     }
 
     /**
-     * The companion object `Modifier` is the empty, default, or starter [DomModifier]
-     * that contains no [elements][Element]. Use it to create a new [DomModifier] using
+     * The companion object `Modifier` is the empty, default, or starter [MppModifier]
+     * that contains no [elements][Element]. Use it to create a new [MppModifier] using
      * modifier extension factory functions:
      *
      * @sample androidx.compose.ui.samples.ModifierUsageSample
      *
-     * or as the default value for [DomModifier] parameters:
+     * or as the default value for [MppModifier] parameters:
      *
      * @sample androidx.compose.ui.samples.ModifierParameterSample
      */
     // The companion object implements `Modifier` so that it may be used  as the start of a
     // modifier extension factory expression.
-    companion object : DomModifier {
+    companion object : MppModifier {
         override fun <R> foldIn(initial: R, operation: (R, Element) -> R): R = initial
         override fun <R> foldOut(initial: R, operation: (Element, R) -> R): R = initial
         override fun any(predicate: (Element) -> Boolean): Boolean = false
         override fun all(predicate: (Element) -> Boolean): Boolean = true
-        override infix fun then(other: DomModifier): DomModifier = other
+        override infix fun then(other: MppModifier): MppModifier = other
         override fun toString() = "Modifier"
     }
 }
 
 /**
- * A node in a [DomModifier] chain. A CombinedModifier always contains at least two elements;
+ * A node in a [MppModifier] chain. A CombinedModifier always contains at least two elements;
  * a Modifier [outer] that wraps around the Modifier [inner].
  */
 class CombinedModifier(
-    private val outer: DomModifier,
-    private val inner: DomModifier
-) : DomModifier {
-    override fun <R> foldIn(initial: R, operation: (R, DomModifier.Element) -> R): R =
+    private val outer: MppModifier,
+    private val inner: MppModifier
+) : MppModifier {
+    override fun <R> foldIn(initial: R, operation: (R, MppModifier.Element) -> R): R =
         inner.foldIn(outer.foldIn(initial, operation), operation)
 
-    override fun <R> foldOut(initial: R, operation: (DomModifier.Element, R) -> R): R =
+    override fun <R> foldOut(initial: R, operation: (MppModifier.Element, R) -> R): R =
         outer.foldOut(inner.foldOut(initial, operation), operation)
 
-    override fun any(predicate: (DomModifier.Element) -> Boolean): Boolean =
+    override fun any(predicate: (MppModifier.Element) -> Boolean): Boolean =
         outer.any(predicate) || inner.any(predicate)
 
-    override fun all(predicate: (DomModifier.Element) -> Boolean): Boolean =
+    override fun all(predicate: (MppModifier.Element) -> Boolean): Boolean =
         outer.all(predicate) && inner.all(predicate)
 
     override fun equals(other: Any?): Boolean =
@@ -129,36 +128,4 @@ class CombinedModifier(
     override fun toString() = "[" + foldIn("") { acc, element ->
         if (acc.isEmpty()) element.toString() else "$acc, $element"
     } + "]"
-}
-
-/**
- * Adds a css style configuration which would be applied when node is updated
- */
-internal class CssModifier(val configure: CSSStyleDeclaration.() -> Unit) : DomModifier.Element
-internal class InlineStylesModifier(val styles: String) : DomModifier.Element
-internal class ClassModifier(val classes: String) : DomModifier.Element
-internal class AttributeModifier(val attrName: String, val attrValue: String) : DomModifier.Element
-
-fun DomModifier.attr(attrName: String, attrValue: String): DomModifier =
-    this.then(AttributeModifier(attrName, attrValue))
-
-fun DomModifier.css(configure: CSSStyleDeclaration.() -> Unit): DomModifier =
-    this.then(CssModifier(configure))
-
-fun DomModifier.inlineStyles(styles: String): DomModifier =
-    this.then(InlineStylesModifier(styles))
-
-fun DomModifier.classes(classes: String): DomModifier =
-    this.then(ClassModifier(classes))
-
-internal class AttributesModifier(
-    val configure: MutableMap<String, String>.() -> Unit
-) : DomModifier.Element
-
-fun DomModifier.attributes(configure: MutableMap<String, String>.() -> Unit) =
-    this.then(AttributesModifier(configure))
-
-@Composable
-fun DomModifier.compose(b: @Composable DomModifier.() -> DomModifier): DomModifier {
-    return this.then(b())
 }

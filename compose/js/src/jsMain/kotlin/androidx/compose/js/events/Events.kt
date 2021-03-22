@@ -16,19 +16,19 @@
 
 package androidx.compose.js.events
 
-import androidx.compose.js.DomModifier
+import androidx.compose.js.MppModifier
 import org.w3c.dom.events.EventListener
 
 
 /**
  * Adds an event listener for the target node which is applied on node recomposition
  */
-internal class EventModifier(val eventName: String, val listener: EventListener) : DomModifier.Element
+internal class EventModifier(val eventName: String, val listener: EventListener) : MppModifier.Element
 
-fun DomModifier.event(eventName: String, listener: EventListener): DomModifier =
+fun MppModifier.event(eventName: String, listener: EventListener): MppModifier =
     this.then(EventModifier(eventName, listener))
 
-fun DomModifier.onClick(action: (WrappedEvent) -> Unit): DomModifier =
+fun MppModifier.onClick(action: (WrappedEvent) -> Unit): MppModifier =
     this.then(EventModifier("click", EventListener {
         action(WrappedEventImpl(it))
     }))

@@ -83,7 +83,7 @@ class DomNodeWrapper(val node: Node) {
 
     constructor(tag: String) : this(document.createElement(tag))
 
-    private var currentModifier: DomModifier = DomModifier
+    private var currentModifier: MppModifier = MppModifier
 
     private fun HTMLElement.updateInlineStyles(
         old: InlineStylesModifier?,
@@ -95,7 +95,7 @@ class DomNodeWrapper(val node: Node) {
         style.cssText = new?.styles ?: ""
     }
 
-    fun updateModifier(modifier: DomModifier) {
+    fun updateModifier(modifier: MppModifier) {
         val htmlElement = node as? HTMLElement ?: return
 
         var currentStyles: InlineStylesModifier? = null
@@ -180,7 +180,7 @@ fun Text(value: String) {
 }
 
 @Composable
-fun Element(tagName: String, modifier: DomModifier = DomModifier, content: @Composable () -> Unit) {
+fun Element(tagName: String, modifier: MppModifier = MppModifier, content: @Composable () -> Unit) {
     ComposeNode<DomNodeWrapper, DomApplier>(
         factory = { DomNodeWrapper(document.createElement(tagName)) },
         update = {
@@ -191,7 +191,7 @@ fun Element(tagName: String, modifier: DomModifier = DomModifier, content: @Comp
 }
 
 @Composable
-fun div(modifier: DomModifier = DomModifier, content: @Composable () -> Unit) {
+fun div(modifier: MppModifier = MppModifier, content: @Composable () -> Unit) {
     Element(tagName = "div", modifier = modifier, content = content)
 }
 

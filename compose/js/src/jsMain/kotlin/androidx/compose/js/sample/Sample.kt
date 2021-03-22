@@ -16,7 +16,7 @@
 
 package androidx.compose.js.sample
 
-import androidx.compose.js.DomModifier
+import androidx.compose.js.MppModifier
 import androidx.compose.js.Element
 import androidx.compose.js.Text
 import androidx.compose.js.attr
@@ -37,12 +37,12 @@ import androidx.compose.runtime.setValue
 import kotlinx.browser.document
 
 @Composable
-fun Button(modifier: DomModifier = DomModifier, content: @Composable () -> Unit) {
+fun Button(modifier: MppModifier = MppModifier, content: @Composable () -> Unit) {
     Element("button", modifier = modifier, content = content)
 }
 
 @Composable
-fun SimpleTextButton(text: String, modifier: DomModifier = DomModifier) {
+fun SimpleTextButton(text: String, modifier: MppModifier = MppModifier) {
     Button(modifier = modifier) {
         Text(text)
     }
@@ -55,7 +55,7 @@ fun CounterApp(counter: MutableState<Int>) {
 
     SimpleTextButton(
         text = "Increment ${counter.value}",
-        modifier = DomModifier.onClick {
+        modifier = MppModifier.onClick {
             counter.value = counter.value + 1
         }.inlineStyles(
             """
@@ -72,7 +72,7 @@ fun CounterApp(counter: MutableState<Int>) {
 @Composable
 fun Counter(value: Int) {
     div(
-        modifier = DomModifier
+        modifier = MppModifier
             .inlineStyles("color:red;")
             .classes("counter")
             .attr("id", "counter")
@@ -94,7 +94,7 @@ fun main() {
 
         if (counter.value % 2 == 0) {
             div(
-                modifier = DomModifier.inlineStyles(
+                modifier = MppModifier.inlineStyles(
                     "background: red; width: 200px; height: 200px"
                 )
             ) {
