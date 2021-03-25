@@ -68,9 +68,9 @@ class DisposableEffectHolder(
 @Composable
 inline fun <T : Any> TagElement(
     tagName: String,
-    crossinline applyAttrs: AttrsBuilder<T>.() -> Unit = {},
-    crossinline applyStyle: StyleBuilder.() -> Unit = {},
-    content: @Composable ElementScope.() -> Unit = {}
+    crossinline applyAttrs: AttrsBuilder<T>.() -> Unit,
+    crossinline applyStyle: StyleBuilder.() -> Unit,
+    content: @Composable ElementScope.() -> Unit
 ) {
 
     val scope = remember { ElementScopeImpl() }

@@ -63,6 +63,7 @@ inline fun Div(
 inline fun A(
     href: String? = null,
     crossinline attrs: (AttrsBuilder<Attrs.A>.() -> Unit) = {},
+    crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) {
     TagElement<Attrs.A>(
@@ -71,6 +72,7 @@ inline fun A(
             href(href)
             attrs()
         },
+        applyStyle = style,
         content = content
     )
 }
