@@ -172,7 +172,7 @@ class WatchFaceControlClientTest {
             400,
             400
         )!!
-        val bitmap = headlessInstance.takeWatchFaceScreenshot(
+        val bitmap = headlessInstance.renderWatchFaceToBitmap(
             RenderParameters(
                 DrawMode.INTERACTIVE,
                 RenderParameters.DRAW_ALL_LAYERS,
@@ -205,7 +205,7 @@ class WatchFaceControlClientTest {
             400,
             400
         )!!
-        val bitmap = headlessInstance.takeWatchFaceScreenshot(
+        val bitmap = headlessInstance.renderWatchFaceToBitmap(
             RenderParameters(
                 DrawMode.INTERACTIVE,
                 mapOf(
@@ -235,9 +235,9 @@ class WatchFaceControlClientTest {
             400
         )!!
 
-        assertThat(headlessInstance.complicationState.size).isEqualTo(2)
+        assertThat(headlessInstance.complicationsState.size).isEqualTo(2)
 
-        val leftComplicationDetails = headlessInstance.complicationState[
+        val leftComplicationDetails = headlessInstance.complicationsState[
             EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID
         ]!!
         assertThat(leftComplicationDetails.bounds).isEqualTo(Rect(80, 160, 160, 240))
@@ -257,7 +257,7 @@ class WatchFaceControlClientTest {
         )
         assertTrue(leftComplicationDetails.isEnabled)
 
-        val rightComplicationDetails = headlessInstance.complicationState[
+        val rightComplicationDetails = headlessInstance.complicationsState[
             EXAMPLE_CANVAS_WATCHFACE_RIGHT_COMPLICATION_ID
         ]!!
         assertThat(rightComplicationDetails.bounds).isEqualTo(Rect(240, 160, 320, 240))
@@ -327,7 +327,7 @@ class WatchFaceControlClientTest {
                 }
             }
 
-        val bitmap = interactiveInstance.takeWatchFaceScreenshot(
+        val bitmap = interactiveInstance.renderWatchFaceToBitmap(
             RenderParameters(
                 DrawMode.INTERACTIVE,
                 RenderParameters.DRAW_ALL_LAYERS,
@@ -372,7 +372,7 @@ class WatchFaceControlClientTest {
                 }
             }
 
-        val bitmap = interactiveInstance.takeWatchFaceScreenshot(
+        val bitmap = interactiveInstance.renderWatchFaceToBitmap(
             RenderParameters(
                 DrawMode.INTERACTIVE,
                 RenderParameters.DRAW_ALL_LAYERS,
@@ -425,9 +425,9 @@ class WatchFaceControlClientTest {
             )
         )
 
-        assertThat(interactiveInstance.complicationState.size).isEqualTo(2)
+        assertThat(interactiveInstance.complicationsState.size).isEqualTo(2)
 
-        val leftComplicationDetails = interactiveInstance.complicationState[
+        val leftComplicationDetails = interactiveInstance.complicationsState[
             EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID
         ]!!
         assertThat(leftComplicationDetails.bounds).isEqualTo(Rect(80, 160, 160, 240))
@@ -450,7 +450,7 @@ class WatchFaceControlClientTest {
             ComplicationType.SHORT_TEXT
         )
 
-        val rightComplicationDetails = interactiveInstance.complicationState[
+        val rightComplicationDetails = interactiveInstance.complicationsState[
             EXAMPLE_CANVAS_WATCHFACE_RIGHT_COMPLICATION_ID
         ]!!
         assertThat(rightComplicationDetails.bounds).isEqualTo(Rect(240, 160, 320, 240))
@@ -637,7 +637,7 @@ class WatchFaceControlClientTest {
 
         // Note this map doesn't include all the categories, which is fine the others will be set
         // to their defaults.
-        interactiveInstance.updateInstance(
+        interactiveInstance.updateWatchFaceInstance(
             "testId2",
             mapOf(
                 COLOR_STYLE_SETTING to BLUE_STYLE,
@@ -649,9 +649,9 @@ class WatchFaceControlClientTest {
 
         // The complications should have been cleared.
         val leftComplication =
-            interactiveInstance.complicationState[EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID]!!
+            interactiveInstance.complicationsState[EXAMPLE_CANVAS_WATCHFACE_LEFT_COMPLICATION_ID]!!
         val rightComplication =
-            interactiveInstance.complicationState[EXAMPLE_CANVAS_WATCHFACE_RIGHT_COMPLICATION_ID]!!
+            interactiveInstance.complicationsState[EXAMPLE_CANVAS_WATCHFACE_RIGHT_COMPLICATION_ID]!!
         assertThat(leftComplication.currentType).isEqualTo(ComplicationType.NO_DATA)
         assertThat(rightComplication.currentType).isEqualTo(ComplicationType.NO_DATA)
 
@@ -662,7 +662,7 @@ class WatchFaceControlClientTest {
         sysUiInterface?.close()
 
         interactiveInstance.updateComplicationData(complications)
-        val bitmap = interactiveInstance.takeWatchFaceScreenshot(
+        val bitmap = interactiveInstance.renderWatchFaceToBitmap(
             RenderParameters(
                 DrawMode.INTERACTIVE,
                 RenderParameters.DRAW_ALL_LAYERS,

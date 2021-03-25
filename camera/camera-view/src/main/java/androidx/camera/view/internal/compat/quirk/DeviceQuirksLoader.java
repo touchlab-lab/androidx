@@ -43,6 +43,10 @@ public class DeviceQuirksLoader {
             quirks.add(new PreviewStretchedQuirk());
         }
 
+        if (SurfaceViewStretchedQuirk.load()) {
+            quirks.add(new SurfaceViewStretchedQuirk());
+        }
+
         return quirks;
     }
 }

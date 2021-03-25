@@ -49,19 +49,17 @@ import androidx.versionedparcelable.ParcelUtils
 import androidx.wear.complications.SystemProviders.ProviderId
 import androidx.wear.complications.data.ComplicationData
 import androidx.wear.complications.data.ComplicationType
-import androidx.wear.complications.data.IdAndComplicationData
-import androidx.wear.complications.data.NoDataComplicationData
-import androidx.wear.complications.data.asApiComplicationData
+import androidx.wear.complications.data.toApiComplicationData
 import androidx.wear.utility.AsyncTraceEvent
 import androidx.wear.utility.TraceEvent
 import androidx.wear.watchface.control.HeadlessWatchFaceImpl
 import androidx.wear.watchface.control.IInteractiveWatchFaceSysUI
 import androidx.wear.watchface.control.InteractiveInstanceManager
 import androidx.wear.watchface.control.InteractiveWatchFaceImpl
-import androidx.wear.watchface.control.data.ComplicationScreenshotParams
+import androidx.wear.watchface.control.data.ComplicationRenderParams
 import androidx.wear.watchface.control.data.HeadlessWatchFaceInstanceParams
 import androidx.wear.watchface.control.data.WallpaperInteractiveWatchFaceInstanceParams
-import androidx.wear.watchface.control.data.WatchfaceScreenshotParams
+import androidx.wear.watchface.control.data.WatchFaceRenderParams
 import androidx.wear.watchface.data.ComplicationStateWireFormat
 import androidx.wear.watchface.data.DeviceConfig
 import androidx.wear.watchface.data.IdAndComplicationDataWireFormat
@@ -95,29 +93,31 @@ internal const val SURFACE_DRAW_TIMEOUT_MS = 100L
 /** @hide */
 @IntDef(
     value = [
-        TapType.TOUCH,
-        TapType.TOUCH_CANCEL,
-        TapType.TAP
+        TapType.DOWN,
+        TapType.UP,
+        TapType.CANCEL
     ]
 )
 public annotation class TapType {
     public companion object {
-        /** Used in [WatchFaceImpl#onTapCommand] to indicate a "down" touch event on the watch face. */
-        public const val TOUCH: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_TOUCH
+        /**
+         * Used in [WatchFaceImpl#onTapCommand] to indicate a "down" touch event on the watch face.
+         */
+        public const val DOWN: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_DOWN
 
         /**
-         * Used in [WatchFaceImpl#onTapCommand] to indicate that a previous TapType.TOUCH touch event
-         * has been canceled. This generally happens when the watch face is touched but then a
+         * Used in [WatchFaceImpl#onTapCommand] to indicate that a previous [TapType.DOWN] touch
+         * event has been canceled. This generally happens when the watch face is touched but then a
          * move or long press occurs.
          */
-        public const val TOUCH_CANCEL: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_TOUCH_CANCEL
+        public const val CANCEL: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_CANCEL
 
         /**
          * Used in [WatchFaceImpl#onTapCommand] to indicate that an "up" event on the watch face has
-         * occurred that has not been consumed by another activity. A TapType.TOUCH will always
-         * occur first. This event will not occur if a TapType.TOUCH_CANCEL is sent.
+         * occurred that has not been consumed by another activity. A [TapType.DOWN] will always
+         * occur first. This event will not occur if a [TapType.CANCEL] is sent.
          */
-        public const val TAP: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_TAP
+        public const val UP: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_UP
     }
 }
 
@@ -225,29 +225,40 @@ public abstract class WatchFaceService : WallpaperService() {
         private const val DIRECT_BOOT_PREFS = "directboot.prefs"
     }
 
-    /** Override this factory method to create your WatchFaceImpl. */
+    /**
+     * Override this factory method to create your WatchFaceImpl. This method will be called by the
+     * library on the UiThread. If possible any expensive initialization should be done on a
+     * background thread.
+     *
+     * @param surfaceHolder The [SurfaceHolder] to pass to the [Renderer]'s constructor.
+     * @param watchState The [WatchState] for the watch face.
+     * @return A [WatchFace] whose [Renderer] uses the provided [surfaceHolder].
+     */
+    @UiThread
     protected abstract suspend fun createWatchFace(
         surfaceHolder: SurfaceHolder,
         watchState: WatchState
     ): WatchFace
 
-    // Creates an interactive engine for WallpaperService.
+    /** Creates an interactive engine for WallpaperService. */
     final override fun onCreateEngine(): Engine = EngineWrapper(getHandler(), false)
 
-    // Creates a headless engine.
+    /** Creates a headless engine. */
     internal fun createHeadlessEngine(): Engine = EngineWrapper(getHandler(), true)
 
-    // This is open to allow mocking.
+    /** This is open to allow mocking. */
     internal open fun getHandler() = Handler(Looper.getMainLooper())
 
-    // This is open to allow mocking.
+    /** This is open to allow mocking. */
     internal open fun getMutableWatchState() = MutableWatchState()
 
-    // This is open for use by tests.
+    /** This is open for use by tests. */
     internal open fun allowWatchFaceToAnimate() = true
 
-    // Whether or not the pre R style init flow (SET_BINDER wallpaper command) is expected.
-    // This is open for use by tests.
+    /**
+     * Whether or not the pre R style init flow (SET_BINDER wallpaper command) is expected.
+     * This is open for use by tests.
+     */
     internal open fun expectPreRInitFlow() = Build.VERSION.SDK_INT < Build.VERSION_CODES.R
 
     /**
@@ -541,13 +552,13 @@ public abstract class WatchFaceService : WallpaperService() {
                             ComplicationType.toWireTypes(it.value.supportedTypes),
                             it.value.defaultProviderPolicy.providersAsList(),
                             it.value.defaultProviderPolicy.systemProviderFallback,
-                            it.value.defaultProviderType.asWireComplicationType(),
+                            it.value.defaultProviderType.toWireComplicationType(),
                             it.value.enabled,
                             it.value.initiallyEnabled,
-                            it.value.renderer.getIdAndData()?.complicationData?.type
-                                ?.asWireComplicationType()
-                                ?: ComplicationType.NO_DATA.asWireComplicationType(),
-                            it.value.fixedComplicationProvider
+                            it.value.renderer.getData()?.type?.toWireComplicationType()
+                                ?: ComplicationType.NO_DATA.toWireComplicationType(),
+                            it.value.fixedComplicationProvider,
+                            it.value.configExtras
                         )
                     )
                 }
@@ -561,7 +572,7 @@ public abstract class WatchFaceService : WallpaperService() {
                 for (idAndComplicationData in complicationDatumWireFormats) {
                     watchFaceImpl.onComplicationDataUpdate(
                         idAndComplicationData.id,
-                        idAndComplicationData.complicationData.asApiComplicationData()
+                        idAndComplicationData.complicationData.toApiComplicationData()
                     )
                 }
             } else {
@@ -569,7 +580,7 @@ public abstract class WatchFaceService : WallpaperService() {
                     pendingComplicationDataUpdates.add(
                         PendingComplicationData(
                             idAndComplicationData.id,
-                            idAndComplicationData.complicationData.asApiComplicationData()
+                            idAndComplicationData.complicationData.toApiComplicationData()
                         )
                     )
                 }
@@ -596,9 +607,9 @@ public abstract class WatchFaceService : WallpaperService() {
 
         @UiThread
         @RequiresApi(27)
-        fun takeWatchFaceScreenshot(
-            params: WatchfaceScreenshotParams
-        ): Bundle = TraceEvent("EngineWrapper.takeWatchFaceScreenshot").use {
+        fun renderWatchFaceToBitmap(
+            params: WatchFaceRenderParams
+        ): Bundle = TraceEvent("EngineWrapper.renderWatchFaceToBitmap").use {
             val oldStyle = HashMap(watchFaceImpl.userStyleRepository.userStyle.selectedOptions)
             params.userStyle?.let {
                 watchFaceImpl.onSetStyleInternal(
@@ -607,21 +618,15 @@ public abstract class WatchFaceService : WallpaperService() {
             }
 
             val oldComplicationData =
-                watchFaceImpl.complicationsManager.complications.values.map {
-                    it.renderer.getIdAndData() ?: IdAndComplicationData(
-                        it.id,
-                        NoDataComplicationData()
-                    )
-                }
+                watchFaceImpl.complicationsManager.complications.values.associateBy(
+                    { it.id },
+                    { it.renderer.getData() }
+                )
+
             params.idAndComplicationDatumWireFormats?.let {
                 for (idAndData in it) {
                     watchFaceImpl.complicationsManager[idAndData.id]!!.renderer
-                        .setIdAndData(
-                            IdAndComplicationData(
-                                idAndData.id, idAndData.complicationData.asApiComplicationData()
-                            ),
-                            false
-                        )
+                        .loadData(idAndData.complicationData.toApiComplicationData(), false)
                 }
             }
 
@@ -638,9 +643,8 @@ public abstract class WatchFaceService : WallpaperService() {
             }
 
             if (params.idAndComplicationDatumWireFormats != null) {
-                for (idAndData in oldComplicationData) {
-                    watchFaceImpl.complicationsManager[idAndData.complicationId]!!.renderer
-                        .setIdAndData(idAndData, false)
+                for ((id, data) in oldComplicationData) {
+                    watchFaceImpl.complicationsManager[id]!!.renderer.loadData(data, false)
                 }
             }
 
@@ -649,9 +653,9 @@ public abstract class WatchFaceService : WallpaperService() {
 
         @UiThread
         @RequiresApi(27)
-        fun takeComplicationScreenshot(
-            params: ComplicationScreenshotParams
-        ): Bundle? = TraceEvent("EngineWrapper.takeComplicationScreenshot").use {
+        fun renderComplicationToBitmap(
+            params: ComplicationRenderParams
+        ): Bundle? = TraceEvent("EngineWrapper.renderComplicationToBitmap").use {
             val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                 timeInMillis = params.calendarTimeMillis
             }
@@ -671,15 +675,12 @@ public abstract class WatchFaceService : WallpaperService() {
                         Bitmap.Config.ARGB_8888
                     )
 
-                var prevIdAndComplicationData: IdAndComplicationData? = null
+                var prevData: ComplicationData? = null
                 val screenshotComplicationData = params.complicationData
                 if (screenshotComplicationData != null) {
-                    prevIdAndComplicationData = it.renderer.getIdAndData()
-                    it.renderer.setIdAndData(
-                        IdAndComplicationData(
-                            params.complicationId,
-                            screenshotComplicationData
-                        ),
+                    prevData = it.renderer.getData()
+                    it.renderer.loadData(
+                        screenshotComplicationData.toApiComplicationData(),
                         false
                     )
                 }
@@ -688,12 +689,13 @@ public abstract class WatchFaceService : WallpaperService() {
                     Canvas(complicationBitmap),
                     Rect(0, 0, bounds.width(), bounds.height()),
                     calendar,
-                    RenderParameters(params.renderParametersWireFormat)
+                    RenderParameters(params.renderParametersWireFormat),
+                    params.complicationId
                 )
 
                 // Restore previous ComplicationData & style if required.
                 if (params.complicationData != null) {
-                    it.renderer.setIdAndData(prevIdAndComplicationData, false)
+                    it.renderer.loadData(prevData, false)
                 }
 
                 if (newStyle != null) {
@@ -827,15 +829,15 @@ public abstract class WatchFaceService : WallpaperService() {
                     }
                 Constants.COMMAND_TAP ->
                     uiThreadHandler.runOnHandlerWithTracing("onCommand COMMAND_TAP") {
-                        sendTouchEvent(x, y, TapType.TAP)
+                        sendTouchEvent(x, y, TapType.UP)
                     }
                 Constants.COMMAND_TOUCH ->
                     uiThreadHandler.runOnHandlerWithTracing("onCommand COMMAND_TOUCH") {
-                        sendTouchEvent(x, y, TapType.TOUCH)
+                        sendTouchEvent(x, y, TapType.DOWN)
                     }
                 Constants.COMMAND_TOUCH_CANCEL ->
                     uiThreadHandler.runOnHandlerWithTracing("onCommand COMMAND_TOUCH_CANCEL") {
-                        sendTouchEvent(x, y, TapType.TOUCH_CANCEL)
+                        sendTouchEvent(x, y, TapType.CANCEL)
                     }
                 else -> {
                 }
@@ -966,8 +968,6 @@ public abstract class WatchFaceService : WallpaperService() {
 
             mutableWatchState.isVisible.value = true
             mutableWatchState.isAmbient.value = false
-
-            watchFaceImpl.renderer.onPostCreate()
             return HeadlessWatchFaceImpl(this, uiThreadHandler)
         }
 
@@ -1000,7 +1000,6 @@ public abstract class WatchFaceService : WallpaperService() {
 
             params.idAndComplicationDataWireFormats?.let { setComplicationDataList(it) }
 
-            watchFaceImpl.renderer.onPostCreate()
             val visibility = pendingVisibilityChanged
             if (visibility != null) {
                 onVisibilityChanged(visibility)
@@ -1068,7 +1067,6 @@ public abstract class WatchFaceService : WallpaperService() {
 
                 val watchState = mutableWatchState.asWatchState()
                 createWatchFaceInternal(watchState, surfaceHolder, "maybeCreateWatchFace")
-                watchFaceImpl.renderer.onPostCreate()
 
                 val backgroundAction = pendingBackgroundAction
                 if (backgroundAction != null) {
@@ -1182,7 +1180,7 @@ public abstract class WatchFaceService : WallpaperService() {
                 extras.getParcelable(Constants.EXTRA_COMPLICATION_DATA)!!
             setComplicationData(
                 extras.getInt(Constants.EXTRA_COMPLICATION_ID),
-                complicationData.asApiComplicationData()
+                complicationData.toApiComplicationData()
             )
         }
 
@@ -1342,9 +1340,12 @@ public abstract class WatchFaceService : WallpaperService() {
  * Runs the supplied task on the handler thread. If we're not on the handler thread a task is posted
  * and we block until it's been processed.
  *
- * AIDL calls are dispatched from a thread pool, but for simplicity WatchFaceImpl code is
- * largely single threaded so we need to post tasks to the UI thread and wait for them to
- * execute.
+ * AIDL calls are dispatched from a thread pool, but for simplicity WatchFaceImpl code is largely
+ * single threaded so we need to post tasks to the UI thread and wait for them to execute.
+ *
+ * @param traceEventName The name of the trace event to emit.
+ * @param task The task to post on the handler.
+ * @return [R] the return value of [task].
  */
 internal fun <R> Handler.runOnHandlerWithTracing(
     traceEventName: String,

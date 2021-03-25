@@ -16,7 +16,7 @@
 
 package androidx.wear.watchface.control;
 
-import androidx.wear.watchface.control.data.WatchfaceScreenshotParams;
+import androidx.wear.watchface.control.data.WatchFaceRenderParams;
 import androidx.wear.watchface.data.SystemState;
 import androidx.wear.watchface.data.IdAndComplicationDataWireFormat;
 import androidx.wear.watchface.data.IdAndComplicationStateWireFormat;
@@ -59,7 +59,8 @@ interface IInteractiveWatchFaceWCS {
      *
      * @since API version 1.
      */
-    oneway void updateComplicationData(in List<IdAndComplicationDataWireFormat> complicationData) = 4;
+    oneway void updateComplicationData(
+            in List<IdAndComplicationDataWireFormat> complicationData) = 4;
 
     /**
      * Renames this instance to newInstanceId, sets the current user style
@@ -68,7 +69,8 @@ interface IInteractiveWatchFaceWCS {
      *
      * @since API version 1.
      */
-    oneway void updateInstance(in String newInstanceId, in UserStyleWireFormat userStyle) = 5;
+    oneway void updateWatchfaceInstance(
+            in String newInstanceId, in UserStyleWireFormat userStyle) = 5;
 
     /**
      * Returns the reference preview time for this watch face in milliseconds since the epoch.
@@ -101,12 +103,12 @@ interface IInteractiveWatchFaceWCS {
      * calendarTimeMillis.
      *
      * @since API version 1.
-     * @param params The {@link WatchfaceScreenshotParams} for this screenshot.
+     * @param params The {@link WatchFaceRenderParams} for this screenshot.
      * @return A bundle containing a compressed shared memory backed {@link Bitmap} of the watch
      *     face with the requested settings
      * TODO(alexclarke): Refactor to return a parcelable rather than a bundle.
      */
-    Bundle takeWatchFaceScreenshot(in WatchfaceScreenshotParams params) = 10;
+    Bundle renderWatchFaceToBitmap(in WatchFaceRenderParams params) = 10;
 
     /**
      * If there's no {@link IInteractiveWatchFaceSysUI} holding a reference then the

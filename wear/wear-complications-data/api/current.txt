@@ -185,7 +185,6 @@ package androidx.wear.complications {
     field public static final int DAY_AND_DATE = 16; // 0x10
     field public static final int DAY_OF_WEEK = 13; // 0xd
     field public static final int FAVORITE_CONTACT = 14; // 0xe
-    field public static final int GOOGLE_PAY = 8; // 0x8
     field public static final int MOST_RECENT_APP = 15; // 0xf
     field public static final int NEXT_EVENT = 9; // 0x9
     field public static final int NO_PROVIDER = -1; // 0xffffffff
@@ -250,15 +249,6 @@ package androidx.wear.complications.data {
     ctor public EmptyComplicationData();
     method public boolean isActiveAt(long dateTimeMillis);
     field public static final androidx.wear.complications.data.ComplicationType TYPE;
-  }
-
-  public final class IdAndComplicationData {
-    ctor public IdAndComplicationData(int complicationId, androidx.wear.complications.data.ComplicationData complicationData);
-    ctor public IdAndComplicationData(int complicationId, android.support.wearable.complications.ComplicationData complicationData);
-    method public androidx.wear.complications.data.ComplicationData getComplicationData();
-    method public int getComplicationId();
-    property public final androidx.wear.complications.data.ComplicationData complicationData;
-    property public final int complicationId;
   }
 
   public final class LongTextComplicationData extends androidx.wear.complications.data.ComplicationData {

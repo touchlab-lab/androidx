@@ -32,6 +32,7 @@ import androidx.annotation.RestrictTo;
 import androidx.annotation.StringRes;
 import androidx.annotation.StyleRes;
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.strictmode.FragmentStrictMode;
 import androidx.lifecycle.Lifecycle;
 
 import java.lang.annotation.Retention;
@@ -63,7 +64,7 @@ public abstract class FragmentTransaction {
     static final class Op {
         int mCmd;
         Fragment mFragment;
-        boolean mTopmostFragment;
+        boolean mFromExpandedOp;
         int mEnterAnim;
         int mExitAnim;
         int mPopEnterAnim;
@@ -77,15 +78,15 @@ public abstract class FragmentTransaction {
         Op(int cmd, Fragment fragment) {
             this.mCmd = cmd;
             this.mFragment = fragment;
-            this.mTopmostFragment = false;
+            this.mFromExpandedOp = false;
             this.mOldMaxState = Lifecycle.State.RESUMED;
             this.mCurrentMaxState = Lifecycle.State.RESUMED;
         }
 
-        Op(int cmd, Fragment fragment, boolean topmostFragment) {
+        Op(int cmd, Fragment fragment, boolean fromExpandedOp) {
             this.mCmd = cmd;
             this.mFragment = fragment;
-            this.mTopmostFragment = topmostFragment;
+            this.mFromExpandedOp = fromExpandedOp;
             this.mOldMaxState = Lifecycle.State.RESUMED;
             this.mCurrentMaxState = Lifecycle.State.RESUMED;
         }
@@ -93,7 +94,7 @@ public abstract class FragmentTransaction {
         Op(int cmd, @NonNull Fragment fragment, Lifecycle.State state) {
             this.mCmd = cmd;
             this.mFragment = fragment;
-            this.mTopmostFragment = false;
+            this.mFromExpandedOp = false;
             this.mOldMaxState = fragment.mMaxState;
             this.mCurrentMaxState = state;
         }
@@ -253,6 +254,9 @@ public abstract class FragmentTransaction {
     }
 
     void doAddOp(int containerViewId, Fragment fragment, @Nullable String tag, int opcmd) {
+        if (fragment.mRemoved) {
+            FragmentStrictMode.onFragmentReuse(fragment);
+        }
         final Class<?> fragmentClass = fragment.getClass();
         final int modifiers = fragmentClass.getModifiers();
         if (fragmentClass.isAnonymousClass() || !Modifier.isPublic(modifiers)

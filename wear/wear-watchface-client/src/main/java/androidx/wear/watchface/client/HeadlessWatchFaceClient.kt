@@ -17,18 +17,20 @@
 package androidx.wear.watchface.client
 
 import android.graphics.Bitmap
-import android.os.IBinder
 import android.support.wearable.watchface.SharedMemoryImage
 import androidx.annotation.RequiresApi
 import androidx.wear.complications.data.ComplicationData
 import androidx.wear.utility.TraceEvent
+import androidx.wear.watchface.Complication
+import androidx.wear.watchface.ComplicationsManager
 import androidx.wear.watchface.RenderParameters
 import androidx.wear.watchface.control.IHeadlessWatchFace
-import androidx.wear.watchface.control.data.ComplicationScreenshotParams
-import androidx.wear.watchface.control.data.WatchfaceScreenshotParams
+import androidx.wear.watchface.control.data.ComplicationRenderParams
+import androidx.wear.watchface.control.data.WatchFaceRenderParams
 import androidx.wear.watchface.data.IdAndComplicationDataWireFormat
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSchema
+import androidx.wear.watchface.style.UserStyleSetting.ComplicationsUserStyleSetting
 
 /**
  * Controls a stateless remote headless watch face.  This is mostly intended for use by watch face
@@ -45,21 +47,16 @@ public interface HeadlessWatchFaceClient : AutoCloseable {
     public val userStyleSchema: UserStyleSchema
 
     /**
-     * Map of complication ids to [ComplicationState] for each complication slot. Note this can
-     * change, typically in response to styling.
+     * Map of complication ids to [ComplicationState] for each [Complication] registered with the
+     * watch face's [ComplicationsManager]. The ComplicationState is based on the initial state of
+     * each Complication plus any overrides from the default style's
+     * [ComplicationsUserStyleSetting]. Because the style can't change, ComplicationState is
+     * immutable for a headless watch face.
      */
-    public val complicationState: Map<Int, ComplicationState>
-
-    public companion object {
-        /** Constructs a [HeadlessWatchFaceClient] from an [IBinder]. */
-        @JvmStatic
-        public fun createFromBinder(binder: IBinder): HeadlessWatchFaceClient =
-            HeadlessWatchFaceClientImpl(binder)
-    }
+    public val complicationsState: Map<Int, ComplicationState>
 
     /**
-     * Requests a shared memory backed [Bitmap] containing a screenshot of the watch face with the
-     * given settings.
+     * Renders the watchface to a shared memory backed [Bitmap] with the given settings.
      *
      * @param renderParameters The [RenderParameters] to draw with.
      * @param calendarTimeMillis The UTC time in milliseconds since the epoch to render with.
@@ -70,7 +67,7 @@ public interface HeadlessWatchFaceClient : AutoCloseable {
      *     given settings.
      */
     @RequiresApi(27)
-    public fun takeWatchFaceScreenshot(
+    public fun renderWatchFaceToBitmap(
         renderParameters: RenderParameters,
         calendarTimeMillis: Long,
         userStyle: UserStyle?,
@@ -78,8 +75,7 @@ public interface HeadlessWatchFaceClient : AutoCloseable {
     ): Bitmap
 
     /**
-     * Requests a shared memory backed [Bitmap] containing a screenshot of the complication with the
-     * given settings.
+     * Renders the complication to a shared memory backed [Bitmap] with the given settings.
      *
      * @param complicationId The id of the complication to render
      * @param renderParameters The [RenderParameters] to draw with
@@ -90,23 +86,18 @@ public interface HeadlessWatchFaceClient : AutoCloseable {
      *     given settings, or `null` if [complicationId] is unrecognized.
      */
     @RequiresApi(27)
-    public fun takeComplicationScreenshot(
+    public fun renderComplicationToBitmap(
         complicationId: Int,
         renderParameters: RenderParameters,
         calendarTimeMillis: Long,
         complicationData: ComplicationData,
         userStyle: UserStyle?,
     ): Bitmap?
-
-    /** Returns the associated [IBinder]. Allows this interface to be passed over AIDL. */
-    public fun asBinder(): IBinder
 }
 
 internal class HeadlessWatchFaceClientImpl internal constructor(
     private val iHeadlessWatchFace: IHeadlessWatchFace
 ) : HeadlessWatchFaceClient {
-
-    constructor(binder: IBinder) : this(IHeadlessWatchFace.Stub.asInterface(binder))
 
     override val previewReferenceTimeMillis: Long
         get() = iHeadlessWatchFace.previewReferenceTimeMillis
@@ -114,22 +105,22 @@ internal class HeadlessWatchFaceClientImpl internal constructor(
     override val userStyleSchema: UserStyleSchema
         get() = UserStyleSchema(iHeadlessWatchFace.userStyleSchema)
 
-    override val complicationState: Map<Int, ComplicationState>
+    override val complicationsState: Map<Int, ComplicationState>
         get() = iHeadlessWatchFace.complicationState.associateBy(
             { it.id },
             { ComplicationState(it.complicationState) }
         )
 
     @RequiresApi(27)
-    override fun takeWatchFaceScreenshot(
+    override fun renderWatchFaceToBitmap(
         renderParameters: RenderParameters,
         calendarTimeMillis: Long,
         userStyle: UserStyle?,
         idToComplicationData: Map<Int, ComplicationData>?
-    ): Bitmap = TraceEvent("HeadlessWatchFaceClientImpl.takeWatchFaceScreenshot").use {
+    ): Bitmap = TraceEvent("HeadlessWatchFaceClientImpl.renderWatchFaceToBitmap").use {
         SharedMemoryImage.ashmemReadImageBundle(
-            iHeadlessWatchFace.takeWatchFaceScreenshot(
-                WatchfaceScreenshotParams(
+            iHeadlessWatchFace.renderWatchFaceToBitmap(
+                WatchFaceRenderParams(
                     renderParameters.toWireFormat(),
                     calendarTimeMillis,
                     userStyle?.toWireFormat(),
@@ -145,15 +136,15 @@ internal class HeadlessWatchFaceClientImpl internal constructor(
     }
 
     @RequiresApi(27)
-    override fun takeComplicationScreenshot(
+    override fun renderComplicationToBitmap(
         complicationId: Int,
         renderParameters: RenderParameters,
         calendarTimeMillis: Long,
         complicationData: ComplicationData,
         userStyle: UserStyle?,
-    ): Bitmap? = TraceEvent("HeadlessWatchFaceClientImpl.takeComplicationScreenshot").use {
-        iHeadlessWatchFace.takeComplicationScreenshot(
-            ComplicationScreenshotParams(
+    ): Bitmap? = TraceEvent("HeadlessWatchFaceClientImpl.renderComplicationToBitmap").use {
+        iHeadlessWatchFace.renderComplicationToBitmap(
+            ComplicationRenderParams(
                 complicationId,
                 renderParameters.toWireFormat(),
                 calendarTimeMillis,
@@ -168,6 +159,4 @@ internal class HeadlessWatchFaceClientImpl internal constructor(
     override fun close() = TraceEvent("HeadlessWatchFaceClientImpl.close").use {
         iHeadlessWatchFace.release()
     }
-
-    override fun asBinder(): IBinder = iHeadlessWatchFace.asBinder()
 }

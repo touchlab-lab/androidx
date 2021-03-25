@@ -18,6 +18,7 @@
 
 package androidx.compose.runtime.lint
 
+import androidx.compose.lint.Stubs
 import com.android.tools.lint.checks.infrastructure.LintDetectorTest
 import com.android.tools.lint.detector.api.Detector
 import com.android.tools.lint.detector.api.Issue
@@ -39,6 +40,22 @@ class ComposableCoroutineCreationDetectorTest : LintDetectorTest() {
 
     override fun getIssues(): MutableList<Issue> =
         mutableListOf(ComposableCoroutineCreationDetector.CoroutineCreationDuringComposition)
+
+    private val coroutineBuildersStub: TestFile = kotlin(
+        """
+        package kotlinx.coroutines
+
+        object CoroutineScope
+
+        fun CoroutineScope.async(
+            block: suspend CoroutineScope.() -> Unit
+        ) {}
+
+        fun CoroutineScope.launch(
+            block: suspend CoroutineScope.() -> Unit
+        ) {}
+    """
+    )
 
     @Test
     fun errors() {
@@ -94,7 +111,7 @@ class ComposableCoroutineCreationDetectorTest : LintDetectorTest() {
                 }
             """
             ),
-            composableStub,
+            kotlin(Stubs.Composable),
             coroutineBuildersStub
         )
             .run()
@@ -142,127 +159,6 @@ src/androidx/compose/runtime/foo/test.kt:45: Error: Calls to async should happen
 src/androidx/compose/runtime/foo/test.kt:46: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
                         CoroutineScope.launch {}
                                        ~~~~~~
-14 errors, 0 warnings
-            """
-            )
-    }
-
-    @Test
-    fun errors_inlineFunctions() {
-        lint().files(
-            kotlin(
-                """
-                package androidx.compose.runtime.foo
-
-                import androidx.compose.runtime.Composable
-                import kotlinx.coroutines.*
-
-                @Composable
-                fun Test() {
-                    run {
-                        CoroutineScope.async {}
-                        CoroutineScope.launch {}
-                    }
-                }
-
-                val lambda = @Composable {
-                    run {
-                        CoroutineScope.async {}
-                        CoroutineScope.launch {}
-                    }
-                }
-
-                val lambda2: @Composable () -> Unit = {
-                    run {
-                        CoroutineScope.async {}
-                        CoroutineScope.launch {}
-                    }
-                }
-
-                @Composable
-                fun LambdaParameter(content: @Composable () -> Unit) {}
-
-                @Composable
-                fun Test2() {
-                    LambdaParameter(content = {
-                        run {
-                            CoroutineScope.async {}
-                            CoroutineScope.launch {}
-                        }
-                    })
-                    LambdaParameter {
-                        run {
-                            CoroutineScope.async {}
-                            CoroutineScope.launch {}
-                        }
-                    }
-                }
-
-                fun test3() {
-                    val localLambda1 = @Composable {
-                        run {
-                            CoroutineScope.async {}
-                            CoroutineScope.launch {}
-                        }
-                    }
-
-                    val localLambda2: @Composable () -> Unit = {
-                        run {
-                            CoroutineScope.async {}
-                            CoroutineScope.launch {}
-                        }
-                    }
-                }
-            """
-            ),
-            composableStub,
-            coroutineBuildersStub
-        )
-            .run()
-            .expect(
-                """
-src/androidx/compose/runtime/foo/test.kt:10: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                        CoroutineScope.async {}
-                                       ~~~~~
-src/androidx/compose/runtime/foo/test.kt:11: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                        CoroutineScope.launch {}
-                                       ~~~~~~
-src/androidx/compose/runtime/foo/test.kt:17: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                        CoroutineScope.async {}
-                                       ~~~~~
-src/androidx/compose/runtime/foo/test.kt:18: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                        CoroutineScope.launch {}
-                                       ~~~~~~
-src/androidx/compose/runtime/foo/test.kt:24: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                        CoroutineScope.async {}
-                                       ~~~~~
-src/androidx/compose/runtime/foo/test.kt:25: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                        CoroutineScope.launch {}
-                                       ~~~~~~
-src/androidx/compose/runtime/foo/test.kt:36: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.async {}
-                                           ~~~~~
-src/androidx/compose/runtime/foo/test.kt:37: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.launch {}
-                                           ~~~~~~
-src/androidx/compose/runtime/foo/test.kt:42: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.async {}
-                                           ~~~~~
-src/androidx/compose/runtime/foo/test.kt:43: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.launch {}
-                                           ~~~~~~
-src/androidx/compose/runtime/foo/test.kt:51: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.async {}
-                                           ~~~~~
-src/androidx/compose/runtime/foo/test.kt:52: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.launch {}
-                                           ~~~~~~
-src/androidx/compose/runtime/foo/test.kt:58: Error: Calls to async should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.async {}
-                                           ~~~~~
-src/androidx/compose/runtime/foo/test.kt:59: Error: Calls to launch should happen inside a LaunchedEffect and not composition [CoroutineCreationDuringComposition]
-                            CoroutineScope.launch {}
-                                           ~~~~~~
 14 errors, 0 warnings
             """
             )
@@ -319,7 +215,7 @@ src/androidx/compose/runtime/foo/test.kt:59: Error: Calls to launch should happe
                 }
             """
             ),
-            composableStub,
+            kotlin(Stubs.Composable),
             coroutineBuildersStub
         )
             .run()

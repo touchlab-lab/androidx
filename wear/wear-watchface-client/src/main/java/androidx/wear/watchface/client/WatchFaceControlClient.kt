@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import androidx.annotation.Px
 import androidx.wear.complications.data.ComplicationData
 import androidx.wear.utility.AsyncTraceEvent
 import androidx.wear.utility.TraceEvent
@@ -47,15 +48,18 @@ public interface WatchFaceControlClient : AutoCloseable {
         /**
          * Constructs a [WatchFaceControlClient] which attempts to connect to a watch face in the
          * android package [watchFacePackageName].
+         *
+         * @param context Calling application's [Context].
+         * @param watchFacePackageName The name of the package containing the watch face control
+         *     service to bind to.
+         * @return The [WatchFaceControlClient] if there is one.
          * @throws [ServiceNotBoundException] if the watch face control service can not be bound or
          * a [ServiceStartFailureException] if the watch face dies during startup.
          */
         @SuppressLint("NewApi") // For ACTION_WATCHFACE_CONTROL_SERVICE
         @JvmStatic
         public suspend fun createWatchFaceControlClient(
-            /** Calling application's [Context]. */
             context: Context,
-            /** The name of the package containing the watch face control service to bind to. */
             watchFacePackageName: String
         ): WatchFaceControlClient = createWatchFaceControlClientImpl(
             context,
@@ -115,7 +119,7 @@ public interface WatchFaceControlClient : AutoCloseable {
 
     /**
      * Creates a [HeadlessWatchFaceClient] with the specified [DeviceConfig]. Screenshots made with
-     * [HeadlessWatchFaceClient.takeWatchFaceScreenshot] will be `surfaceWidth` x `surfaceHeight` in
+     * [HeadlessWatchFaceClient.renderWatchFaceToBitmap] will be `surfaceWidth` x `surfaceHeight` in
      * size.
      *
      * When finished call [HeadlessWatchFaceClient.close] to release resources.
@@ -131,8 +135,8 @@ public interface WatchFaceControlClient : AutoCloseable {
     public fun createHeadlessWatchFaceClient(
         watchFaceName: ComponentName,
         deviceConfig: DeviceConfig,
-        surfaceWidth: Int,
-        surfaceHeight: Int
+        @Px surfaceWidth: Int,
+        @Px surfaceHeight: Int
     ): HeadlessWatchFaceClient?
 
     /**

@@ -18,6 +18,7 @@ package androidx.compose.foundation.lazy
 
 import androidx.compose.animation.core.advanceClockMillis
 import androidx.compose.animation.core.snap
+import androidx.compose.foundation.AutoTestFrameClock
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -77,6 +78,7 @@ import com.google.common.collect.Range
 import com.google.common.truth.IntegerSubject
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
@@ -1303,12 +1305,40 @@ class LazyColumnTest {
         }
     }
 
+    @Test
+    fun changeItemsCountAndScrollImmediately() {
+        lateinit var state: LazyListState
+        var count by mutableStateOf(100)
+        val composedIndexes = mutableListOf<Int>()
+        rule.setContent {
+            state = rememberLazyListState()
+            LazyColumn(Modifier.fillMaxWidth().height(10.dp), state) {
+                items(count) { index ->
+                    composedIndexes.add(index)
+                    Box(Modifier.size(20.dp))
+                }
+            }
+        }
+
+        rule.runOnIdle {
+            composedIndexes.clear()
+            count = 10
+            runBlocking(AutoTestFrameClock()) {
+                state.scrollToItem(50)
+            }
+            composedIndexes.forEach {
+                assertThat(it).isLessThan(count)
+            }
+            assertThat(state.firstVisibleItemIndex).isEqualTo(9)
+        }
+    }
+
     private fun SemanticsNodeInteraction.assertTopPositionIsAlmost(expected: Dp) {
         getUnclippedBoundsInRoot().top.assertIsEqualTo(expected, tolerance = 1.dp)
     }
 
     private fun LazyListState.scrollBy(offset: Dp) {
-        runBlocking {
+        runBlocking(Dispatchers.Main + AutoTestFrameClock()) {
             animateScrollBy(with(rule.density) { offset.roundToPx().toFloat() }, snap())
         }
     }

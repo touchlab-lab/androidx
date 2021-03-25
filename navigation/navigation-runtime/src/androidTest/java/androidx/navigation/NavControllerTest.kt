@@ -25,6 +25,8 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.view.View
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.addCallback
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.testing.TestLifecycleOwner
@@ -323,6 +325,10 @@ class NavControllerTest {
         navController.navigate(deepLink)
         assertThat(navController.currentDestination?.id ?: 0).isEqualTo(R.id.second_test)
         assertThat(navigator.backStack.size).isEqualTo(2)
+        val intent = navigator.current.second?.getParcelable<Intent>(
+            NavController.KEY_DEEP_LINK_INTENT
+        )
+        assertThat(intent?.data).isEqualTo(deepLink)
     }
 
     @UiThreadTest
@@ -348,11 +354,16 @@ class NavControllerTest {
         val navController = createNavController()
         navController.setGraph(R.navigation.nav_simple)
         val navigator = navController.navigatorProvider.getNavigator(TestNavigator::class.java)
-        val deepLink = NavDeepLinkRequest(null, "test.action", null)
+        val action = "test.action"
+        val deepLink = NavDeepLinkRequest(null, action, null)
 
         navController.navigate(deepLink)
         assertThat(navController.currentDestination?.id ?: 0).isEqualTo(R.id.second_test)
         assertThat(navigator.backStack.size).isEqualTo(2)
+        val intent = navigator.current.second?.getParcelable<Intent>(
+            NavController.KEY_DEEP_LINK_INTENT
+        )
+        assertThat(intent?.action).isEqualTo(action)
     }
 
     @UiThreadTest
@@ -387,11 +398,16 @@ class NavControllerTest {
         val navController = createNavController()
         navController.setGraph(R.navigation.nav_deeplink)
         val navigator = navController.navigatorProvider.getNavigator(TestNavigator::class.java)
-        val deepLink = NavDeepLinkRequest(null, null, "type/test")
+        val mimeType = "type/test"
+        val deepLink = NavDeepLinkRequest(null, null, mimeType)
 
         navController.navigate(deepLink)
         assertThat(navController.currentDestination?.id ?: 0).isEqualTo(R.id.forth_test)
         assertThat(navigator.backStack.size).isEqualTo(2)
+        val intent = navigator.current.second?.getParcelable<Intent>(
+            NavController.KEY_DEEP_LINK_INTENT
+        )
+        assertThat(intent?.type).isEqualTo(mimeType)
     }
 
     @UiThreadTest
@@ -1578,6 +1594,35 @@ class NavControllerTest {
 
         assertWithMessage("$collectedDestinationIds should have 1 destination id")
             .that(collectedDestinationIds).hasSize(1)
+    }
+
+    @UiThreadTest
+    @Test
+    fun testSetOnBackPressedDispatcherOnNavBackStackEntry() {
+        var backPressedIntercepted = false
+        val navController = createNavController()
+        val lifecycleOwner = TestLifecycleOwner()
+        val dispatcher = OnBackPressedDispatcher()
+
+        navController.setLifecycleOwner(lifecycleOwner)
+        navController.setOnBackPressedDispatcher(dispatcher)
+
+        navController.setGraph(R.navigation.nav_simple)
+        navController.navigate(R.id.second_test)
+        assertEquals(R.id.start_test, navController.previousBackStackEntry?.destination?.id ?: 0)
+
+        dispatcher.addCallback(navController.currentBackStackEntry!!) {
+            backPressedIntercepted = true
+        }
+
+        // Move to STOPPED
+        lifecycleOwner.currentState = Lifecycle.State.CREATED
+        // Move back up to RESUMED
+        lifecycleOwner.currentState = Lifecycle.State.RESUMED
+
+        dispatcher.onBackPressed()
+
+        assertThat(backPressedIntercepted).isTrue()
     }
 
     private fun createNavController(): NavController {

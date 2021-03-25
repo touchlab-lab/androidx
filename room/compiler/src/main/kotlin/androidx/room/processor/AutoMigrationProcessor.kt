@@ -46,7 +46,8 @@ class AutoMigrationProcessor(
             return null
         }
 
-        if (!context.processingEnv.requireType(RoomTypeNames.AUTO_MIGRATION_CALLBACK)
+        if (!context.processingEnv
+            .requireType(RoomTypeNames.AUTO_MIGRATION_CALLBACK)
             .isAssignableFrom(element.type)
         ) {
             context.logger.e(
@@ -56,7 +57,7 @@ class AutoMigrationProcessor(
             return null
         }
 
-        val annotationBox = element.toAnnotationBox(AutoMigration::class)
+        val annotationBox = element.getAnnotation(AutoMigration::class)
         if (annotationBox == null) {
             context.logger.e(
                 element,
@@ -115,13 +116,13 @@ class AutoMigrationProcessor(
     private fun getValidatedSchemaFile(version: Int): File? {
         val schemaFile = File(
             context.schemaOutFolder,
-            "${element.qualifiedName}/$version.json"
+            "${element.className.enclosingClassName()}/$version.json"
         )
         if (!schemaFile.exists()) {
             context.logger.e(
                 ProcessorErrors.autoMigrationSchemasNotFound(
                     context.schemaOutFolder.toString(),
-                    "${element.qualifiedName}/$version.json"
+                    "${element.className.enclosingClassName()}/$version.json"
                 ),
                 element
             )

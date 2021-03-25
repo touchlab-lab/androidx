@@ -20,17 +20,18 @@ import android.app.PendingIntent
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Rect
-import android.os.IBinder
-import android.support.wearable.complications.TimeDependentText
 import android.support.wearable.watchface.SharedMemoryImage
 import androidx.annotation.IntDef
+import androidx.annotation.Px
 import androidx.annotation.RequiresApi
 import androidx.annotation.RestrictTo
 import androidx.wear.complications.data.ComplicationData
+import androidx.wear.complications.data.ComplicationText
+import androidx.wear.complications.data.toApiComplicationText
 import androidx.wear.utility.TraceEvent
 import androidx.wear.watchface.RenderParameters
 import androidx.wear.watchface.control.IInteractiveWatchFaceSysUI
-import androidx.wear.watchface.control.data.WatchfaceScreenshotParams
+import androidx.wear.watchface.control.data.WatchFaceRenderParams
 import androidx.wear.watchface.data.IdAndComplicationDataWireFormat
 import androidx.wear.watchface.style.UserStyle
 import java.util.Objects
@@ -40,9 +41,9 @@ import java.util.Objects
  * @hide
  */
 @IntDef(
-    InteractiveWatchFaceSysUiClient.TAP_TYPE_TOUCH,
-    InteractiveWatchFaceSysUiClient.TAP_TYPE_TOUCH_CANCEL,
-    InteractiveWatchFaceSysUiClient.TAP_TYPE_TAP
+    InteractiveWatchFaceSysUiClient.TAP_TYPE_DOWN,
+    InteractiveWatchFaceSysUiClient.TAP_TYPE_CANCEL,
+    InteractiveWatchFaceSysUiClient.TAP_TYPE_UP
 )
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 public annotation class TapType
@@ -57,45 +58,38 @@ public interface InteractiveWatchFaceSysUiClient : AutoCloseable {
 
     public companion object {
         /** Indicates a "down" touch event on the watch face. */
-        public const val TAP_TYPE_TOUCH: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_TOUCH
+        public const val TAP_TYPE_DOWN: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_DOWN
 
         /**
-         * Indicates that a previous TAP_TYPE_TOUCH event has been canceled. This generally happens
+         * Indicates that a previous [TAP_TYPE_DOWN] event has been canceled. This generally happens
          * when the watch face is touched but then a move or long press occurs.
          */
-        public const val TAP_TYPE_TOUCH_CANCEL: Int =
-            IInteractiveWatchFaceSysUI.TAP_TYPE_TOUCH_CANCEL
+        public const val TAP_TYPE_CANCEL: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_CANCEL
 
         /**
          * Indicates that an "up" event on the watch face has occurred that has not been consumed by
-         * another activity. A TAP_TYPE_TOUCH always occur first. This event will not occur if a
-         * TAP_TYPE_TOUCH_CANCEL is sent.
+         * another activity. A [TAP_TYPE_DOWN] always occur first. This event will not occur if a
+         * [TAP_TYPE_CANCEL] is sent.
          */
-        public const val TAP_TYPE_TAP: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_TAP
-
-        /**
-         * Constructs an [InteractiveWatchFaceSysUiClient] from the [IBinder] returned by
-         * [asBinder].
-         */
-        @JvmStatic
-        public fun createFromBinder(binder: IBinder): InteractiveWatchFaceSysUiClient =
-            InteractiveWatchFaceSysUiClientImpl(binder)
+        public const val TAP_TYPE_UP: Int = IInteractiveWatchFaceSysUI.TAP_TYPE_UP
     }
 
     /**
      * Sends a tap event to the watch face for processing.
      */
-    public fun sendTouchEvent(xPosition: Int, yPosition: Int, @TapType tapType: Int)
+    public fun sendTouchEvent(@Px xPosition: Int, @Px yPosition: Int, @TapType tapType: Int)
 
-    /** Describes regions of the watch face for use by a screen reader. */
+    /**
+     * Describes regions of the watch face for use by a screen reader.
+     *
+     * @param text [ComplicationText] associated with the region, to be read by the screen reader.
+     * @param bounds [Rect] describing the area of the feature on screen.
+     * @param tapAction [PendingIntent] to be used if the screen reader's user triggers a tap
+     *     action.
+     */
     public class ContentDescriptionLabel(
-        /** Text associated with the region, to be read by the screen reader. */
-        private val text: TimeDependentText,
-
-        /** Area of the feature on screen. */
+        private val text: ComplicationText,
         public val bounds: Rect,
-
-        /** [PendingIntent] to be used if the screen reader's user triggers a tap action. */
         public val tapAction: PendingIntent?
     ) {
         /**
@@ -129,8 +123,7 @@ public interface InteractiveWatchFaceSysUiClient : AutoCloseable {
     public val contentDescriptionLabels: List<ContentDescriptionLabel>
 
     /**
-     * Requests a shared memory backed [Bitmap] containing a screenshot of the watch face with the
-     * given settings.
+     * Renders the watchface to a shared memory backed [Bitmap] with the given settings.
      *
      * @param renderParameters The [RenderParameters] to draw with.
      * @param calendarTimeMillis The UTC time in milliseconds since the epoch to render with.
@@ -141,7 +134,7 @@ public interface InteractiveWatchFaceSysUiClient : AutoCloseable {
      *     given settings.
      */
     @RequiresApi(27)
-    public fun takeWatchFaceScreenshot(
+    public fun renderWatchFaceToBitmap(
         renderParameters: RenderParameters,
         calendarTimeMillis: Long,
         userStyle: UserStyle?,
@@ -159,16 +152,11 @@ public interface InteractiveWatchFaceSysUiClient : AutoCloseable {
 
     /** Triggers watch face rendering into the surface when in ambient mode. */
     public fun performAmbientTick()
-
-    /** Returns the associated [IBinder]. Allows this interface to be passed over AIDL. */
-    public fun asBinder(): IBinder
 }
 
 internal class InteractiveWatchFaceSysUiClientImpl internal constructor(
     private val iInteractiveWatchFaceSysUI: IInteractiveWatchFaceSysUI
 ) : InteractiveWatchFaceSysUiClient {
-
-    constructor(binder: IBinder) : this(IInteractiveWatchFaceSysUI.Stub.asInterface(binder))
 
     override fun sendTouchEvent(
         xPosition: Int,
@@ -182,22 +170,22 @@ internal class InteractiveWatchFaceSysUiClientImpl internal constructor(
         List<InteractiveWatchFaceSysUiClient.ContentDescriptionLabel>
             get() = iInteractiveWatchFaceSysUI.contentDescriptionLabels.map {
                 InteractiveWatchFaceSysUiClient.ContentDescriptionLabel(
-                    it.text,
+                    it.text.toApiComplicationText(),
                     it.bounds,
                     it.tapAction
                 )
             }
 
     @RequiresApi(27)
-    override fun takeWatchFaceScreenshot(
+    override fun renderWatchFaceToBitmap(
         renderParameters: RenderParameters,
         calendarTimeMillis: Long,
         userStyle: UserStyle?,
         idAndComplicationData: Map<Int, ComplicationData>?
-    ): Bitmap = TraceEvent("InteractiveWatchFaceSysUiClientImpl.takeWatchFaceScreenshot").use {
+    ): Bitmap = TraceEvent("InteractiveWatchFaceSysUiClientImpl.renderWatchFaceToBitmap").use {
         SharedMemoryImage.ashmemReadImageBundle(
-            iInteractiveWatchFaceSysUI.takeWatchFaceScreenshot(
-                WatchfaceScreenshotParams(
+            iInteractiveWatchFaceSysUI.renderWatchFaceToBitmap(
+                WatchFaceRenderParams(
                     renderParameters.toWireFormat(),
                     calendarTimeMillis,
                     userStyle?.toWireFormat(),
@@ -238,6 +226,4 @@ internal class InteractiveWatchFaceSysUiClientImpl internal constructor(
     override fun close() = TraceEvent("InteractiveWatchFaceSysUiClientImpl.close").use {
         iInteractiveWatchFaceSysUI.release()
     }
-
-    override fun asBinder(): IBinder = iInteractiveWatchFaceSysUI.asBinder()
 }

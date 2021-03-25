@@ -1152,6 +1152,15 @@ package androidx.core.content.pm {
     method public static int getProtectionFlags(android.content.pm.PermissionInfo);
   }
 
+  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) public abstract class ShortcutInfoChangeListener {
+    ctor public ShortcutInfoChangeListener();
+    method @AnyThread public void onAllShortcutsRemoved();
+    method @AnyThread public void onShortcutAdded(java.util.List<androidx.core.content.pm.ShortcutInfoCompat!>);
+    method @AnyThread public void onShortcutRemoved(java.util.List<java.lang.String!>);
+    method @AnyThread public void onShortcutUpdated(java.util.List<androidx.core.content.pm.ShortcutInfoCompat!>);
+    method @AnyThread public void onShortcutUsageReported(java.util.List<java.lang.String!>);
+  }
+
   public class ShortcutInfoCompat {
     method public android.content.ComponentName? getActivity();
     method public java.util.Set<java.lang.String!>? getCategories();
@@ -1183,6 +1192,7 @@ package androidx.core.content.pm {
     ctor public ShortcutInfoCompat.Builder(android.content.Context, String);
     ctor @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) public ShortcutInfoCompat.Builder(androidx.core.content.pm.ShortcutInfoCompat);
     ctor @RequiresApi(25) @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) public ShortcutInfoCompat.Builder(android.content.Context, android.content.pm.ShortcutInfo);
+    method public androidx.core.content.pm.ShortcutInfoCompat.Builder addCapabilityBinding(String, java.util.Map<java.lang.String!,java.util.List<java.lang.String!>!>?);
     method public androidx.core.content.pm.ShortcutInfoCompat build();
     method public androidx.core.content.pm.ShortcutInfoCompat.Builder setActivity(android.content.ComponentName);
     method public androidx.core.content.pm.ShortcutInfoCompat.Builder setAlwaysBadged();
@@ -1201,6 +1211,7 @@ package androidx.core.content.pm {
     method public androidx.core.content.pm.ShortcutInfoCompat.Builder setPersons(androidx.core.app.Person![]);
     method public androidx.core.content.pm.ShortcutInfoCompat.Builder setRank(int);
     method public androidx.core.content.pm.ShortcutInfoCompat.Builder setShortLabel(CharSequence);
+    method public androidx.core.content.pm.ShortcutInfoCompat.Builder setSliceUri(android.net.Uri);
   }
 
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) public abstract class ShortcutInfoCompatSaver<T> {
@@ -1869,6 +1880,7 @@ package androidx.core.os {
   public final class HandlerCompat {
     method public static android.os.Handler createAsync(android.os.Looper);
     method public static android.os.Handler createAsync(android.os.Looper, android.os.Handler.Callback);
+    method @RequiresApi(16) public static boolean hasCallbacks(android.os.Handler, Runnable);
     method public static boolean postDelayed(android.os.Handler, Runnable, Object?, long);
   }
 
