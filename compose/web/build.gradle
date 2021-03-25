@@ -53,7 +53,7 @@ kotlin {
 androidx {
     name = "Compose Web"
     publish = Publish.SNAPSHOT_AND_RELEASE
-    mavenGroup = LibraryGroups.Compose.JS
+    mavenGroup = LibraryGroups.Compose.WEB
     inceptionYear = "2021"
     description = ""
     legacyDisableKotlinStrictApiMode = true
