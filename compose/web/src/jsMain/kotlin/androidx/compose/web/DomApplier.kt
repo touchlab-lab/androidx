@@ -165,6 +165,11 @@ class DomNodeWrapper(val node: Node) {
         currentModifier.foldOut(Unit) { mod, _ ->
             when (mod) {
                 is CssModifier -> htmlElement.style.apply(mod.configure)
+                is CssProperties -> {
+                    mod.props.map { (propName, value) ->
+                        htmlElement.style.asDynamic().setProperty(propName.value, value)
+                    }
+                }
                 is EventModifier -> htmlElement.addEventListener(mod.eventName, mod.listener)
                 is AttributesModifier -> htmlElement.apply {
                     with(mutableMapOf<String, String>()) {
