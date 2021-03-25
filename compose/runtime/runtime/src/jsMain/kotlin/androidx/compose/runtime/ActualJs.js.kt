@@ -16,6 +16,7 @@
 
 package androidx.compose.runtime
 
+import androidx.compose.runtime.snapshots.SnapshotMutableState
 import kotlinx.browser.window
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -122,3 +123,8 @@ private class MonotonicClockImpl : MonotonicFrameClock {
         }
     }
 }
+
+internal actual fun <T> createSnapshotMutableState(
+    value: T,
+    policy: SnapshotMutationPolicy<T>
+): SnapshotMutableState<T> = SnapshotMutableStateImpl(value, policy)
