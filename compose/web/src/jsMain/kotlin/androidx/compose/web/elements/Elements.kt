@@ -222,7 +222,8 @@ inline fun Img(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs.Img>(
-    "img", applyAttrs = {
+    tagName = "img",
+    applyAttrs = {
         src(src).alt(alt)
         attrs()
     },
@@ -236,7 +237,8 @@ inline fun Form(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs.Form>(
-    "form", applyAttrs = {
+    tagName = "form",
+    applyAttrs = {
         if (!action.isNullOrEmpty()) action(action)
         attrs()
     },
@@ -249,10 +251,10 @@ inline fun Select(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs.Select>(
-    "select", applyAttrs = {
-        attrs()
-    },
-    applyStyle = style, content = content
+    tagName = "select",
+    applyAttrs = attrs,
+    applyStyle = style,
+    content = content
 )
 
 @Composable
@@ -262,11 +264,13 @@ inline fun Option(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs.Option>(
-    "option", applyAttrs = {
+    tagName = "option",
+    applyAttrs = {
         value(value)
         attrs()
     },
-    applyStyle = style, content = content
+    applyStyle = style,
+    content = content
 )
 
 @Composable
@@ -276,11 +280,13 @@ inline fun OptGroup(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs.OptGroup>(
-    "optgroup", applyAttrs = {
+    tagName = "optgroup",
+    applyAttrs = {
         label(label)
         attrs()
     },
-    applyStyle = style, content = content
+    applyStyle = style,
+    content = content
 )
 
 @Composable
@@ -289,8 +295,10 @@ inline fun Section(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs>(
-    "section", applyAttrs = attrs,
-    applyStyle = style, content = content
+    tagName = "section",
+    applyAttrs = attrs,
+    applyStyle = style,
+    content = content
 )
 
 @Composable
@@ -299,7 +307,8 @@ inline fun TextArea(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     value: String
 ) = TagElement<Attrs.TextArea>(
-    "textarea", applyAttrs = {
+    tagName = "textarea",
+    applyAttrs = {
         valueProp(value)
         attrs()
     },
@@ -314,6 +323,8 @@ inline fun Nav(
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope.() -> Unit
 ) = TagElement<Attrs.Nav>(
-    "nav", applyAttrs = attrs,
-    applyStyle = style, content = content
+    tagName = "nav",
+    applyAttrs = attrs,
+    applyStyle = style,
+    content = content
 )

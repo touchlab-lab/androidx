@@ -18,7 +18,6 @@ package androidx.compose.web.attributes
 
 import org.w3c.dom.HTMLInputElement
 
-
 object Attrs {
     object Div
     object A
@@ -35,9 +34,7 @@ object Attrs {
     object Img
     object TextArea
     object Nav
-
 }
-
 
 /* Anchor <a> attributes */
 
@@ -270,7 +267,6 @@ fun AttrsBuilder<Attrs.OptGroup>.label(value: String) =
 
 fun AttrsBuilder<Attrs.OptGroup>.disabled(value: Boolean = true) =
     attr("disabled", value.toString())
-
 
 /* TextArea attributes */
 

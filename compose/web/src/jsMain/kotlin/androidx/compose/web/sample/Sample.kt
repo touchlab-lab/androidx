@@ -50,11 +50,11 @@ fun CounterApp(counter: MutableState<Int>) {
     Button(
         style = {
             cssText = """
-            color: ${if (counter.value % 2 == 0) "green" else "red"};
-            width: ${counter.value + 200}px;
-            font-size: ${if (counter.value % 2 == 0) "25px" else "30px"};
-            margin: 15px;
-        """.trimIndent().replace("\n", "")
+                color: ${if (counter.value % 2 == 0) "green" else "red"};
+                width: ${counter.value + 200}px;
+                font-size: ${if (counter.value % 2 == 0) "25px" else "30px"};
+                margin: 15px;
+            """.trimIndent().replace("\n", "")
         },
         attrs = {
             onClick { counter.value = counter.value + 1 }
@@ -64,18 +64,20 @@ fun CounterApp(counter: MutableState<Int>) {
     }
 }
 
-
 @Composable
 fun Counter(value: Int) {
-    Div(attrs = {
-        classes("counter")
-        id("counter")
-        draggable(Draggable.True)
-        attr("title", "This is a counter!")
-        onDrag { println("DRAGGING NOW!!!!") }
-    }, style = {
-        cssText = "color: red;"
-    }) {
+    Div(
+        attrs = {
+            classes("counter")
+            id("counter")
+            draggable(Draggable.True)
+            attr("title", "This is a counter!")
+            onDrag { println("DRAGGING NOW!!!!") }
+        },
+        style = {
+            cssText = "color: red;"
+        }
+    ) {
         Text("Counter = $value")
     }
 }
@@ -123,11 +125,14 @@ fun main() {
 @Composable
 fun MyInputComponent(text: State<String>, onChange: (String) -> Unit) {
     Div {
-        TextArea(value = text.value, attrs = {
-            onInput {
-                onChange(it.nativeEvent.target.asDynamic().value)
+        TextArea(
+            value = text.value,
+            attrs = {
+                onInput {
+                    onChange(it.nativeEvent.target.asDynamic().value)
+                }
             }
-        })
+        )
     }
 }
 

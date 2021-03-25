@@ -212,13 +212,14 @@ class DomNodeWrapper(val node: Node) {
     }
 
     companion object {
+
         val UpdateAttrs: DomNodeWrapper.(Map<String, String?>) -> Unit = {
             this.updateAttrs(it)
         }
         val UpdateListeners: DomNodeWrapper.(List<EventsListenerBuilder.EventListener>) -> Unit = {
             this.updateEventListeners(it)
         }
-        val UpdateProperties: DomNodeWrapper.(List<Pair<(HTMLElement, Any) -> Unit, Any>>) -> Unit = {
+        val UpdateProperties: DomNodePropertiesUpdater = {
             this.updateProperties(it)
         }
         val UpdateStyle: DomNodeWrapper.(String?) -> Unit = {
@@ -226,6 +227,9 @@ class DomNodeWrapper(val node: Node) {
         }
     }
 }
+
+typealias DomNodePropertiesUpdater =
+    DomNodeWrapper.(List<Pair<(HTMLElement, Any) -> Unit, Any>>) -> Unit
 
 @Composable
 fun Element(tagName: String, modifier: MppModifier = MppModifier, content: @Composable () -> Unit) {

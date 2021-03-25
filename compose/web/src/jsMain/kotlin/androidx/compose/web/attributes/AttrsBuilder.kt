@@ -55,7 +55,7 @@ class AttrsBuilder<T> : EventsListenerBuilder() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <E: HTMLElement, V: Any> prop(update: (E, V) -> Unit, value: V) {
+    fun <E : HTMLElement, V : Any> prop(update: (E, V) -> Unit, value: V) {
         propertyUpdates.add((update to value) as Pair<(HTMLElement, Any) -> Unit, Any>)
     }
 

@@ -88,23 +88,23 @@ sealed class ButtonFormTarget(val targetStr: String) {
     object Top : ButtonFormTarget("_top")
 }
 
-enum class ButtonFormMethod(val methodStr : String) {
+enum class ButtonFormMethod(val methodStr: String) {
     Get("get"), Post("post")
 }
 
-enum class ButtonFormEncType(val typeStr : String) {
+enum class ButtonFormEncType(val typeStr: String) {
     MultipartFormData("multipart/form-data"),
     ApplicationXWwwFormUrlEncoded("application/x-www-form-urlencoded"),
     TextPlain("text/plain")
 }
 
-enum class FormEncType(val typeStr : String) {
+enum class FormEncType(val typeStr: String) {
     MultipartFormData("multipart/form-data"),
     ApplicationXWwwFormUrlEncoded("application/x-www-form-urlencoded"),
     TextPlain("text/plain")
 }
 
-enum class FormMethod(val methodStr : String) {
+enum class FormMethod(val methodStr: String) {
     Get("get"),
     Post("post"),
     Dialog("dialog")
@@ -117,13 +117,13 @@ sealed class FormTarget(val targetStr: String) {
     object Top : FormTarget("_top")
 }
 
-enum class InputFormEncType(val typeStr : String) {
+enum class InputFormEncType(val typeStr: String) {
     MultipartFormData("multipart/form-data"),
     ApplicationXWwwFormUrlEncoded("application/x-www-form-urlencoded"),
     TextPlain("text/plain")
 }
 
-enum class InputFormMethod(val methodStr : String) {
+enum class InputFormMethod(val methodStr: String) {
     Get("get"),
     Post("post"),
     Dialog("dialog")
@@ -136,7 +136,7 @@ sealed class InputFormTarget(val targetStr: String) {
     object Top : InputFormTarget("_top")
 }
 
-enum class TextAreaWrap(val str : String) {
+enum class TextAreaWrap(val str: String) {
     Hard("hard"),
     Soft("soft"),
     Off("off")
