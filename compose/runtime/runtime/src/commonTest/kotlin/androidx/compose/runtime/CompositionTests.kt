@@ -2482,7 +2482,6 @@ class CompositionTests {
     @OptIn(ComposeCompilerApi::class)
     @Test
     fun testApplierBeginEndCallbacks() = compositionTest {
-        error("This doesn't compile for JS. Need to fix compiler plugin. the problem is with remember<RememberObserver>")
         val checks = mutableListOf<String>()
         compose {
             val myComposer = currentComposer
@@ -2503,31 +2502,31 @@ class CompositionTests {
             // expression in a unit lambda (the argument to `compose {}`). The remember lambda is in
             // turn interpreted as returning Unit, the object expression is dropped on the floor for
             // the gc, and Unit is written into the slot table.
-//            remember<RememberObserver> {
-//                object : RememberObserver {
-//                    override fun onRemembered() {
-//                        assertEquals(
-//                            1,
-//                            myApplier.onBeginChangesCalled,
-//                            "onBeginChanges during lifecycle observer"
-//                        )
-//                        assertEquals(
-//                            1,
-//                            myApplier.onEndChangesCalled,
-//                            "onEndChanges during lifecycle observer"
-//                        )
-//                        checks += "RememberObserver"
-//                    }
-//
-//                    override fun onForgotten() {
-//                        // Nothing to do
-//                    }
-//
-//                    override fun onAbandoned() {
-//                        // Nothing to do
-//                    }
-//                }
-//            }
+            remember<RememberObserver> {
+                object : RememberObserver {
+                    override fun onRemembered() {
+                        assertEquals(
+                            1,
+                            myApplier.onBeginChangesCalled,
+                            "onBeginChanges during lifecycle observer"
+                        )
+                        assertEquals(
+                            1,
+                            myApplier.onEndChangesCalled,
+                            "onEndChanges during lifecycle observer"
+                        )
+                        checks += "RememberObserver"
+                    }
+
+                    override fun onForgotten() {
+                        // Nothing to do
+                    }
+
+                    override fun onAbandoned() {
+                        // Nothing to do
+                    }
+                }
+            }
         }
         assertEquals(
             listOf(
