@@ -47,7 +47,8 @@ dependencies {
         testImplementation(KOTLIN_TEST_JUNIT)
         testImplementation(JUNIT)
         testImplementation(ROBOLECTRIC)
-        testImplementation(KOTLIN_COROUTINES_TEST)
+//        testImplementation(KOTLIN_COROUTINES_TEST)
+        testImplementation("org.jetbrains.kotlinx:atomicfu:0.14.4")
 
         androidTestImplementation(KOTLIN_TEST_JUNIT)
         androidTestImplementation(ANDROIDX_TEST_EXT_JUNIT)
@@ -65,6 +66,9 @@ if(AndroidXUiPlugin.isMultiplatformEnabled(project)) {
     kotlin {
         android()
         jvm("desktop")
+        js(IR) {
+            browser()
+        }
 
         /*
          * When updating dependencies, make sure to make the an an analogous update in the
@@ -90,10 +94,33 @@ if(AndroidXUiPlugin.isMultiplatformEnabled(project)) {
             desktopMain {
                 dependsOn(jvmMain)
             }
-
-            commonTest.dependencies {
-                implementation(kotlin("test-junit"))
-                implementation(KOTLIN_COROUTINES_TEST)
+            jsMain {
+                dependencies {
+                    implementation(kotlin("stdlib-js"))
+                }
+            }
+            commonTest {
+                dependencies {
+                    implementation(KOTLIN_TEST_JUNIT)
+                    implementation(KOTLIN_COROUTINES_CORE)
+                    implementation("org.jetbrains.kotlinx:atomicfu:0.14.4")
+                }
+            }
+            jvmTest {
+                dependsOn commonTest
+                dependencies {
+                    implementation kotlin("test-junit")
+//                    implementation(KOTLIN_COROUTINES_TEST)
+                }
+            }
+            desktopTest {
+                dependsOn jvmTest
+            }
+            androidTest {
+                dependsOn jvmTest
+            }
+            jsTest.dependencies {
+                implementation kotlin("test-js")
             }
             androidAndroidTest.dependencies {
                 implementation(ANDROIDX_TEST_EXT_JUNIT)

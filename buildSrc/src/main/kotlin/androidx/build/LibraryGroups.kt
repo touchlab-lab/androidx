@@ -111,6 +111,7 @@ object LibraryGroups {
         val FOUNDATION = LibraryGroup("$group.foundation", LibraryVersions.COMPOSE)
         val MATERIAL = LibraryGroup("$group.material", LibraryVersions.COMPOSE)
         val RUNTIME = LibraryGroup("$group.runtime", LibraryVersions.COMPOSE)
+        val WEB = LibraryGroup("$group.web", LibraryVersions.COMPOSE)
         val UI = LibraryGroup("$group.ui", LibraryVersions.COMPOSE)
     }
 }
