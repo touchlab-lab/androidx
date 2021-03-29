@@ -22,6 +22,7 @@ import androidx.compose.compiler.plugins.kotlin.lower.ModuleLoweringPass
 import org.jetbrains.kotlin.backend.common.ir.addChild
 import org.jetbrains.kotlin.backend.common.ir.copyParameterDeclarationsFrom
 import org.jetbrains.kotlin.backend.common.ir.copyTo
+import org.jetbrains.kotlin.backend.common.ir.copyTypeParametersFrom
 import org.jetbrains.kotlin.backend.common.ir.moveBodyTo
 import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -162,7 +163,7 @@ class CreateDecoysTransformer(
         newFunction.origin = IrDeclarationOrigin.DEFINED
 
         // here generic value parameters will be applied
-        newFunction.copyParameterDeclarationsFrom(original)
+        newFunction.copyTypeParametersFrom(original)
 
         // ..but we need to remap the return type as well
         newFunction.returnType = newFunction.returnType.remapTypeParameters(
@@ -170,17 +171,21 @@ class CreateDecoysTransformer(
             target = newFunction
         )
         // remove leading $ in params to avoid confusing other transforms
-        newFunction.valueParameters = newFunction.valueParameters.map {
+        newFunction.valueParameters = original.valueParameters.map {
             val name = dexSafeName(it.name).asString()
-            if (name.startsWith('$')) {
-                it.copyTo(
-                    newFunction,
-                    name = Name.identifier(name.dropWhile { it == '$' })
-                )
-            } else {
-                it
-            }
+            it.copyTo(
+                newFunction,
+                name = Name.identifier(
+                    if (name.startsWith('$')) name.dropWhile { it == '$' } else name
+                ),
+                defaultValue = it.defaultValue?.copyWithNewTypeParams(original, newFunction)
+            )
         }
+
+        newFunction.extensionReceiverParameter = original.extensionReceiverParameter
+            ?.copyTo(newFunction)
+        newFunction.dispatchReceiverParameter = original.dispatchReceiverParameter
+            ?.copyTo(newFunction)
 
         newFunction.body = original.moveBodyTo(newFunction)
             ?.copyWithNewTypeParams(original, newFunction)
