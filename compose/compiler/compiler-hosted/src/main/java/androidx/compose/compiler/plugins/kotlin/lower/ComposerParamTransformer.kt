@@ -21,6 +21,7 @@ import androidx.compose.compiler.plugins.kotlin.analysis.ComposeWritableSlices
 import androidx.compose.compiler.plugins.kotlin.hasComposableAnnotation
 import androidx.compose.compiler.plugins.kotlin.irTrace
 import androidx.compose.compiler.plugins.kotlin.isComposableCallable
+import androidx.compose.compiler.plugins.kotlin.lower.decoys.copyWithNewTypeParams
 import androidx.compose.compiler.plugins.kotlin.lower.decoys.isDecoy
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.ir.descriptors.WrappedPropertyGetterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.WrappedPropertySetterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
@@ -67,6 +69,7 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.createType
+import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
@@ -267,8 +270,16 @@ class ComposerParamTransformer(
         endOffset: Int = UNDEFINED_OFFSET
     ): IrExpression {
         val classSymbol = classOrNull
-        if (this !is IrSimpleType || hasQuestionMark || classSymbol?.owner?.isInline != true)
+        if (this !is IrSimpleType || hasQuestionMark || classSymbol?.owner?.isInline != true) {
+            if (isMarkedNullable()) {
+                return IrConstImpl.constNull(
+                    startOffset,
+                    endOffset,
+                    context.irBuiltIns.unitType
+                )
+            }
             return IrConstImpl.defaultValueForType(startOffset, endOffset, this)
+        }
 
         val klass = classSymbol.owner
         val ctor = classSymbol.constructors.first()
@@ -415,7 +426,11 @@ class ComposerParamTransformer(
                 // case in composable lambdas. The synthetic name that kotlin generates for
                 // anonymous parameters has an issue where it is not safe to dex, so we sanitize
                 // the names here to ensure that dex is always safe.
-                p.copyTo(fn, name = dexSafeName(p.name))
+                p.copyTo(
+                    irFunction = fn,
+                    name = dexSafeName(p.name),
+                    defaultValue = p.defaultValue?.copyWithNewTypeParams(this, fn)
+                )
             }
             fn.annotations = annotations.map { a -> a }
             fn.metadata = metadata
