@@ -16,9 +16,7 @@
 
 package androidx.compose.web
 
-import androidx.compose.web.attributes.EventsListenerBuilder
 import androidx.compose.web.events.EventModifier
-import androidx.compose.web.events.WrappedEventImpl
 import androidx.compose.runtime.AbstractApplier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
@@ -26,6 +24,7 @@ import androidx.compose.runtime.Composition
 import androidx.compose.runtime.ControlledComposition
 import androidx.compose.runtime.DefaultMonotonicFrameClock
 import androidx.compose.runtime.Recomposer
+import androidx.compose.web.attributes.WrappedEventListener
 import kotlinx.browser.document
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -35,7 +34,6 @@ import kotlinx.dom.clear
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
-import org.w3c.dom.events.EventListener
 import org.w3c.dom.get
 
 fun renderComposable(root: Element, content: @Composable () -> Unit): Composition {
@@ -87,8 +85,7 @@ class DomNodeWrapper(val node: Node) {
 
     private var currentModifier: MppModifier = MppModifier
 
-    private var currentListeners: List<Pair<EventsListenerBuilder.EventListener, EventListener>> =
-        emptyList()
+    private var currentListeners: List<WrappedEventListener<*>> = emptyList()
     private var currentAttrs: Map<String, String?> = emptyMap()
 
     private fun HTMLElement.updateInlineStyles(
@@ -106,19 +103,17 @@ class DomNodeWrapper(val node: Node) {
         list.forEach { it.first(htmlElement, it.second) }
     }
 
-    fun updateEventListeners(list: List<EventsListenerBuilder.EventListener>) {
+    fun updateEventListeners(list: List<WrappedEventListener<*>>) {
         val htmlElement = node as? HTMLElement ?: return
 
         currentListeners.forEach {
-            htmlElement.removeEventListener(it.first.event, it.second)
+            htmlElement.removeEventListener(it.event, it)
         }
 
-        currentListeners = list.map { l ->
-            l to EventListener { l.listener(WrappedEventImpl(it)) }
-        }
+        currentListeners = list
 
         currentListeners.forEach {
-            htmlElement.addEventListener(it.first.event, it.second)
+            htmlElement.addEventListener(it.event, it)
         }
     }
 
@@ -216,7 +211,7 @@ class DomNodeWrapper(val node: Node) {
         val UpdateAttrs: DomNodeWrapper.(Map<String, String?>) -> Unit = {
             this.updateAttrs(it)
         }
-        val UpdateListeners: DomNodeWrapper.(List<EventsListenerBuilder.EventListener>) -> Unit = {
+        val UpdateListeners: DomNodeWrapper.(List<WrappedEventListener<*>>) -> Unit = {
             this.updateEventListeners(it)
         }
         val UpdateProperties: DomNodePropertiesUpdater = {
