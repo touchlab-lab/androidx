@@ -31,6 +31,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.web.attributes.InputType
+import androidx.compose.web.attributes.name
+import androidx.compose.web.elements.Input
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -124,13 +127,64 @@ fun main() {
 
 @Composable
 fun MyInputComponent(text: State<String>, onChange: (String) -> Unit) {
+    Div(
+        style = {
+            cssText = "padding:50px;"
+        },
+        attrs = {
+            onTouchStart {
+                println("On touch start")
+            }
+            onTouchEnd {
+                println("On touch end")
+            }
+        }
+    ) {
+        Text("Test onMouseDown")
+    }
+
     Div {
         TextArea(
             value = text.value,
             attrs = {
-                onInput {
-                    onChange(it.nativeEvent.target.asDynamic().value)
+                onKeyDown {
+                    println("On keyDown key = : ${it.getNormalizedKey()}")
                 }
+                onTextInput {
+                    onChange(it.inputValue)
+                    println("On input = : ${it.nativeEvent.isComposing} - ${it.inputValue}")
+                }
+                onKeyUp {
+                    println("On keyUp key = : ${it.getNormalizedKey()}")
+                }
+            }
+        )
+    }
+    Div(attrs = {
+        onCheckboxInput {
+            println("From div - Checked: " + it.checked)
+        }
+    }) {
+        Input(type = InputType.Checkbox, attrs = {})
+        Input(value = "Hi, ")
+    }
+    Div {
+        Input(
+            type = InputType.Radio,
+            attrs = {
+                onRadioInput {
+                    println("Radio 1 - Checked: " + it.checked)
+                }
+                name("f1")
+            }
+        )
+        Input(
+            type = InputType.Radio,
+            attrs = {
+                onRadioInput {
+                    println("Radio 2 - Checked: " + it.checked)
+                }
+                name("f1")
             }
         )
     }
