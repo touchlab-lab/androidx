@@ -164,7 +164,9 @@ internal class RadioInputEventListener(
 internal class CheckBoxInputEventListener(
     options: Options,
     listener: (WrappedCheckBoxInputEvent) -> Unit
-) : WrappedEventListener<WrappedCheckBoxInputEvent>(EventsListenerBuilder.INPUT, options, listener) {
+) : WrappedEventListener<WrappedCheckBoxInputEvent>(
+    EventsListenerBuilder.INPUT, options, listener
+) {
     override fun handleEvent(event: Event) {
         val checked = event.target.asDynamic().checked as Boolean
         listener(WrappedCheckBoxInputEvent(event, checked))

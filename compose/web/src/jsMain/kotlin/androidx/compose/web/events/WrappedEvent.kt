@@ -17,14 +17,10 @@
 package androidx.compose.web.events
 
 import org.w3c.dom.DragEvent
-import org.w3c.dom.Element
-import org.w3c.dom.HTMLElement
-import org.w3c.dom.Text
 import org.w3c.dom.TouchEvent
 import org.w3c.dom.clipboard.ClipboardEvent
 import org.w3c.dom.events.CompositionEvent
 import org.w3c.dom.events.Event
-import org.w3c.dom.events.EventTarget
 import org.w3c.dom.events.FocusEvent
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent

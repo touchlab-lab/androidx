@@ -160,11 +160,13 @@ fun MyInputComponent(text: State<String>, onChange: (String) -> Unit) {
             }
         )
     }
-    Div(attrs = {
-        onCheckboxInput {
-            println("From div - Checked: " + it.checked)
+    Div(
+        attrs = {
+            onCheckboxInput {
+                println("From div - Checked: " + it.checked)
+            }
         }
-    }) {
+    ) {
         Input(type = InputType.Checkbox, attrs = {})
         Input(value = "Hi, ")
     }
