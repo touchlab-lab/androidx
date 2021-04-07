@@ -130,6 +130,7 @@ class SnapshotStateMapTests {
     }
 
     @Test
+    @kotlinx.test.IgnoreJsTarget
     fun validateEntriesIterator() {
         validateRead { map, normalMap ->
             for (entries in map.entries.zip(normalMap.entries)) {

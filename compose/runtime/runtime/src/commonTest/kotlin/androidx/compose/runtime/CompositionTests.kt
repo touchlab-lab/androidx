@@ -1496,6 +1496,7 @@ class CompositionTests {
     }
 
     @Test
+    @kotlinx.test.IgnoreJsTarget
     fun testRememberObserver_Forget_Simple() = compositionTest {
         val rememberObject = object : RememberObserver {
             var count = 0
@@ -1560,6 +1561,7 @@ class CompositionTests {
     }
 
     @Test
+    @kotlinx.test.IgnoreJsTarget
     fun testRemember_Forget_NoForgetOnRemember() = compositionTest {
         var expectedRemember = true
         var expectedForget = true
@@ -1942,6 +1944,7 @@ class CompositionTests {
     }
 
     @Test
+    @kotlinx.test.IgnoreJsTarget
     fun testCompoundKeyHashStaysTheSameAfterRecompositions() = compositionTest {
         val outerKeys = mutableListOf<Int>()
         val innerKeys = mutableListOf<Int>()
@@ -1992,6 +1995,7 @@ class CompositionTests {
     }
 
     @Test // b/152753046
+    @kotlinx.test.IgnoreJsTarget
     fun testSwappingGroups() = compositionTest {
         val items = mutableListOf(0, 1, 2, 3, 4)
         var scope: RecomposeScope? = null

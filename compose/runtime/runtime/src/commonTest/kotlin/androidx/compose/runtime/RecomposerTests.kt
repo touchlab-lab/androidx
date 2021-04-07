@@ -113,6 +113,7 @@ class RecomposerTests {
     }
 
     @Test
+    @kotlinx.test.IgnoreJsTarget
     fun testRecomposition() = compositionTest {
         val counter = Counter()
         val triggers = mapOf(

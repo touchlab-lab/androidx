@@ -51,6 +51,7 @@ class SnapshotFlowTests {
     }
 
     @Test
+    @kotlinx.test.IgnoreJsTarget
     fun coalesceChanges() = runBlockingTest {
         var state by mutableStateOf(1)
         var runCount = 0
