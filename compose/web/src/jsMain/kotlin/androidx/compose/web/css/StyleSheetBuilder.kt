@@ -18,18 +18,24 @@ package androidx.compose.web.css
 
 import androidx.compose.web.css.selectors.CSSSelector
 
-open class StyleSheetBuilder {
-    val cssRules: MutableCSSRuleDeclarationList = mutableListOf()
-
+interface CSSRulesHolder {
+    val cssRules: CSSRuleDeclarationList
+    fun add(cssRule: CSSRuleDeclaration)
     fun add(selector: CSSSelector, properties: StylePropertyList) {
-        cssRules.add(CSSRuleDeclaration(selector, properties))
+        add(CSSRuleDeclaration(selector, properties))
+    }
+}
+
+interface StyleSheetBuilder : CSSRulesHolder {
+    fun rule(selector: CSSSelector, cssRule: CSSRuleBuilder.() -> Unit) {
+        add(selector, buildCSSRule(cssRule))
     }
 
     operator fun CSSSelector.invoke(cssRule: CSSRuleBuilder.() -> Unit) {
         rule(this, cssRule)
     }
 
-    infix fun CSSSelector.with(cssRule: CSSRuleBuilder.() -> Unit) {
+    infix fun CSSSelector.style(cssRule: CSSRuleBuilder.() -> Unit) {
         rule(this, cssRule)
     }
 
@@ -37,11 +43,15 @@ open class StyleSheetBuilder {
         rule(CSSSelector.Raw(this), cssRule)
     }
 
-    infix fun String.with(cssRule: CSSRuleBuilder.() -> Unit) {
+    infix fun String.style(cssRule: CSSRuleBuilder.() -> Unit) {
         rule(CSSSelector.Raw(this), cssRule)
     }
+}
 
-    fun rule(selector: CSSSelector, cssRule: CSSRuleBuilder.() -> Unit) {
-        add(selector, buildCSSRule(cssRule))
+open class StyleSheetBuilderImpl : StyleSheetBuilder {
+    override val cssRules: MutableCSSRuleDeclarationList = mutableListOf()
+
+    override fun add(cssRule: CSSRuleDeclaration) {
+        cssRules.add(cssRule)
     }
 }

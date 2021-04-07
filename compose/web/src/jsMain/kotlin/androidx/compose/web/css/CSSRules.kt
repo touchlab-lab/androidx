@@ -24,12 +24,25 @@ import org.w3c.dom.css.CSSRule
 import org.w3c.dom.css.StyleSheet
 import kotlin.js.Promise
 
-open class CSSRuleBuilder : StyleBuilder()
+interface CSSRuleBuilder : StyleBuilder
+
+open class CSSRuleBuilderImpl : CSSRuleBuilder, StyleBuilderImpl()
 
 data class CSSRuleDeclaration(
     val selector: CSSSelector,
     val properties: StylePropertyList
-)
+) {
+    // StylePropertyValue is js native object without equals
+    override fun equals(other: Any?): Boolean {
+        return if (other is CSSRuleDeclaration) {
+            var index = 0
+            selector == other.selector && properties.all { prop ->
+                val otherProp = other.properties[index++]
+                prop.name == otherProp.name && prop.value.toString() == otherProp.value.toString()
+            }
+        } else false
+    }
+}
 
 typealias CSSRuleDeclarationList = List<CSSRuleDeclaration>
 typealias MutableCSSRuleDeclarationList = MutableList<CSSRuleDeclaration>
@@ -76,7 +89,7 @@ private fun setCSSRules(sheet: StyleSheet, cssRules: CSSRuleDeclarationList) {
 }
 
 fun buildCSSRule(cssRule: CSSRuleBuilder.() -> Unit): StylePropertyList {
-    val builder = CSSRuleBuilder()
+    val builder = CSSRuleBuilderImpl()
     builder.cssRule()
     return builder.properties
 }
