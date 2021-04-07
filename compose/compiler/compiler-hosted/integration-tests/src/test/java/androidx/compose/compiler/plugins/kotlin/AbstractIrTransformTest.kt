@@ -676,6 +676,7 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
             }
     }
 
+    // This interface enables different Compilation variants for compiler tests
     interface Compilation {
         val enabled: Boolean
         fun compile(files: List<KtFile>): IrModuleFragment

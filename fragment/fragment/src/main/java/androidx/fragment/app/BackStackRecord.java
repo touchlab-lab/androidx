@@ -36,6 +36,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
     boolean mCommitted;
     int mIndex = -1;
+    boolean mBeingSaved = false;
 
     @Override
     public String toString() {
@@ -280,6 +281,15 @@ final class BackStackRecord extends FragmentTransaction implements
         }
     }
 
+    void runOnExecuteRunnables() {
+        if (mExecuteRunnables != null) {
+            for (int i = 0; i < mExecuteRunnables.size(); i++) {
+                mExecuteRunnables.get(i).run();
+            }
+            mExecuteRunnables = null;
+        }
+    }
+
     public void runOnCommitRunnables() {
         if (mCommitRunnables != null) {
             for (int i = 0; i < mCommitRunnables.size(); i++) {
@@ -404,6 +414,7 @@ final class BackStackRecord extends FragmentTransaction implements
             final Op op = mOps.get(opNum);
             final Fragment f = op.mFragment;
             if (f != null) {
+                f.mBeingSaved = mBeingSaved;
                 f.setPopDirection(false);
                 f.setAnimations(op.mEnterAnim, op.mExitAnim, op.mPopEnterAnim, op.mPopExitAnim);
                 f.setNextTransition(mTransition);
@@ -467,6 +478,7 @@ final class BackStackRecord extends FragmentTransaction implements
             final Op op = mOps.get(opNum);
             Fragment f = op.mFragment;
             if (f != null) {
+                f.mBeingSaved = mBeingSaved;
                 f.setPopDirection(true);
                 f.setAnimations(op.mEnterAnim, op.mExitAnim, op.mPopEnterAnim, op.mPopExitAnim);
                 f.setNextTransition(FragmentManager.reverseTransit(mTransition));

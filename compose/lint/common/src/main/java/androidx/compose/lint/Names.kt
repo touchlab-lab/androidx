@@ -22,6 +22,9 @@ import kotlinx.metadata.ClassName
  * Contains common names used for lint checks.
  */
 object Names {
+    object Animation {
+        val PackageName = Package("androidx.compose.animation")
+    }
     object AnimationCore {
         val PackageName = Package("androidx.compose.animation.core")
     }
@@ -30,6 +33,7 @@ object Names {
 
         val Composable = Name(PackageName, "Composable")
         val CompositionLocal = Name(PackageName, "CompositionLocal")
+        val MutableState = Name(PackageName, "MutableState")
         val MutableStateOf = Name(PackageName, "mutableStateOf")
         val MutableStateListOf = Name(PackageName, "mutableStateListOf")
         val MutableStateMapOf = Name(PackageName, "mutableStateMapOf")
@@ -38,6 +42,10 @@ object Names {
     object Ui {
         val PackageName = Package("androidx.compose.ui")
         val Modifier = Name(PackageName, "Modifier")
+    }
+    object UiGraphics {
+        val PackageName = Package("androidx.compose.ui.graphics")
+        val Color = Name(PackageName, "Color")
     }
 }
 

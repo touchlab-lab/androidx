@@ -17,6 +17,8 @@
 package androidx.room.compiler.processing.util
 
 import androidx.room.compiler.processing.ExperimentalProcessingApi
+import androidx.room.compiler.processing.XProcessingStep
+import androidx.room.compiler.processing.XTypeElement
 import androidx.room.compiler.processing.util.runner.CompilationTestRunner
 import androidx.room.compiler.processing.util.runner.JavacCompilationTestRunner
 import androidx.room.compiler.processing.util.runner.KaptCompilationTestRunner
@@ -24,9 +26,12 @@ import androidx.room.compiler.processing.util.runner.KspCompilationTestRunner
 import androidx.room.compiler.processing.util.runner.TestCompilationParameters
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.google.devtools.ksp.processing.SymbolProcessor
 import com.tschuchort.compiletesting.KotlinCompilation
+import com.tschuchort.compiletesting.symbolProcessors
 import java.io.ByteArrayOutputStream
 import java.io.File
+import javax.annotation.processing.Processor
 
 @ExperimentalProcessingApi
 private fun runTests(
@@ -108,6 +113,46 @@ fun runProcessorTest(
     classpath: List<File> = emptyList(),
     handler: (XTestInvocation) -> Unit
 ) = runProcessorTest(sources = sources, classpath = classpath, handlers = listOf(handler))
+
+/**
+ * Runs the step created by [createProcessingStep] with ksp and one of javac or kapt, depending
+ * on whether input has kotlin sources.
+ *
+ * The step created by [createProcessingStep] will be invoked only for the first round.
+ *
+ * [onCompilationResult] will be called with a [CompilationResultSubject] after each compilation to
+ * assert the compilation result.
+ *
+ * By default, the compilation is expected to succeed. If it should fail, there must be an
+ * assertion on [onCompilationResult] which expects a failure (e.g. checking errors).
+ */
+@Suppress("VisibleForTests") // this is a test library
+@ExperimentalProcessingApi
+fun runProcessorTest(
+    sources: List<Source> = emptyList(),
+    classpath: List<File> = emptyList(),
+    createProcessingStep: () -> XProcessingStep,
+    onCompilationResult: (CompilationResultSubject) -> Unit
+) {
+    runProcessorTest(
+        sources = sources,
+        classpath = classpath
+    ) { invocation ->
+        val step = createProcessingStep()
+        val elements =
+            step.annotations()
+                .associateWith { annotation ->
+                    invocation.roundEnv.getElementsAnnotatedWith(annotation)
+                        .filterIsInstance<XTypeElement>()
+                        .toSet()
+                }
+        step.process(
+            env = invocation.processingEnv,
+            elementsByAnnotation = elements
+        )
+        invocation.assertCompilationResult(onCompilationResult)
+    }
+}
 
 /**
  * @see runProcessorTest
@@ -238,15 +283,22 @@ fun runKspTest(
 /**
  * Compiles the given set of sources into a temporary folder and returns the output classes
  * directory.
+ * @param sources The list of source files to compile
+ * @param annotationProcessors The list of Java annotation processors to run with compilation
+ * @param symbolProcessors The list of Kotlin symbol processors to run with compilation
  */
 fun compileFiles(
-    sources: List<Source>
+    sources: List<Source>,
+    annotationProcessors: List<Processor> = emptyList(),
+    symbolProcessors: List<SymbolProcessor> = emptyList()
 ): File {
     val outputStream = ByteArrayOutputStream()
     val compilation = KotlinCompilationUtil.prepareCompilation(
         sources = sources,
         outputStream = outputStream
     )
+    compilation.annotationProcessors = annotationProcessors
+    compilation.symbolProcessors = symbolProcessors
     val result = compilation.compile()
     check(result.exitCode == KotlinCompilation.ExitCode.OK) {
         "compilation failed: ${outputStream.toString(Charsets.UTF_8)}"

@@ -24,6 +24,7 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
@@ -680,6 +681,22 @@ public abstract class FragmentManager implements FragmentResultOwner {
     }
 
     /**
+     * Restores the back stack previously saved via {@link #saveBackStack(String)}. This
+     * will result in all of the transactions that made up that back stack to be re-executed,
+     * thus re-adding any fragments that were added through those transactions. All state of
+     * those fragments will be restored as part of this process.
+     * <p>
+     * This function is asynchronous -- it enqueues the
+     * request to restore, but the action will not be performed until the application
+     * returns to its event loop.
+     *
+     * @param name The name of the back stack previously saved by {@link #saveBackStack(String)}.
+     */
+    public void restoreBackStack(@NonNull String name) {
+        enqueueAction(new RestoreBackStackState(name), false);
+    }
+
+    /**
      * Save the back stack. While this functions similarly to
      * {@link #popBackStack(String, int)}, it <strong>does not</strong> throw away the
      * state of any fragments that were added through those transactions. Instead, the
@@ -1182,6 +1199,25 @@ public abstract class FragmentManager implements FragmentResultOwner {
                     + " is not currently in the FragmentManager"));
         }
         return fragmentStateManager.saveInstanceState();
+    }
+
+    private void clearBackStackStateViewModels() {
+        boolean shouldClear;
+        if (mHost instanceof ViewModelStoreOwner) {
+            shouldClear = mFragmentStore.getNonConfig().isCleared();
+        } else if (mHost.getContext() instanceof Activity) {
+            Activity activity = (Activity) mHost.getContext();
+            shouldClear = !activity.isChangingConfigurations();
+        } else {
+            shouldClear = true;
+        }
+        if (shouldClear) {
+            for (BackStackState backStackState : mBackStackStates.values()) {
+                for (String who : backStackState.mFragments) {
+                    mFragmentStore.getNonConfig().clearNonConfigState(who);
+                }
+            }
+        }
     }
 
     /**
@@ -2187,6 +2223,11 @@ public abstract class FragmentManager implements FragmentResultOwner {
         }
         executeOps(records, isRecordPop, startIndex, endIndex);
 
+        for (int recordNum = startIndex; recordNum < endIndex; recordNum++) {
+            final BackStackRecord record = records.get(recordNum);
+            record.runOnExecuteRunnables();
+        }
+
         if (USE_STATE_MANAGER) {
             // The last operation determines the overall direction, this ensures that operations
             // such as push, push, pop, push are correctly considered a push
@@ -2602,9 +2643,24 @@ public abstract class FragmentManager implements FragmentResultOwner {
         mBackStack.add(state);
     }
 
+    boolean restoreBackStackState(@NonNull ArrayList<BackStackRecord> records,
+            @NonNull ArrayList<Boolean> isRecordPop, @NonNull String name) {
+        BackStackState backStackState = mBackStackStates.get(name);
+        if (backStackState == null) {
+            return false;
+        }
+
+        List<BackStackRecord> backStackRecords = backStackState.instantiate(this);
+        for (BackStackRecord record : backStackRecords) {
+            records.add(record);
+            isRecordPop.add(false);
+        }
+        return true;
+    }
+
     boolean saveBackStackState(@NonNull ArrayList<BackStackRecord> records,
             @NonNull ArrayList<Boolean> isRecordPop, @NonNull String name) {
-        int index = findBackStackIndex(name, -1, true);
+        final int index = findBackStackIndex(name, -1, true);
         if (index < 0) {
             return false;
         }
@@ -2680,11 +2736,37 @@ public abstract class FragmentManager implements FragmentResultOwner {
         }
 
         // Now actually record each save
+        final ArrayList<String> fragments = new ArrayList<>();
+        for (Fragment f : allFragments) {
+            fragments.add(f.mWho);
+        }
+        final ArrayList<BackStackRecordState> backStackRecordStates =
+                new ArrayList<>(mBackStack.size() - index);
+        // Add placeholders for each BackStackRecordState
+        for (int i = index; i < mBackStack.size(); i++) {
+            backStackRecordStates.add(null);
+        }
+        final BackStackState backStackState = new BackStackState(
+                fragments, backStackRecordStates);
         for (int i = mBackStack.size() - 1; i >= index; i--) {
-            // TODO: Pre-process each BackStackRecord so that they actually save state
-            records.add(mBackStack.remove(i));
+            final BackStackRecord record = mBackStack.remove(i);
+            record.mBeingSaved = true;
+            // Get a callback when the BackStackRecord is actually finished
+            final int currentIndex = i;
+            record.addOnExecuteRunnable(new Runnable() {
+                @Override
+                public void run() {
+                    // First collapse the record to remove expanded ops and get it ready to save
+                    record.collapseOps();
+                    // Then save the state
+                    BackStackRecordState state = new BackStackRecordState(record);
+                    backStackRecordStates.set(currentIndex - index, state);
+                }
+            });
+            records.add(record);
             isRecordPop.add(true);
         }
+        mBackStackStates.put(name, backStackState);
         return true;
     }
 
@@ -2792,10 +2874,13 @@ public abstract class FragmentManager implements FragmentResultOwner {
         mStateSaved = true;
         mNonConfig.setIsStateSaved(true);
 
-        // First collect all active fragments.
-        ArrayList<FragmentState> active = mFragmentStore.saveActiveFragments();
+        // First save all active fragments.
+        ArrayList<String> active = mFragmentStore.saveActiveFragments();
 
-        if (active.isEmpty()) {
+        // And grab all FragmentState objects
+        ArrayList<FragmentState> savedState = mFragmentStore.getAllSavedState();
+
+        if (savedState.isEmpty()) {
             if (isLoggingEnabled(Log.VERBOSE)) Log.v(TAG, "saveAllState: no fragments!");
             return null;
         }
@@ -2820,6 +2905,7 @@ public abstract class FragmentManager implements FragmentResultOwner {
         }
 
         FragmentManagerState fms = new FragmentManagerState();
+        fms.mSavedState = savedState;
         fms.mActive = active;
         fms.mAdded = added;
         fms.mBackStack = backStack;
@@ -2849,12 +2935,17 @@ public abstract class FragmentManager implements FragmentResultOwner {
         // If there is no saved state at all, then there's nothing else to do
         if (state == null) return;
         FragmentManagerState fms = (FragmentManagerState) state;
-        if (fms.mActive == null) return;
+        if (fms.mSavedState == null) return;
+
+        // Restore the saved state of all fragments
+        mFragmentStore.restoreSaveState(fms.mSavedState);
 
         // Build the full list of active fragments, instantiating them from
         // their saved state.
         mFragmentStore.resetActiveFragments();
-        for (FragmentState fs : fms.mActive) {
+        for (String who : fms.mActive) {
+            // Retrieve any saved state, clearing it out for future calls
+            FragmentState fs = mFragmentStore.setSavedState(who, null);
             if (fs != null) {
                 FragmentStateManager fragmentStateManager;
                 Fragment retainedFragment = mNonConfig.findRetainedFragmentByWho(fs.mWho);
@@ -3254,6 +3345,7 @@ public abstract class FragmentManager implements FragmentResultOwner {
         mDestroyed = true;
         execPendingActions(true);
         endAnimatingAwayFragments();
+        clearBackStackStateViewModels();
         dispatchStateChange(Fragment.INITIALIZING);
         mHost = null;
         mContainer = null;
@@ -3712,6 +3804,21 @@ public abstract class FragmentManager implements FragmentResultOwner {
                 }
             }
             return popBackStackState(records, isRecordPop, mName, mId, mFlags);
+        }
+    }
+
+    private class RestoreBackStackState implements OpGenerator {
+
+        private final String mName;
+
+        RestoreBackStackState(@NonNull String name) {
+            mName = name;
+        }
+
+        @Override
+        public boolean generateOps(@NonNull ArrayList<BackStackRecord> records,
+                @NonNull ArrayList<Boolean> isRecordPop) {
+            return restoreBackStackState(records, isRecordPop, mName);
         }
     }
 

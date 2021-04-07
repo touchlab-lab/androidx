@@ -16,9 +16,12 @@
 
 package androidx.wear.watchface.style
 
+import androidx.wear.watchface.style.UserStyleSetting.BooleanUserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.CustomValueUserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.DoubleRangeUserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
+import androidx.wear.watchface.style.UserStyleSetting.LongRangeUserStyleSetting
+import androidx.wear.watchface.style.UserStyleSetting.Option
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
@@ -26,20 +29,20 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito
 
 @RunWith(StyleTestRunner::class)
-class CurrentUserStyleRepositoryTest {
+public class CurrentUserStyleRepositoryTest {
     private val redStyleOption =
-        ListUserStyleSetting.ListOption("red_style", "Red", icon = null)
+        ListUserStyleSetting.ListOption(Option.Id("red_style"), "Red", icon = null)
 
     private val greenStyleOption =
-        ListUserStyleSetting.ListOption("green_style", "Green", icon = null)
+        ListUserStyleSetting.ListOption(Option.Id("green_style"), "Green", icon = null)
 
     private val blueStyleOption =
-        ListUserStyleSetting.ListOption("bluestyle", "Blue", icon = null)
+        ListUserStyleSetting.ListOption(Option.Id("bluestyle"), "Blue", icon = null)
 
     private val colorStyleList = listOf(redStyleOption, greenStyleOption, blueStyleOption)
 
     private val colorStyleSetting = ListUserStyleSetting(
-        "color_style_setting",
+        UserStyleSetting.Id("color_style_setting"),
         "Colors",
         "Watchface colorization", /* icon = */
         null,
@@ -48,19 +51,19 @@ class CurrentUserStyleRepositoryTest {
     )
 
     private val classicStyleOption =
-        ListUserStyleSetting.ListOption("classic_style", "Classic", icon = null)
+        ListUserStyleSetting.ListOption(Option.Id("classic_style"), "Classic", icon = null)
 
     private val modernStyleOption =
-        ListUserStyleSetting.ListOption("modern_style", "Modern", icon = null)
+        ListUserStyleSetting.ListOption(Option.Id("modern_style"), "Modern", icon = null)
 
     private val gothicStyleOption =
-        ListUserStyleSetting.ListOption("gothic_style", "Gothic", icon = null)
+        ListUserStyleSetting.ListOption(Option.Id("gothic_style"), "Gothic", icon = null)
 
     private val watchHandStyleList =
         listOf(classicStyleOption, modernStyleOption, gothicStyleOption)
 
     private val watchHandStyleSetting = ListUserStyleSetting(
-        "hand_style_setting",
+        UserStyleSetting.Id("hand_style_setting"),
         "Hand Style",
         "Hand visual look", /* icon = */
         null,
@@ -69,7 +72,7 @@ class CurrentUserStyleRepositoryTest {
     )
     private val watchHandLengthStyleSetting =
         DoubleRangeUserStyleSetting(
-            "watch_hand_length_style_setting",
+            UserStyleSetting.Id("watch_hand_length_style_setting"),
             "Hand length",
             "Scale of watch hands",
             null,
@@ -94,13 +97,13 @@ class CurrentUserStyleRepositoryTest {
         )
 
     @Test
-    fun addUserStyleListener_firesImmediately() {
+    public fun addUserStyleListener_firesImmediately() {
         userStyleRepository.addUserStyleChangeListener(mockListener1)
         Mockito.verify(mockListener1).onUserStyleChanged(userStyleRepository.userStyle)
     }
 
     @Test
-    fun assigning_userStyle_firesListeners() {
+    public fun assigning_userStyle_firesListeners() {
         userStyleRepository.addUserStyleChangeListener(mockListener1)
         userStyleRepository.addUserStyleChangeListener(mockListener2)
         userStyleRepository.addUserStyleChangeListener(mockListener3)
@@ -127,7 +130,8 @@ class CurrentUserStyleRepositoryTest {
         Mockito.verify(mockListener3).onUserStyleChanged(userStyleRepository.userStyle)
     }
 
-    fun assigning_userStyle() {
+    @Test
+    public fun assigning_userStyle() {
         val newStyle = UserStyle(
             hashMapOf(
                 colorStyleSetting to greenStyleOption,
@@ -144,9 +148,9 @@ class CurrentUserStyleRepositoryTest {
     }
 
     @Test
-    fun assign_userStyle_with_distinctButMatchingRefs() {
+    public fun assign_userStyle_with_distinctButMatchingRefs() {
         val colorStyleSetting2 = ListUserStyleSetting(
-            "color_style_setting",
+            UserStyleSetting.Id("color_style_setting"),
             "Colors",
             "Watchface colorization", /* icon = */
             null,
@@ -154,7 +158,7 @@ class CurrentUserStyleRepositoryTest {
             listOf(Layer.BASE)
         )
         val watchHandStyleSetting2 = ListUserStyleSetting(
-            "hand_style_setting",
+            UserStyleSetting.Id("hand_style_setting"),
             "Hand Style",
             "Hand visual look", /* icon = */
             null,
@@ -178,7 +182,7 @@ class CurrentUserStyleRepositoryTest {
     }
 
     @Test
-    fun defaultValues() {
+    public fun defaultValues() {
         val watchHandLengthOption =
             userStyleRepository.userStyle.selectedOptions[watchHandLengthStyleSetting]!! as
                 DoubleRangeUserStyleSetting.DoubleRangeOption
@@ -186,51 +190,61 @@ class CurrentUserStyleRepositoryTest {
     }
 
     @Test
-    fun userStyle_mapConstructor() {
+    public fun userStyle_mapConstructor() {
         val userStyle = UserStyle(
-            mapOf(
-                "color_style_setting" to "bluestyle",
-                "hand_style_setting" to "gothic_style"
+            UserStyleData(
+                mapOf(
+                    "color_style_setting" to "bluestyle".encodeToByteArray(),
+                    "hand_style_setting" to "gothic_style".encodeToByteArray()
+                )
             ),
             userStyleRepository.schema
         )
 
-        assertThat(userStyle.selectedOptions[colorStyleSetting]!!.id).isEqualTo("bluestyle")
-        assertThat(userStyle.selectedOptions[watchHandStyleSetting]!!.id).isEqualTo("gothic_style")
+        assertThat(userStyle.selectedOptions[colorStyleSetting]!!.id.value.decodeToString())
+            .isEqualTo("bluestyle")
+        assertThat(userStyle.selectedOptions[watchHandStyleSetting]!!.id.value.decodeToString())
+            .isEqualTo("gothic_style")
     }
 
     @Test
-    fun userStyle_mapConstructor_badColorStyle() {
+    public fun userStyle_mapConstructor_badColorStyle() {
         val userStyle = UserStyle(
-            mapOf(
-                "color_style_setting" to "I DO NOT EXIST",
-                "hand_style_setting" to "gothic_style"
+            UserStyleData(
+                mapOf(
+                    "color_style_setting" to "I DO NOT EXIST".encodeToByteArray(),
+                    "hand_style_setting" to "gothic_style".encodeToByteArray()
+                )
             ),
             userStyleRepository.schema
         )
 
-        assertThat(userStyle.selectedOptions[colorStyleSetting]!!.id).isEqualTo("red_style")
-        assertThat(userStyle.selectedOptions[watchHandStyleSetting]!!.id).isEqualTo("gothic_style")
+        assertThat(userStyle.selectedOptions[colorStyleSetting]!!.id.value.decodeToString())
+            .isEqualTo("red_style")
+        assertThat(userStyle.selectedOptions[watchHandStyleSetting]!!.id.value.decodeToString())
+            .isEqualTo("gothic_style")
     }
 
     @Test
-    fun userStyle_mapConstructor_missingColorStyle() {
+    public fun userStyle_mapConstructor_missingColorStyle() {
         val userStyle = UserStyle(
-            mapOf(
-                "hand_style_setting" to "gothic_style"
+            UserStyleData(
+                mapOf("hand_style_setting" to "gothic_style".encodeToByteArray())
             ),
             userStyleRepository.schema
         )
 
-        assertThat(userStyle.selectedOptions[colorStyleSetting]!!.id).isEqualTo("red_style")
-        assertThat(userStyle.selectedOptions[watchHandStyleSetting]!!.id).isEqualTo("gothic_style")
+        assertThat(userStyle.selectedOptions[colorStyleSetting]!!.id.value.decodeToString())
+            .isEqualTo("red_style")
+        assertThat(userStyle.selectedOptions[watchHandStyleSetting]!!.id.value.decodeToString())
+            .isEqualTo("gothic_style")
     }
 
     @Test
-    fun userStyle_mapConstructor_customValueUserStyleSetting() {
+    public fun userStyle_mapConstructor_customValueUserStyleSetting() {
         val customStyleSetting = CustomValueUserStyleSetting(
             listOf(Layer.BASE),
-            "default"
+            "default".encodeToByteArray()
         )
 
         val userStyleRepository = CurrentUserStyleRepository(
@@ -240,26 +254,29 @@ class CurrentUserStyleRepositoryTest {
         )
 
         val userStyle = UserStyle(
-            mapOf(
-                CustomValueUserStyleSetting.CUSTOM_VALUE_USER_STYLE_SETTING_ID to "TEST 123"
+            UserStyleData(
+                mapOf(
+                    CustomValueUserStyleSetting.CUSTOM_VALUE_USER_STYLE_SETTING_ID
+                        to "TEST 123".encodeToByteArray()
+                )
             ),
             userStyleRepository.schema
         )
 
         val customValue = userStyle.selectedOptions[customStyleSetting]!! as
             UserStyleSetting.CustomValueUserStyleSetting.CustomValueOption
-        assertThat(customValue.customValue).isEqualTo("TEST 123")
+        assertThat(customValue.customValue.decodeToString()).isEqualTo("TEST 123")
     }
 
     @Test
-    fun userStyle_multiple_CustomValueUserStyleSettings_notAllowed() {
+    public fun userStyle_multiple_CustomValueUserStyleSettings_notAllowed() {
         val customStyleSetting1 = CustomValueUserStyleSetting(
             listOf(Layer.BASE),
-            "default"
+            "default".encodeToByteArray()
         )
         val customStyleSetting2 = CustomValueUserStyleSetting(
             listOf(Layer.BASE),
-            "default"
+            "default".encodeToByteArray()
         )
 
         try {
@@ -276,10 +293,10 @@ class CurrentUserStyleRepositoryTest {
     }
 
     @Test
-    fun setAndGetCustomStyleSetting() {
+    public fun setAndGetCustomStyleSetting() {
         val customStyleSetting = CustomValueUserStyleSetting(
             listOf(Layer.BASE),
-            "default"
+            "default".encodeToByteArray()
         )
 
         val userStyleRepository = CurrentUserStyleRepository(
@@ -289,11 +306,60 @@ class CurrentUserStyleRepositoryTest {
         )
 
         userStyleRepository.userStyle = UserStyle(
-            mapOf(customStyleSetting to CustomValueUserStyleSetting.CustomValueOption("test"))
+            mapOf(
+                customStyleSetting to
+                    CustomValueUserStyleSetting.CustomValueOption("test".encodeToByteArray())
+            )
         )
 
         assertThat(
-            userStyleRepository.userStyle[customStyleSetting]?.toCustomValueOption()!!.customValue
+            userStyleRepository.userStyle[
+                customStyleSetting
+            ]?.toCustomValueOption()!!.customValue.decodeToString()
+        ).isEqualTo("test")
+    }
+
+    @Test
+    public fun userStyleData_equals() {
+        assertThat(UserStyleData(mapOf("A" to "a".encodeToByteArray()))).isEqualTo(
+            UserStyleData(mapOf("A" to "a".encodeToByteArray()))
+        )
+
+        assertThat(
+            UserStyleData(mapOf("A" to "a".encodeToByteArray(), "B" to "b".encodeToByteArray()))
+        ).isEqualTo(
+            UserStyleData(mapOf("A" to "a".encodeToByteArray(), "B" to "b".encodeToByteArray()))
+        )
+
+        assertThat(UserStyleData(mapOf("A" to "a".encodeToByteArray()))).isNotEqualTo(
+            UserStyleData(mapOf("A" to "b".encodeToByteArray()))
+        )
+
+        assertThat(UserStyleData(mapOf("A" to "a".encodeToByteArray()))).isNotEqualTo(
+            UserStyleData(mapOf("B" to "a".encodeToByteArray()))
+        )
+
+        assertThat(UserStyleData(mapOf("A" to "a".encodeToByteArray()))).isNotEqualTo(
+            UserStyleData(mapOf("A" to "a".encodeToByteArray(), "B" to "b".encodeToByteArray()))
+        )
+
+        assertThat(
+            UserStyleData(mapOf("A" to "a".encodeToByteArray(), "B" to "b".encodeToByteArray()))
+        ).isNotEqualTo(UserStyleData(mapOf("A" to "a".encodeToByteArray())))
+    }
+
+    @Test
+    public fun optionIdToStringTest() {
+        assertThat(BooleanUserStyleSetting.BooleanOption(true).toString()).isEqualTo("true")
+        assertThat(BooleanUserStyleSetting.BooleanOption(false).toString()).isEqualTo("false")
+        assertThat(gothicStyleOption.toString()).isEqualTo("gothic_style")
+        assertThat(DoubleRangeUserStyleSetting.DoubleRangeOption(12.3).toString())
+            .isEqualTo("12.3")
+        assertThat(LongRangeUserStyleSetting.LongRangeOption(123).toString())
+            .isEqualTo("123")
+        assertThat(
+            CustomValueUserStyleSetting.CustomValueOption("test".encodeToByteArray())
+                .toString()
         ).isEqualTo("test")
     }
 }

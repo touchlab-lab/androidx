@@ -26,6 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.car.app.Screen;
 import androidx.car.app.SurfaceCallback;
+import androidx.car.app.annotations.CarProtocol;
 import androidx.car.app.model.Action;
 import androidx.car.app.model.ActionStrip;
 import androidx.car.app.model.CarColor;
@@ -64,6 +65,7 @@ import java.util.Objects;
  * <p>In order to use this template your car app <b>MUST</b> declare that it uses the {@code
  * androidx.car.app.NAVIGATION_TEMPLATES} permission in the manifest.
  */
+@CarProtocol
 public final class NavigationTemplate implements Template {
 
     /**
@@ -208,7 +210,8 @@ public final class NavigationTemplate implements Template {
          * Sets the {@link TravelEstimate} to the final destination.
          *
          * @throws IllegalArgumentException if the {@link TravelEstimate}'s remaining time is
-         *                                  less than zero
+         *                                  {@link TravelEstimate#REMAINING_TIME_UNKNOWN} or less
+         *                                  than zero
          * @throws NullPointerException     if {@code destinationTravelEstimate} is {@code null}
          */
         @NonNull

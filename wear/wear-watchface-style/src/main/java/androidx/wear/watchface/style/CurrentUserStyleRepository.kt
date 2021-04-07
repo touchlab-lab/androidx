@@ -24,7 +24,9 @@ import androidx.wear.watchface.style.data.UserStyleWireFormat
 
 /**
  * The users style choices represented as a map of [UserStyleSetting] to
- * [UserStyleSetting.Option].
+ * [UserStyleSetting.Option]. This is intended for use by the WatchFace and the [selectedOptions]
+ * map keys are the same objects as in the [UserStyleSchema]. This means you can't serialize a
+ * UserStyle directly, instead you need to use a [UserStyleData] (see [toUserStyleData]).
  *
  * @param selectedOptions The [UserStyleSetting.Option] selected for each [UserStyleSetting]
  */
@@ -39,22 +41,21 @@ public class UserStyle(
     public constructor(userStyle: UserStyle) : this(HashMap(userStyle.selectedOptions))
 
     /**
-     * Constructs a [UserStyle] from a Map<String, String> and the [UserStyleSchema]. Unrecognized
+     * Constructs a [UserStyle] from a [UserStyleData] and the [UserStyleSchema]. Unrecognized
      * style settings will be ignored. Unlisted style settings will be initialized with that
      * settings default option.
      *
-     * @param userStyle The [UserStyle] represented as a Map<String, String> of
-     *     [UserStyleSetting.id] to [UserStyleSetting.Option.id]
-     * @param styleSchema The [UserStyleSchema] for this UserStyle, describes how we interpret
+     * @param userStyle The [UserStyle] represented as a [UserStyleData].
+     * @param styleSchema The  for this UserStyle, describes how we interpret
      *     [userStyle].
      */
     public constructor(
-        userStyle: Map<String, String>,
+        userStyle: UserStyleData,
         styleSchema: UserStyleSchema
     ) : this(
         HashMap<UserStyleSetting, UserStyleSetting.Option>().apply {
             for (styleSetting in styleSchema.userStyleSettings) {
-                val option = userStyle[styleSetting.id]
+                val option = userStyle.userStyleMap[styleSetting.id.value]
                 if (option != null) {
                     this[styleSetting] = styleSetting.getSettingOptionForId(option)
                 } else {
@@ -66,19 +67,14 @@ public class UserStyle(
 
     /** @hide */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP_PREFIX)
-    public constructor(
-        userStyle: UserStyleWireFormat,
-        styleSchema: UserStyleSchema
-    ) : this(userStyle.mUserStyle, styleSchema)
+    public fun toWireFormat(): UserStyleWireFormat = UserStyleWireFormat(toMap())
 
-    /** @hide */
-    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP_PREFIX)
-    public fun toWireFormat(): UserStyleWireFormat =
-        UserStyleWireFormat(toMap())
+    /** Returns the style as a [UserStyleData]. */
+    public fun toUserStyleData(): UserStyleData = UserStyleData(toMap())
 
-    /** Returns the style as a Map<String, String>. */
-    public fun toMap(): Map<String, String> =
-        selectedOptions.entries.associate { it.key.id to it.value.id }
+    /** Returns the style as a [Map]<[String], [ByteArray]>. */
+    private fun toMap(): Map<String, ByteArray> =
+        selectedOptions.entries.associate { it.key.id.value to it.value.id.value }
 
     /** Returns the [UserStyleSetting.Option] for [setting] if there is one or `null` otherwise. */
     public operator fun get(setting: UserStyleSetting): UserStyleSetting.Option? =
@@ -86,8 +82,60 @@ public class UserStyle(
 
     override fun toString(): String =
         "[" + selectedOptions.entries.joinToString(
-            transform = { it.key.id + " -> " + it.value.id }
+            transform = { "${it.key.id} -> ${it.value}" }
         ) + "]"
+}
+
+/**
+ * A form of [UserStyle] which is easy to serialize. This is intended for use by the watch face
+ * clients and the editor where we can't practically use [UserStyle] due to it's limitations.
+ */
+public class UserStyleData(
+    public val userStyleMap: Map<String, ByteArray>
+) {
+    /** @hide */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP_PREFIX)
+    public constructor(
+        userStyle: UserStyleWireFormat
+    ) : this(userStyle.mUserStyle)
+
+    override fun toString(): String = "{" + userStyleMap.entries.joinToString(
+        transform = {
+            try {
+                it.key + "=" + it.value.decodeToString()
+            } catch (e: Exception) {
+                it.key + "=" + it.value
+            }
+        }
+    ) + "}"
+
+    /** @hide */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP_PREFIX)
+    public fun toWireFormat(): UserStyleWireFormat = UserStyleWireFormat(userStyleMap)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as UserStyleData
+
+        // Check if references are the same.
+        if (userStyleMap == other.userStyleMap) return true
+
+        // Check if contents are the same.
+        if (userStyleMap.size != other.userStyleMap.size) return false
+
+        for ((key, value) in userStyleMap) {
+            val otherValue = other.userStyleMap[key] ?: return false
+            if (!otherValue.contentEquals(value)) return false
+        }
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return userStyleMap.hashCode()
+    }
 }
 
 /**
@@ -150,7 +198,7 @@ public class CurrentUserStyleRepository(
 
     private val styleListeners = HashSet<UserStyleChangeListener>()
 
-    private val idToStyleSetting = schema.userStyleSettings.associateBy { it.id }
+    private val idToStyleSetting = schema.userStyleSettings.associateBy { it.id.value }
 
     /**
      * The current [UserStyle]. Assigning to this property triggers immediate
@@ -172,9 +220,9 @@ public class CurrentUserStyleRepository(
                 field.selectedOptions as HashMap<UserStyleSetting, UserStyleSetting.Option>
             for ((setting, option) in style.selectedOptions) {
                 // Ignore an unrecognized setting.
-                val localSetting = idToStyleSetting[setting.id] ?: continue
+                val localSetting = idToStyleSetting[setting.id.value] ?: continue
                 val styleSetting = field.selectedOptions[localSetting] ?: continue
-                if (styleSetting.id != option.id) {
+                if (styleSetting.id.value != option.id.value) {
                     changed = true
                 }
                 hashmap[localSetting] = option

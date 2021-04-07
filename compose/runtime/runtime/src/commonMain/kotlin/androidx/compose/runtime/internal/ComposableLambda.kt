@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("UNCHECKED_CAST")
 @file:OptIn(InternalComposeApi::class)
 package androidx.compose.runtime.internal
 

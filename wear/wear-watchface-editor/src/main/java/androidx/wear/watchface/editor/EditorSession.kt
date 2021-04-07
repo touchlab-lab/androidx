@@ -56,16 +56,17 @@ import androidx.wear.watchface.data.IdAndComplicationDataWireFormat
 import androidx.wear.watchface.editor.data.EditorStateWireFormat
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSchema
+import androidx.wear.watchface.style.UserStyleData
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Interface for manipulating watch face state during an editing session for a watch face editing
- * session. The editor should adjust [userStyle] and call [launchComplicationProviderChooser] to
+ * session. The editor should adjust [userStyle] and call [openComplicationProviderChooser] to
  * configure the watch face and call [close] when done. This reports the updated [EditorState] to
  * the [EditorListener]s registered via [EditorServiceClient.addListener].
  */
@@ -118,7 +119,7 @@ public abstract class EditorSession : AutoCloseable {
      * the watch face. Note if a slot is configured to be empty then it will not appear in the map,
      * however disabled complications are included. Note also unlike live data this is static per
      * provider, but it may update (on the UiThread) as a result of
-     * [launchComplicationProviderChooser].
+     * [openComplicationProviderChooser].
      */
     @UiThread
     public abstract suspend fun getComplicationsPreviewData(): Map<Int, ComplicationData>
@@ -147,12 +148,12 @@ public abstract class EditorSession : AutoCloseable {
     ): Bitmap
 
     /**
-     * Launches the complication provider chooser and returns `true` if the user made a selection or
+     * Opens the complication provider chooser and returns `true` if the user made a selection or
      * `false` if the activity was canceled. If the complication provider was changed then the map
      * returned by [getComplicationsPreviewData] is updated (on the UiThread).
      */
     @UiThread
-    public abstract suspend fun launchComplicationProviderChooser(complicationId: Int): Boolean
+    public abstract suspend fun openComplicationProviderChooser(complicationId: Int): Boolean
 
     public companion object {
         /**
@@ -168,10 +169,10 @@ public abstract class EditorSession : AutoCloseable {
         @SuppressWarnings("ExecutorRegistration")
         @JvmStatic
         @UiThread
-        public fun createOnWatchEditingSessionAsync(
+        public suspend fun createOnWatchEditingSession(
             activity: ComponentActivity,
             editIntent: Intent
-        ): Deferred<EditorSession?> = createOnWatchEditingSessionAsyncImpl(
+        ): EditorSession? = createOnWatchEditingSessionImpl(
             activity,
             editIntent,
             object : ProviderInfoRetrieverProvider {
@@ -180,11 +181,11 @@ public abstract class EditorSession : AutoCloseable {
         )
 
         // Used by tests.
-        internal fun createOnWatchEditingSessionAsyncImpl(
+        internal suspend fun createOnWatchEditingSessionImpl(
             activity: ComponentActivity,
             editIntent: Intent,
             providerInfoRetrieverProvider: ProviderInfoRetrieverProvider
-        ): Deferred<EditorSession?> = TraceEvent(
+        ): EditorSession? = TraceEvent(
             "EditorSession.createOnWatchEditingSessionAsyncImpl"
         ).use {
             val coroutineScope =
@@ -202,17 +203,18 @@ public abstract class EditorSession : AutoCloseable {
 
                 // But full initialization has to be deferred because
                 // [WatchFace.getOrCreateEditorDelegate] is async.
-                coroutineScope.async {
+                // Resolve only after init has been completed.
+                withContext(coroutineScope.coroutineContext) {
                     session.setEditorDelegate(
                         WatchFace.getOrCreateEditorDelegate(
                             editorRequest.watchFaceComponentName
                         ).await()!!
                     )
 
-                    // Resolve the Deferred<EditorSession?> only after init has been completed.
+                    // Resolve only after init has been completed.
                     session
                 }
-            } ?: CompletableDeferred(null)
+            }
         }
 
         /**
@@ -317,7 +319,7 @@ public abstract class BaseEditorSession internal constructor(
             }
         }
 
-    override suspend fun launchComplicationProviderChooser(
+    override suspend fun openComplicationProviderChooser(
         complicationId: Int
     ): Boolean = TraceEvent(
         "BaseEditorSession.launchComplicationProviderChooser $complicationId"
@@ -479,7 +481,7 @@ internal class OnWatchFaceEditorSessionImpl(
     activity: ComponentActivity,
     override val watchFaceComponentName: ComponentName,
     override val watchFaceId: WatchFaceId,
-    private val initialEditorUserStyle: Map<String, String>?,
+    private val initialEditorUserStyle: UserStyleData?,
     providerInfoRetrieverProvider: ProviderInfoRetrieverProvider,
     coroutineScope: CoroutineScope
 ) : BaseEditorSession(activity, providerInfoRetrieverProvider, coroutineScope) {
@@ -574,7 +576,7 @@ internal class HeadlessEditorSession(
     private val headlessWatchFaceClient: HeadlessWatchFaceClient,
     override val watchFaceComponentName: ComponentName,
     override val watchFaceId: WatchFaceId,
-    initialUserStyle: Map<String, String>,
+    initialUserStyle: UserStyleData,
     providerInfoRetrieverProvider: ProviderInfoRetrieverProvider,
     coroutineScope: CoroutineScope,
 ) : BaseEditorSession(activity, providerInfoRetrieverProvider, coroutineScope) {

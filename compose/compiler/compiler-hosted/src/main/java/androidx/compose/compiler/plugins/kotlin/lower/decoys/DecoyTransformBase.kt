@@ -24,11 +24,11 @@ import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
 import org.jetbrains.kotlin.backend.common.serialization.KotlinIrLinker
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData.SymbolKind.FUNCTION_SYMBOL
+import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureSerializer
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -45,18 +45,28 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
-import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.IdSignature
-import org.jetbrains.kotlin.ir.util.SymbolRemapper
 import org.jetbrains.kotlin.ir.util.TypeRemapper
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.module
-import org.jetbrains.kotlin.ir.util.withinScope
 
 internal interface DecoyTransformBase {
     val context: IrPluginContext
+    val signatureBuilder: IdSignatureSerializer
+
+    fun IrFunction.getSignatureId(): Long {
+        val signature = symbol.signature
+            ?: signatureBuilder.composeSignatureForDeclaration(this)
+
+        return when (signature) {
+            is IdSignature.PublicSignature -> signature.id!!
+            is IdSignature.AccessorSignature -> signature.accessorSignature.id!!
+            is IdSignature.FileLocalSignature -> signature.id
+            is IdSignature.ScopeLocalDeclaration -> signature.id.toLong()
+        }
+    }
 
     fun irVarargString(valueArguments: List<String>): IrExpression {
         val stringArrayType = IrSimpleTypeImpl(
@@ -77,10 +87,12 @@ internal interface DecoyTransformBase {
     @OptIn(ObsoleteDescriptorBasedAPI::class)
     fun IrFunction.getComposableForDecoy(): IrFunctionSymbol {
         val implementationName = getDecoyTargetName()
+        val signatureId = getSignatureId()
         val implementation = (parent as? IrDeclarationContainer)?.declarations
             ?.filterIsInstance<IrFunction>()
             ?.firstOrNull {
-                it.getDecoyImplementationName() == implementationName
+                it.getDecoyImplementationName() == implementationName &&
+                    it.getDecoyImplementationId() == signatureId
             }
 
         if (implementation != null) {
@@ -120,6 +132,15 @@ internal interface DecoyTransformBase {
 
         @Suppress("UNCHECKED_CAST")
         val decoyImplName = annotation.getValueArgument(0) as IrConst<String>
+
+        return decoyImplName.value
+    }
+
+    fun IrFunction.getDecoyImplementationId(): Long? {
+        val annotation = getAnnotation(DecoyFqNames.DecoyImplementation) ?: return null
+
+        @Suppress("UNCHECKED_CAST")
+        val decoyImplName = annotation.getValueArgument(1) as IrConst<Long>
 
         return decoyImplName.value
     }
@@ -166,12 +187,14 @@ internal interface DecoyTransformBase {
 fun IrDeclaration.isDecoy(): Boolean =
     hasAnnotationSafe(DecoyFqNames.Decoy)
 
-inline fun <reified T : IrElement> T.copyWithNewTypeParams(source: IrFunction, target: IrFunction): T {
-    val copier : (SymbolRemapper, TypeRemapper) -> DeepCopyIrTreeWithSymbols = { symbolRemapper, typeRemapper ->
+inline fun <reified T : IrElement> T.copyWithNewTypeParams(
+    source: IrFunction,
+    target: IrFunction
+): T {
+    return deepCopyWithSymbols(target) { symbolRemapper, typeRemapper ->
         val typeParamRemapper = object : TypeRemapper by typeRemapper {
             override fun remapType(type: IrType): IrType {
-                val t = type.remapTypeParameters(source, target)
-                return typeRemapper.remapType(t)
+                return typeRemapper.remapType(type.remapTypeParameters(source, target))
             }
         }
 
@@ -179,6 +202,4 @@ inline fun <reified T : IrElement> T.copyWithNewTypeParams(source: IrFunction, t
         (typeRemapper as? DeepCopyTypeRemapper)?.deepCopy = deepCopy
         deepCopy
     }
-
-    return deepCopyWithSymbols(target, copier)
 }

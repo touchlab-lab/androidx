@@ -575,7 +575,7 @@ object ProcessorErrors {
     val MISSING_ROOM_COROUTINE_ARTIFACT = "To use Coroutine features, you must add `ktx`" +
         " artifact from Room as a dependency. androidx.room:room-ktx:<version>"
 
-    fun ambigiousConstructor(
+    fun ambiguousConstructor(
         pojo: String,
         paramName: String,
         matchingFields: List<String>
@@ -864,4 +864,9 @@ object ProcessorErrors {
 
     val AUTO_MIGRATION_FOUND_BUT_EXPORT_SCHEMA_OFF = "Cannot create auto-migrations when export " +
         "schema is OFF."
+
+    fun tableWithNewTablePrefixFound(tableName: String): String {
+        return "The new version of the schema contains `$tableName` a table name" +
+            " with the prefix '_new_', which is causing a conflict during autoMigration."
+    }
 }

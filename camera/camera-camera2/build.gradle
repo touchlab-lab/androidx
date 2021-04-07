@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import static androidx.build.dependencies.DependenciesKt.*
-import androidx.build.LibraryVersions
+
 import androidx.build.LibraryGroups
 import androidx.build.Publish
+
+import static androidx.build.dependencies.DependenciesKt.*
 
 plugins {
     id("AndroidXPlugin")
@@ -27,10 +28,8 @@ plugins {
 
 dependencies {
     api(project(":camera:camera-core"))
-
-    implementation("androidx.core:core:1.1.0")
     api("androidx.annotation:annotation:1.0.0")
-    api("androidx.annotation:annotation-experimental:1.0.0-rc01")
+    implementation("androidx.core:core:1.1.0")
     implementation("androidx.concurrent:concurrent-futures:1.0.0")
     implementation(GUAVA_LISTENABLE_FUTURE)
     implementation(AUTO_VALUE_ANNOTATIONS)
@@ -47,6 +46,7 @@ dependencies {
     testImplementation(project(":annotation:annotation-experimental"))
     testImplementation(project(":lifecycle:lifecycle-runtime-testing"))
     testImplementation(project(":camera:camera-testing"))
+    testImplementation("androidx.arch.core:core-testing:2.1.0")
 
     androidTestImplementation(ANDROIDX_TEST_EXT_JUNIT)
     androidTestImplementation(ANDROIDX_TEST_CORE)

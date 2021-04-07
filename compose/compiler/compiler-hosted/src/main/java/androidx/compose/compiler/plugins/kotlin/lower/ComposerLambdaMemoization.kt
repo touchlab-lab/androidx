@@ -79,6 +79,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
+import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isLocal
@@ -90,6 +91,7 @@ import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -271,6 +273,8 @@ class ComposerLambdaMemoization(
         val filePath = declaration.fileEntry.name
         val fileName = filePath.split('/').last()
         val current = context.irFactory.buildClass {
+            startOffset = SYNTHETIC_OFFSET
+            endOffset = SYNTHETIC_OFFSET
             kind = ClassKind.OBJECT
             visibility = DescriptorVisibilities.INTERNAL
             val shortName = PackagePartClassUtils.getFilePartShortName(fileName)
@@ -560,11 +564,12 @@ class ComposerLambdaMemoization(
             visibility = DescriptorVisibilities.INTERNAL
         }.also { p ->
             p.backingField = context.irFactory.buildField {
+                startOffset = SYNTHETIC_OFFSET
+                endOffset = SYNTHETIC_OFFSET
                 name = Name.identifier(lambdaName)
                 type = lambdaType
                 visibility = DescriptorVisibilities.INTERNAL
-                origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
-                isStatic = !context.platform.isJs() // todo(KT-44943): JS doesn't have static fields
+                isStatic = context.platform.isJvm()
             }.also { f ->
                 f.correspondingPropertySymbol = p.symbol
                 f.parent = clazz
@@ -703,6 +708,12 @@ class ComposerLambdaMemoization(
         return if (!isJs) {
             composableLambdaExpression
         } else {
+            /*
+             * JS doesn't have ability to extend FunctionN types, therefore the lambda call must be
+             * transformed into composableLambda(...)::invoke. It loses some of the optimizations
+             * related to skipping updates that way, but still ensures correct handling of
+             * lambdas.
+             */
             val realArgumentCount = argumentCount +
                 if (function.extensionReceiverParameter != null) 1 else 0
 

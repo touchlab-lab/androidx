@@ -23,11 +23,14 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RawQuery
+import androidx.room.compiler.processing.util.runProcessorTest
+import androidx.room.compiler.processing.XTypeElement
 import androidx.room.ext.PagingTypeNames
 import androidx.room.ext.SupportDbTypeNames
 import androidx.room.processor.ProcessorErrors.RAW_QUERY_STRING_PARAMETER_REMOVED
 import androidx.room.testing.TestInvocation
 import androidx.room.testing.TestProcessor
+import androidx.room.testing.context
 import androidx.room.vo.RawQueryMethod
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.google.common.truth.Truth
@@ -40,7 +43,6 @@ import com.squareup.javapoet.TypeName
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
-import simpleRun
 
 class RawQueryMethodProcessorTest {
     @Test
@@ -213,7 +215,7 @@ class RawQueryMethodProcessorTest {
 
     @Test
     fun suspendUnit() {
-        simpleRun { invocation ->
+        runProcessorTest { invocation ->
             val daoElement =
                 invocation.processingEnv.requireTypeElement(RawQuerySuspendUnitDao::class)
             val daoFunctionElement = daoElement.getDeclaredMethods().first()
@@ -222,9 +224,10 @@ class RawQueryMethodProcessorTest {
                 containing = daoElement.type,
                 executableElement = daoFunctionElement
             ).process()
-        }.failsToCompile().withErrorContaining(
-            ProcessorErrors.RAW_QUERY_BAD_RETURN_TYPE
-        )
+            invocation.assertCompilationResult {
+                hasErrorContaining(ProcessorErrors.RAW_QUERY_BAD_RETURN_TYPE)
+            }
+        }
     }
 
     @Test
@@ -343,7 +346,8 @@ class RawQueryMethodProcessorTest {
                     )
                     .nextRunHandler { invocation ->
                         val (owner, methods) = invocation.roundEnv
-                            .getTypeElementsAnnotatedWith(Dao::class.qualifiedName!!)
+                            .getElementsAnnotatedWith(Dao::class.qualifiedName!!)
+                            .filterIsInstance<XTypeElement>()
                             .map {
                                 Pair(
                                     it,

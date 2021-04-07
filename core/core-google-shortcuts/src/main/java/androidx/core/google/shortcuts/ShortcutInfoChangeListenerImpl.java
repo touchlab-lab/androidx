@@ -24,6 +24,7 @@ import static androidx.core.google.shortcuts.ShortcutUtils.SHORTCUT_LABEL_KEY;
 import static androidx.core.google.shortcuts.ShortcutUtils.SHORTCUT_URL_KEY;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +34,7 @@ import androidx.core.content.pm.ShortcutInfoChangeListener;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.graphics.drawable.IconCompat;
 
+import com.google.crypto.tink.KeysetHandle;
 import com.google.firebase.appindexing.Action;
 import com.google.firebase.appindexing.FirebaseAppIndex;
 import com.google.firebase.appindexing.FirebaseUserActions;
@@ -50,9 +52,12 @@ import java.util.List;
  */
 @RestrictTo(LIBRARY_GROUP)
 public class ShortcutInfoChangeListenerImpl extends ShortcutInfoChangeListener {
+    private static final String TAG = "ShortcutInfoChangeListe";
+
     private final Context mContext;
     private final FirebaseAppIndex mFirebaseAppIndex;
     private final FirebaseUserActions mFirebaseUserActions;
+    @Nullable private final KeysetHandle mKeysetHandle;
 
     /**
      * Create an instance of {@link ShortcutInfoChangeListenerImpl}.
@@ -63,15 +68,17 @@ public class ShortcutInfoChangeListenerImpl extends ShortcutInfoChangeListener {
     @NonNull
     public static ShortcutInfoChangeListenerImpl getInstance(@NonNull Context context) {
         return new ShortcutInfoChangeListenerImpl(context, FirebaseAppIndex.getInstance(context),
-                FirebaseUserActions.getInstance(context));
+                FirebaseUserActions.getInstance(context),
+                ShortcutUtils.getOrCreateShortcutKeysetHandle(context));
     }
 
     @VisibleForTesting
     ShortcutInfoChangeListenerImpl(Context context, FirebaseAppIndex firebaseAppIndex,
-            FirebaseUserActions firebaseUserActions) {
+            FirebaseUserActions firebaseUserActions, @Nullable KeysetHandle keysetHandle) {
         mContext = context;
         mFirebaseAppIndex = firebaseAppIndex;
         mFirebaseUserActions = firebaseUserActions;
+        mKeysetHandle = keysetHandle;
     }
 
     /**
@@ -81,7 +88,7 @@ public class ShortcutInfoChangeListenerImpl extends ShortcutInfoChangeListener {
      */
     @Override
     public void onShortcutAdded(@NonNull List<ShortcutInfoCompat> shortcuts) {
-        mFirebaseAppIndex.update(buildIndexables(shortcuts));
+        updateAndReportUsage(shortcuts);
     }
 
     /**
@@ -91,7 +98,7 @@ public class ShortcutInfoChangeListenerImpl extends ShortcutInfoChangeListener {
      */
     @Override
     public void onShortcutUpdated(@NonNull List<ShortcutInfoCompat> shortcuts) {
-        mFirebaseAppIndex.update(buildIndexables(shortcuts));
+        updateAndReportUsage(shortcuts);
     }
 
     /**
@@ -132,6 +139,25 @@ public class ShortcutInfoChangeListenerImpl extends ShortcutInfoChangeListener {
         mFirebaseAppIndex.removeAll();
     }
 
+    private void updateAndReportUsage(@NonNull List<ShortcutInfoCompat> shortcuts) {
+        mFirebaseAppIndex.update(buildIndexables(shortcuts))
+                .continueWithTask((task) -> {
+                    if (task.isSuccessful()) {
+                        reportUsages(shortcuts);
+                    } else {
+                        Log.e(TAG, "failed to update shortcuts to firebase", task.getException());
+                    }
+                    return null;
+                });
+    }
+
+    private void reportUsages(@NonNull List<ShortcutInfoCompat> shortcuts) {
+        for (ShortcutInfoCompat shortcut : shortcuts) {
+            String url = ShortcutUtils.getIndexableUrl(mContext, shortcut.getId());
+            mFirebaseUserActions.end(buildAction(url));
+        }
+    }
+
     @NonNull
     private Action buildAction(@NonNull String url) {
         // The reported action isn't uploaded to the server.
@@ -155,7 +181,8 @@ public class ShortcutInfoChangeListenerImpl extends ShortcutInfoChangeListener {
     @NonNull
     private Indexable buildIndexable(@NonNull ShortcutInfoCompat shortcut) {
         String url = ShortcutUtils.getIndexableUrl(mContext, shortcut.getId());
-        String shortcutUrl = ShortcutUtils.getIndexableShortcutUrl(mContext, shortcut.getIntent());
+        String shortcutUrl = ShortcutUtils.getIndexableShortcutUrl(mContext, shortcut.getIntent(),
+                mKeysetHandle);
 
         Indexable.Builder builder = new Indexable.Builder()
                 .setId(shortcut.getId())

@@ -133,6 +133,11 @@ class CompilationResultSubject(
      */
     fun hasErrorCount(expected: Int) = hasDiagnosticCount(Diagnostic.Kind.ERROR, expected)
 
+    /**
+     * Check the compilation had [expected] number of warning messages.
+     */
+    fun hasWarningCount(expected: Int) = hasDiagnosticCount(Diagnostic.Kind.WARNING, expected)
+
     private fun hasDiagnosticCount(kind: Diagnostic.Kind, expected: Int) = chain {
         val actual = compilationResult.diagnosticsOfKind(kind).size
         if (actual != expected) {
@@ -255,10 +260,27 @@ class CompilationResultSubject(
     }
 
     /**
+     * Asserts that a file with the given [relativePath] was generated.
+     *
+     * @see generatedSource
+     */
+    fun generatedSourceFileWithPath(relativePath: String) = chain {
+        val match = actual().generatedSources.firstOrNull {
+            it.relativePath == relativePath
+        }
+        if (match == null) {
+            failWithActual(
+                simpleFact("Didn't generate file with path: $relativePath")
+            )
+        }
+    }
+    /**
      * Asserts that the given source file is generated.
      *
      * Unlike Java compile testing, which does structural comparison, this method executes a line
      * by line comparison and is only able to ignore spaces and empty lines.
+     *
+     * @see generatedSourceFileWithPath
      */
     fun generatedSource(source: Source) = chain {
         val match = actual().generatedSources.firstOrNull {

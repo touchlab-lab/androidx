@@ -122,6 +122,7 @@ public abstract class FragmentTransaction {
     ArrayList<String> mSharedElementTargetNames;
     boolean mReorderingAllowed = false;
 
+    ArrayList<Runnable> mExecuteRunnables;
     ArrayList<Runnable> mCommitRunnables;
 
     /**
@@ -822,6 +823,18 @@ public abstract class FragmentTransaction {
     @NonNull
     public FragmentTransaction setAllowOptimization(boolean allowOptimization) {
         return setReorderingAllowed(allowOptimization);
+    }
+
+    /**
+     * Add a runnable that is run immediately after the transaction is executed.
+     * This differs from the commit runnables in that it happens before any
+     * fragments move to their expected state.
+     */
+    void addOnExecuteRunnable(@NonNull Runnable runnable) {
+        if (mExecuteRunnables == null) {
+            mExecuteRunnables = new ArrayList<>();
+        }
+        mExecuteRunnables.add(runnable);
     }
 
     /**

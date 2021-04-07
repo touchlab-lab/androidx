@@ -185,6 +185,8 @@ class AndroidXUiPlugin : Plugin<Project> {
                     error("ComposableLambdaParameterPosition")
                     error("CompositionLocalNaming")
                     error("ComposableModifierFactory")
+                    error("InvalidColorHexValue")
+                    error("MissingColorAlphaChannel")
                     error("ModifierFactoryReturnType")
                     error("ModifierFactoryExtensionFunction")
                     error("ModifierParameter")

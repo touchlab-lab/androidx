@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.ir.descriptors.WrappedPropertyGetterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.WrappedPropertySetterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
@@ -271,14 +270,11 @@ class ComposerParamTransformer(
     ): IrExpression {
         val classSymbol = classOrNull
         if (this !is IrSimpleType || hasQuestionMark || classSymbol?.owner?.isInline != true) {
-            if (isMarkedNullable()) {
-                return IrConstImpl.constNull(
-                    startOffset,
-                    endOffset,
-                    context.irBuiltIns.unitType
-                )
+            return if (isMarkedNullable()) {
+                IrConstImpl.constNull(startOffset, endOffset, context.irBuiltIns.unitType)
+            } else {
+                IrConstImpl.defaultValueForType(startOffset, endOffset, this)
             }
-            return IrConstImpl.defaultValueForType(startOffset, endOffset, this)
         }
 
         val klass = classSymbol.owner

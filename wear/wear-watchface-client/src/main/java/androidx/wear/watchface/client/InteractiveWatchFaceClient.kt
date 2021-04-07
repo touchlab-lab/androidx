@@ -21,6 +21,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.support.wearable.watchface.SharedMemoryImage
+import androidx.annotation.AnyThread
 import androidx.annotation.Px
 import androidx.annotation.RequiresApi
 import androidx.wear.complications.data.ComplicationData
@@ -39,8 +40,9 @@ import androidx.wear.watchface.data.WatchUiState
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting.ComplicationsUserStyleSetting
-import androidx.wear.watchface.style.data.UserStyleWireFormat
+import androidx.wear.watchface.style.UserStyleData
 import java.util.Objects
+import java.util.concurrent.Executor
 
 /**
  * Controls a stateful remote interactive watch face. Typically this will be used for the current
@@ -89,11 +91,11 @@ public interface InteractiveWatchFaceClient : AutoCloseable {
     /**
      * Renames this instance to [newInstanceId] (must be unique, usually this would be different
      * from the old ID but that's not a requirement). Sets the current [UserStyle] represented as a
-     * Map<String, String> and clears any complication data. Setting the new UserStyle may have
-     * a side effect of enabling or disabling complications, which will be visible via
+     * [UserStyleData> and clears any complication data. Setting the new UserStyle may have a
+     * side effect of enabling or disabling complications, which will be visible via
      * [ComplicationState.isEnabled].
      */
-    public fun updateWatchFaceInstance(newInstanceId: String, userStyle: Map<String, String>)
+    public fun updateWatchFaceInstance(newInstanceId: String, userStyle: UserStyleData)
 
     /** Returns the ID of this watch face instance. */
     public val instanceId: String
@@ -197,12 +199,58 @@ public interface InteractiveWatchFaceClient : AutoCloseable {
 
     /** Triggers watch face rendering into the surface when in ambient mode. */
     public fun performAmbientTick()
+
+    /** Callback that observes when the client disconnects. */
+    public interface ClientDisconnectListener {
+        /**
+         * The client disconnected, typically due to the server side crashing. Note this is not
+         * called in response to [close] being called on [InteractiveWatchFaceClient].
+         */
+        public fun onClientDisconnected()
+    }
+
+    /** Registers a [ClientDisconnectListener]. */
+    @AnyThread
+    public fun addClientDisconnectListener(listener: ClientDisconnectListener, executor: Executor)
+
+    /**
+     * Removes a [ClientDisconnectListener] previously registered by [addClientDisconnectListener].
+     */
+    @AnyThread
+    public fun removeClientDisconnectListener(listener: ClientDisconnectListener)
+
+    /** Returns true if the connection to the server side is alive. */
+    @AnyThread
+    public fun isConnectionAlive(): Boolean
 }
 
 /** Controls a stateful remote interactive watch face. */
 internal class InteractiveWatchFaceClientImpl internal constructor(
     private val iInteractiveWatchFace: IInteractiveWatchFace
 ) : InteractiveWatchFaceClient {
+
+    private val lock = Any()
+    private val listeners = HashMap<InteractiveWatchFaceClient.ClientDisconnectListener, Executor>()
+
+    init {
+        iInteractiveWatchFace.asBinder().linkToDeath(
+            {
+                var listenerCopy:
+                    HashMap<InteractiveWatchFaceClient.ClientDisconnectListener, Executor>
+
+                synchronized(lock) {
+                    listenerCopy = HashMap(listeners)
+                }
+
+                for ((listener, executor) in listenerCopy) {
+                    executor.execute {
+                        listener.onClientDisconnected()
+                    }
+                }
+            },
+            0
+        )
+    }
 
     override fun updateComplicationData(
         idToComplicationData: Map<Int, ComplicationData>
@@ -249,13 +297,13 @@ internal class InteractiveWatchFaceClientImpl internal constructor(
 
     override fun updateWatchFaceInstance(
         newInstanceId: String,
-        userStyle: Map<String, String>
+        userStyle: UserStyleData
     ) = TraceEvent(
         "InteractiveWatchFaceClientImpl.updateInstance"
     ).use {
         iInteractiveWatchFace.updateWatchfaceInstance(
             newInstanceId,
-            UserStyleWireFormat(userStyle)
+            userStyle.toWireFormat()
         )
     }
 
@@ -316,4 +364,26 @@ internal class InteractiveWatchFaceClientImpl internal constructor(
     ).use {
         iInteractiveWatchFace.ambientTickUpdate()
     }
+
+    override fun addClientDisconnectListener(
+        listener: InteractiveWatchFaceClient.ClientDisconnectListener,
+        executor: Executor
+    ) {
+        synchronized(lock) {
+            require(!listeners.contains(listener)) {
+                "Don't call addClientDisconnectListener multiple times for the same listener"
+            }
+            listeners.put(listener, executor)
+        }
+    }
+
+    override fun removeClientDisconnectListener(
+        listener: InteractiveWatchFaceClient.ClientDisconnectListener
+    ) {
+        synchronized(lock) {
+            listeners.remove(listener)
+        }
+    }
+
+    override fun isConnectionAlive() = iInteractiveWatchFace.asBinder().isBinderAlive
 }
