@@ -27,9 +27,9 @@ class AttrsBuilder<TTag : Tag> : EventsListenerBuilder() {
     var refEffect: (DisposableEffectScope.(HTMLElement) -> DisposableEffectResult)? = null
 
     inline fun classes(builder: ClassesAttrBuilder.() -> Unit) =
-        attr(CLASS, ClassesAttrBuilder().apply(builder).asString())
+        prop(setClassList, ClassesAttrBuilder().apply(builder).asList().toTypedArray())
 
-    fun classes(vararg value: String) = attr(CLASS, value.joinToString(separator = " "))
+    fun classes(vararg classes: String) = prop(setClassList, classes)
 
     fun id(value: String) = attr(ID, value)
     fun hidden(value: Boolean) = attr(HIDDEN, value.toString())
@@ -87,4 +87,9 @@ class ClassesAttrBuilder {
 
     fun asList(): List<String> = classes
     fun asString(): String = classes.joinToString(" ")
+}
+
+val setClassList: (HTMLElement, Array<out String>) -> Unit = { e, classList ->
+    e.className = ""
+    e.classList.add(*classList)
 }
