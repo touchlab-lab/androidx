@@ -21,6 +21,7 @@ import androidx.compose.web.attributes.AttrsBuilder
 import androidx.compose.web.attributes.Tag
 import androidx.compose.web.css.CSSRuleDeclarationList
 import androidx.compose.web.css.StyleSheetBuilder
+import androidx.compose.web.css.StyleSheetBuilderImpl
 import androidx.compose.web.css.cssRules
 import org.w3c.dom.HTMLStyleElement
 
@@ -29,7 +30,7 @@ inline fun Style(
     crossinline applyAttrs: AttrsBuilder<Tag.Style>.() -> Unit = {},
     cssRules: StyleSheetBuilder.() -> Unit
 ) {
-    val builder = StyleSheetBuilder()
+    val builder = StyleSheetBuilderImpl()
     builder.cssRules()
     Style(applyAttrs, builder.cssRules)
 }

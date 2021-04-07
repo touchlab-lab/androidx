@@ -16,10 +16,14 @@
 
 package androidx.compose.web.css
 
-open class StyleBuilder {
+interface StyleBuilder {
+    fun add(propertyName: String, value: StylePropertyValue)
+}
+
+open class StyleBuilderImpl : StyleBuilder {
     var properties: MutableStylePropertyList = mutableListOf()
 
-    fun add(propertyName: String, value: StylePropertyValue) {
+    override fun add(propertyName: String, value: StylePropertyValue) {
         properties.add(StylePropertyDeclaration(propertyName, value))
     }
 }

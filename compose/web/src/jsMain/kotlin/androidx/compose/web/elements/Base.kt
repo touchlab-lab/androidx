@@ -31,6 +31,7 @@ import androidx.compose.web.DomNodeWrapper
 import androidx.compose.web.attributes.AttrsBuilder
 import androidx.compose.web.attributes.Tag
 import androidx.compose.web.css.StyleBuilder
+import androidx.compose.web.css.StyleBuilderImpl
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
 
@@ -95,7 +96,7 @@ inline fun <TTag : Tag, THTMLElement : HTMLElement> TagElement(
             }
         },
         styleSkippableUpdate = {
-            val properties = StyleBuilder().apply(applyStyle).properties
+            val properties = StyleBuilderImpl().apply(applyStyle).properties
             update {
                 set(properties, DomNodeWrapper.UpdateStyleDeclarations)
             }

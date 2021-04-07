@@ -14,73 +14,92 @@
  * limitations under the License.
  */
 
-package androidx.compose.web.xcss
+package androidx.compose.web.css
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.web.css.CSSRuleBuilder
-import androidx.compose.web.css.CSSRuleDeclaration
-import androidx.compose.web.css.CSSRuleDeclarationList
-import androidx.compose.web.css.StylePropertyList
-import androidx.compose.web.css.buildCSSRule
 import androidx.compose.web.css.selectors.CSSSelector
 import androidx.compose.web.css.selectors.className
 import androidx.compose.web.elements.Style
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-interface CSSRulesHolder {
-    var cssRules: CSSRuleDeclarationList
-}
-
 class CSSRulesHolderState : CSSRulesHolder {
     override var cssRules: CSSRuleDeclarationList by mutableStateOf(listOf())
+
+    override fun add(cssRule: CSSRuleDeclaration) {
+        cssRules += cssRule
+    }
 }
 
 open class StyleSheet(
-    private val cssRulesHolder: CSSRulesHolder = CSSRulesHolderState()
-) : CSSRulesHolder by cssRulesHolder {
+    private val rulesHolder: CSSRulesHolder = CSSRulesHolderState()
+) : StyleSheetBuilder, CSSRulesHolder by rulesHolder {
+    private val boundClasses = mutableMapOf<String, CSSRuleDeclarationList>()
 
-    fun add(selector: CSSSelector, properties: StylePropertyList) {
-        cssRules += CSSRuleDeclaration(selector, properties)
-    }
-
-    protected fun rule(cssRule: CSSRuleBuilder.() -> Unit) = CSSHolder(cssRule)
+    protected fun style(cssRule: CSSBuilder.() -> Unit) = CSSHolder(cssRule)
 
     companion object {
         var counter = 0
     }
-    // TODO: just proof of concept, do not use it
-    fun css(cssRuleBuilder: CSSRuleBuilder.() -> Unit): String {
-        val properties = buildCSSRule(cssRuleBuilder)
-        val cssRule = cssRules.find {
-            it.selector is CSSSelector.CSSClass && it.properties == properties
+
+    data class CSSSelfSelector(var selector: CSSSelector? = null) : CSSSelector() {
+        override fun toString(): String = selector.toString()
+        override fun equals(other: Any?): Boolean {
+            return other is CSSSelfSelector
         }
+    }
+
+    // TODO: just proof of concept, do not use it
+    fun css(cssBuilder: CSSBuilder.() -> Unit): String {
+        val selfSelector = CSSSelfSelector()
+        val (properties, newCssRules) = buildCSS(selfSelector, selfSelector, cssBuilder)
+        val cssRule = cssRules.find {
+            it.selector is CSSSelector.CSSClass && it.properties == properties &&
+                (boundClasses[it.selector.className] ?: emptyList()) == newCssRules
+        }
+        js("debugger")
         return if (cssRule != null) {
             cssRule.selector.unsafeCast<CSSSelector.CSSClass>().className
         } else {
             val classNameSelector = className("auto-${counter++}")
-            add(classNameSelector, buildCSSRule(cssRuleBuilder))
+            selfSelector.selector = classNameSelector
+            add(classNameSelector, properties)
+            newCssRules.forEach { add(it) }
+            boundClasses[classNameSelector.className] = newCssRules
             classNameSelector.className
         }
     }
 
-    protected class CSSHolder(val cssRule: CSSRuleBuilder.() -> Unit) {
+    protected class CSSHolder(val cssBuilder: CSSBuilder.() -> Unit) {
         operator fun provideDelegate(
             sheet: StyleSheet,
             property: KProperty<*>
         ): ReadOnlyProperty<Any?, String> {
             val sheetName = "${sheet::class.simpleName}-"
-            val classNameSelector = className("$sheetName${property.name}")
-            sheet.add(classNameSelector, buildCSSRule(cssRule))
+            val selector = className("$sheetName${property.name}")
+            val (properties, rules) = buildCSS(selector, selector, cssBuilder)
+            sheet.add(selector, properties)
+            rules.forEach { sheet.add(it) }
 
             return ReadOnlyProperty { _, _ ->
-                classNameSelector.className
+                selector.className
             }
         }
     }
+}
+
+fun buildCSS(
+    thisClass: CSSSelector,
+    thisContext: CSSSelector,
+    cssRule: CSSBuilder.() -> Unit
+): Pair<StylePropertyList, CSSRuleDeclarationList> {
+    val styleSheet = StyleSheetBuilderImpl()
+    val builder = CSSBuilderImpl(thisClass, thisContext, styleSheet)
+    builder.cssRule()
+    return builder.properties to styleSheet.cssRules
 }
 
 @Composable

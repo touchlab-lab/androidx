@@ -35,8 +35,8 @@ import androidx.compose.web.css.opacity
 import androidx.compose.web.css.padding
 import androidx.compose.web.css.percent
 import androidx.compose.web.css.px
-import androidx.compose.web.css.selectors.combine
 import androidx.compose.web.css.selectors.hover
+import androidx.compose.web.css.selectors.plus
 import androidx.compose.web.css.width
 import androidx.compose.web.elements.A
 import androidx.compose.web.elements.Button
@@ -46,8 +46,8 @@ import androidx.compose.web.elements.Style
 import androidx.compose.web.elements.Text
 import androidx.compose.web.elements.TextArea
 import androidx.compose.web.renderComposable
-import androidx.compose.web.xcss.Style
-import androidx.compose.web.xcss.StyleSheet
+import androidx.compose.web.css.Style
+import androidx.compose.web.css.StyleSheet
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -62,8 +62,16 @@ val globalState = State()
 val globalInt = mutableStateOf(1)
 
 object AppStyleSheet : StyleSheet() {
-    val myClass by rule {
+    val myClass by style {
         color("green")
+    }
+
+    val classWithNested by style {
+        color("green")
+
+        hover(self) style {
+            color("red")
+        }
     }
 }
 
@@ -142,11 +150,11 @@ fun main() {
         Text("inputValue.value" + inputValue.value)
 
         Style {
-            className(MyClassName) with {
+            className(MyClassName) style {
                 opacity(0.3)
             }
 
-            combine(className(MyClassName), hover()) with {
+            className(MyClassName) + hover() style {
                 opacity(1)
             }
 
@@ -155,6 +163,16 @@ fun main() {
             }
         }
         Style(AppStyleSheet)
+
+        Div(
+            attrs = {
+                classes(
+                    AppStyleSheet.classWithNested
+                )
+            }
+        ) {
+            Text("My text")
+        }
 
         Div(
             attrs = {
@@ -182,6 +200,9 @@ fun main() {
                 classes(
                     Auto.css {
                         color("pink")
+                        hover(self) style {
+                            color("blue")
+                        }
                     }
                 )
             },
