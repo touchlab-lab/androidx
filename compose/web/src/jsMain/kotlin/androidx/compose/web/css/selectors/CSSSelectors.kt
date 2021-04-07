@@ -36,6 +36,10 @@ sealed class Nth {
 }
 
 open class CSSSelector {
+    override fun equals(other: Any?): Boolean {
+        return toString() == other.toString()
+    }
+
     data class Raw(val selector: String) : CSSSelector() {
         override fun toString(): String = selector
     }
@@ -78,11 +82,11 @@ open class CSSSelector {
         }
     }
 
-    data class Combine(val selectors: Array<out CSSSelector>) : CSSSelector() {
+    data class Combine(val selectors: MutableList<CSSSelector>) : CSSSelector() {
         override fun toString(): String = selectors.joinToString("")
     }
 
-    data class Group(val selectors: Array<out CSSSelector>) : CSSSelector() {
+    data class Group(val selectors: List<CSSSelector>) : CSSSelector() {
         override fun toString(): String = selectors.joinToString(", ")
     }
 
@@ -219,7 +223,13 @@ open class CSSSelector {
 }
 
 fun selector(selector: String) = CSSSelector.Raw(selector)
-fun combine(vararg selectors: CSSSelector) = CSSSelector.Combine(selectors)
+fun combine(vararg selectors: CSSSelector) = CSSSelector.Combine(selectors.toMutableList())
+operator fun CSSSelector.plus(selector: CSSSelector) = combine(this, selector)
+operator fun String.plus(selector: CSSSelector) = combine(selector(this), selector)
+operator fun CSSSelector.plus(selector: String) = combine(this, selector(selector))
+operator fun CSSSelector.Combine.plus(selector: CSSSelector) { this.selectors.add(selector) }
+operator fun CSSSelector.Combine.plus(selector: String) { this.selectors.add(selector(selector)) }
+
 fun universal() = CSSSelector.Universal
 fun type(type: String) = CSSSelector.Type(type)
 fun className(className: String) = CSSSelector.CSSClass(className)
@@ -230,7 +240,7 @@ fun attr(
     operator: CSSSelector.Attribute.Operator = CSSSelector.Attribute.Operator.Equals,
     caseSensitive: Boolean = true
 ) = CSSSelector.Attribute(name, value, operator, caseSensitive)
-fun group(vararg selectors: CSSSelector) = CSSSelector.Group(selectors)
+fun group(vararg selectors: CSSSelector) = CSSSelector.Group(selectors.toList())
 fun descendant(parent: CSSSelector, selected: CSSSelector) =
     CSSSelector.Descendant(parent, selected)
 fun sibling(sibling: CSSSelector, selected: CSSSelector) = CSSSelector.Descendant(sibling, selected)
@@ -238,3 +248,4 @@ fun adjacent(sibling: CSSSelector, selected: CSSSelector) = CSSSelector.Adjacent
 
 fun not(selector: CSSSelector) = CSSSelector.PseudoClass.Not(selector)
 fun hover() = CSSSelector.PseudoClass.hover
+fun hover(selector: CSSSelector) = selector + hover()
