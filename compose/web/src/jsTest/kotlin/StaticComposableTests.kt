@@ -16,10 +16,14 @@
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.browser.document
 import androidx.compose.web.renderComposable
 import org.w3c.dom.HTMLElement
 import androidx.compose.web.elements.Text
+import androidx.compose.web.elements.Div
+import androidx.compose.web.css.opacity
+import androidx.compose.web.css.color
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -30,17 +34,64 @@ class StaticComposableTests {
         renderComposable(
             root = root
         ) {}
-        assertEquals(root.outerHTML, "<div></div>")
+        assertEquals("<div></div>", root.outerHTML)
     }
 
     @Test
-    fun testText() {
+    fun textChild() {
         val root = "div".asHtmlElement()
         renderComposable(
             root = root
         ) {
             Text("inner text")
         }
-        assertEquals(root.outerHTML, "<div>inner text</div>")
+        assertEquals("<div>inner text</div>", root.outerHTML)
+    }
+
+    @Test
+    fun attrs() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                attrs = {
+                    classes("some", "simple", "classes")
+                    id("special")
+                    attr("data-val", "some data")
+                    attr("data-val", "some other data")
+                    id("verySpecial")
+                }
+            ) {}
+        }
+
+        val el = root.firstChild
+        assertTrue(el is HTMLElement, "element not found")
+
+        assertEquals("verySpecial", el.getAttribute("id"))
+        assertEquals("some simple classes", el.getAttribute("class"))
+        assertEquals("some other data", el.getAttribute("data-val"))
+    }
+
+    @Test
+    fun styles() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    opacity(0.3)
+                    color("red")
+                    opacity(0.2)
+                    color("green")
+                }
+            ) {}
+        }
+
+        val el = root.firstChild
+        assertTrue(el is HTMLElement, "element not found")
+
+        assertEquals("opacity: 0.2; color: green;", el.style.cssText)
     }
 }
