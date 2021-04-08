@@ -1,0 +1,17 @@
+{
+  "name": "js-framework-benchmark-compose",
+  "version": "0.0.1",
+  "description": "Compose Web Benchmark",
+  "main": "index.js",
+  "js-framework-benchmark": {
+    "frameworkVersion": "0.0.1"
+  },
+  "scripts": {
+    "build-dev": "exit 0",
+    "build-prod": "exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "homepage": ""
+}
