@@ -15,8 +15,6 @@
  */
 
 import androidx.build.AndroidXUiPlugin
-import androidx.build.LibraryGroups
-import androidx.build.Publish
 
 buildscript {
     repositories {
@@ -29,7 +27,6 @@ buildscript {
 }
 
 plugins {
-    id("AndroidXPlugin")
     id("AndroidXUiPlugin")
     id("kotlin-multiplatform")
 }
@@ -46,7 +43,6 @@ node {
 }
 
 kotlin {
-    jvm()
     js(IR) {
         browser() {
             testTask {
@@ -78,15 +74,6 @@ kotlin {
             }
         }
     }
-}
-
-androidx {
-    name = "Compose Web Benchmar"
-    publish = Publish.NONE
-    mavenGroup = LibraryGroups.Compose.WEB
-    inceptionYear = "2021"
-    description = ""
-    legacyDisableKotlinStrictApiMode = true
 }
 
 task installBenchmark(type: NpmTask) {
