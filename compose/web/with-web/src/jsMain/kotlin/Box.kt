@@ -17,10 +17,15 @@
 package androidx.compose.foundation.layout.ww
 
 import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.ui.ww.asStyleBuilderApplier
 import androidx.compose.runtime.Composable
-import androidx.compose.web.elements.Text
+import androidx.compose.web.elements.Div
 
 @Composable
 actual fun Box(modifier: Modifier, content: @Composable () -> Unit) {
-    Text("I AM A BOX")
+    Div(
+        style = modifier.asStyleBuilderApplier()
+    ) {
+        content()
+    }
 }
