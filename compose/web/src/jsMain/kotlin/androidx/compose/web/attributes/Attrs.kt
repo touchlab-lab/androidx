@@ -38,6 +38,8 @@ open class Tag {
     object P : Tag()
     object Br : Tag()
     object Style : Tag()
+    object Pre : Tag()
+    object Code : Tag()
 }
 
 /* Anchor <a> attributes */

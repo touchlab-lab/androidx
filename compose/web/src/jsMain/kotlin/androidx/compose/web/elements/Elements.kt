@@ -45,6 +45,7 @@ import org.w3c.dom.HTMLOListElement
 import org.w3c.dom.HTMLOptGroupElement
 import org.w3c.dom.HTMLOptionElement
 import org.w3c.dom.HTMLParagraphElement
+import org.w3c.dom.HTMLPreElement
 import org.w3c.dom.HTMLSelectElement
 import org.w3c.dom.HTMLSpanElement
 import org.w3c.dom.HTMLTextAreaElement
@@ -353,3 +354,31 @@ inline fun Nav(
     applyStyle = style,
     content = content
 )
+
+@Composable
+inline fun Pre(
+    crossinline attrs: (AttrsBuilder<Tag.Pre>.() -> Unit) = {},
+    crossinline style: (StyleBuilder.() -> Unit) = {},
+    content: @Composable ElementScope<HTMLPreElement>.() -> Unit
+) {
+    TagElement(
+        tagName = "pre",
+        applyAttrs = attrs,
+        applyStyle = style,
+        content = content
+    )
+}
+
+@Composable
+inline fun Code(
+    crossinline attrs: (AttrsBuilder<Tag.Code>.() -> Unit) = {},
+    crossinline style: (StyleBuilder.() -> Unit) = {},
+    content: @Composable ElementScope<HTMLElement>.() -> Unit
+) {
+    TagElement(
+        tagName = "code",
+        applyAttrs = attrs,
+        applyStyle = style,
+        content = content
+    )
+}
