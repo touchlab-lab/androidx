@@ -53,6 +53,18 @@ fun StyleBuilder.width(value: CSSAutoValue) {
     width(CSSSizeOrAutoValue(value))
 }
 
+fun StyleBuilder.height(value: CSSSizeOrAutoValue) {
+    add("height", value)
+}
+
+fun StyleBuilder.height(value: CSSSizeValue) {
+    height(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.height(value: CSSAutoValue) {
+    height(CSSSizeOrAutoValue(value))
+}
+
 fun StyleBuilder.fontSize(value: CSSSizeValue) {
     add("font-size", StylePropertyValue(value))
 }
