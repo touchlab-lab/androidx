@@ -16,11 +16,6 @@
 
 package androidx.compose.ui.unit.ww
 
-import androidx.compose.ui.unit.Dp as JDp
-
-val Dp.implementation: JDp
-    get() = JDp(value)
-
-// TODO: This has to be reduplicated here - otherwise we'll end with exception which looks like a JVM-target bug to me
+// TODO: this have to be in a separate package otherwise there's an error for in cross-module usage
 val Int.dp: Dp
     get() = Dp(this.toFloat())

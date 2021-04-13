@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package androidx.compose.ui.unit.ww
 
-data class Dp(val value: Float)
+import androidx.compose.ui.unit.Dp as JDp
 
-val Int.dp: Dp
-    get() = Dp(this.toFloat())
+val Dp.implementation: JDp
+    get() = JDp(value)
