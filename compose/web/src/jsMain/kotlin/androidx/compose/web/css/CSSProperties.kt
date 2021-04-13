@@ -33,6 +33,14 @@ fun StyleBuilder.color(value: Color) {
     add("color", StylePropertyValue(value.toString()))
 }
 
+fun StyleBuilder.backgroundColor(value: Color) {
+    add("background-color", StylePropertyValue(value.toString()))
+}
+
+fun StyleBuilder.backgroundColor(value: String) {
+    add("background-color", StylePropertyValue(value))
+}
+
 fun StyleBuilder.width(value: CSSSizeOrAutoValue) {
     add("width", value)
 }
