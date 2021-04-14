@@ -22,7 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Box as JBox
 
 @Composable
-actual fun Box(modifier: Modifier, content: @Composable () -> Unit) {
+internal actual fun BoxActual(modifier: Modifier, content: @Composable () -> Unit) {
     JBox(modifier.implementation) {
         content.invoke()
     }

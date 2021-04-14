@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package androidx.compose.foundation.layout.ww
 
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.Column as JColumn
-import org.jetbrains.ui.ww.implementation
 
 @Composable
-internal actual fun ColumnActual(modifier: Modifier, content: @Composable () -> Unit) {
-    JColumn(modifier = modifier.implementation) {
-        content.invoke()
-    }
-}
+fun Box(modifier: Modifier = Modifier.Companion, content: @Composable () -> Unit) =
+    BoxActual(modifier, content)
+
+@Composable
+fun Column(modifier: Modifier = Modifier.Companion, content: @Composable () -> Unit) =
+    ColumnActual(modifier, content)
+
+@Composable
+fun Row(modifier: Modifier = Modifier.Companion, content: @Composable () -> Unit) =
+    RowActual(modifier, content)

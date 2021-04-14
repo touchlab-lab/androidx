@@ -19,7 +19,4 @@ import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 
 @Composable
-expect fun Row(modifier: Modifier, content: @Composable () -> Unit)
-
-@Composable
-fun Row(content: @Composable () -> Unit) = Row(Modifier.Companion, content)
+internal expect fun RowActual(modifier: Modifier, content: @Composable () -> Unit)

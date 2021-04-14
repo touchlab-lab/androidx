@@ -19,7 +19,4 @@ import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 
 @Composable
-expect fun Column(modifier: Modifier, content: @Composable () -> Unit)
-
-@Composable
-fun Column(content: @Composable () -> Unit) = Column(Modifier.Companion, content)
+internal expect fun ColumnActual(modifier: Modifier, content: @Composable () -> Unit)

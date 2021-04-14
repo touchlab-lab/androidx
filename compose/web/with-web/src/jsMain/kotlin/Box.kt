@@ -22,7 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.web.elements.Div
 
 @Composable
-actual fun Box(modifier: Modifier, content: @Composable () -> Unit) {
+internal actual fun BoxActual(modifier: Modifier, content: @Composable () -> Unit) {
     Div(
         style = modifier.asStyleBuilderApplier()
     ) {

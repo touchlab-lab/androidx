@@ -22,7 +22,7 @@ import org.jetbrains.ui.ww.asStyleBuilderApplier
 import androidx.compose.web.elements.Div
 
 @Composable
-actual fun Column(modifier: Modifier, content: @Composable () -> Unit) {
+internal actual fun ColumnActual(modifier: Modifier, content: @Composable () -> Unit) {
     Div(
         style = modifier.asStyleBuilderApplier()
     ) {
