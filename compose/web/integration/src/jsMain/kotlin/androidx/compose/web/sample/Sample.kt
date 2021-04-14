@@ -212,6 +212,8 @@ fun main() {
         ) {
             Text("My text")
         }
+
+        KotlinCodeSnippets()
     }
 
     MainScope().launch {
