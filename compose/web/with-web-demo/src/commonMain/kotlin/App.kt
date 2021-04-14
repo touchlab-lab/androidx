@@ -8,11 +8,15 @@ import org.jetbrains.ui.ww.background
 import androidx.compose.ui.unit.ww.dp
 import androidx.core.graphics.ww.Color
 import androidx.compose.foundation.layout.ww.Row
+import androidx.compose.foundation.layout.ww.Arrangement
 
 @Composable
 fun App() {
     Row(
-        Modifier.size(150.dp).background(Color.Yellow)
+        modifier = Modifier
+                        .size(150.dp)
+                        .background(Color.Yellow),
+        horizontalArrangement = Arrangement.End
     ) {
         Box(Modifier.size(50.dp).background(Color.Red)) { }
         Box(Modifier.size(30.dp).background(Color.Blue)) { }

@@ -15,24 +15,12 @@
  */
 package androidx.compose.foundation.layout.ww
 
-import org.jetbrains.ui.ww.Modifier
-import androidx.compose.runtime.Composable
+object Arrangement {
+    open class Horizontal
+    open class Vertical
 
-@Composable
-fun Box(
-    modifier: Modifier = Modifier.Companion,
-    content: @Composable () -> Unit
-) = BoxActual(modifier, content)
-
-@Composable
-fun Column(
-    modifier: Modifier = Modifier.Companion,
-    content: @Composable () -> Unit
-) = ColumnActual(modifier, content)
-
-@Composable
-fun Row(
-    modifier: Modifier = Modifier.Companion,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    content: @Composable () -> Unit
-) = RowActual(modifier, horizontalArrangement, content)
+    val End = object : Horizontal() {}
+    val Start = object : Horizontal() {}
+    val Top = object : Vertical() {}
+    val Bottom = object : Vertical() {}
+}

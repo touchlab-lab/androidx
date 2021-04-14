@@ -22,8 +22,15 @@ import androidx.compose.foundation.layout.Row as JRow
 import org.jetbrains.ui.ww.implementation
 
 @Composable
-internal actual fun RowActual(modifier: Modifier, content: @Composable () -> Unit) {
-    JRow(modifier.implementation) {
+internal actual fun RowActual(
+    modifier: Modifier,
+    horizontalArrangement: Arrangement.Horizontal,
+    content: @Composable () -> Unit
+) {
+    JRow(
+        modifier.implementation,
+        horizontalArrangement.implementation
+    ) {
         content.invoke()
     }
 }

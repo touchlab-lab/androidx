@@ -19,4 +19,8 @@ import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 
 @Composable
-internal expect fun RowActual(modifier: Modifier, content: @Composable () -> Unit)
+internal expect fun RowActual(
+    modifier: Modifier,
+    horizontalArrangement: Arrangement.Horizontal,
+    content: @Composable () -> Unit
+)

@@ -22,7 +22,11 @@ import androidx.compose.web.elements.Div
 import org.jetbrains.ui.ww.asStyleBuilderApplier
 
 @Composable
-internal actual fun RowActual(modifier: Modifier, content: @Composable () -> Unit) {
+internal actual fun RowActual(
+    modifier: Modifier,
+    horizontalArrangement: Arrangement.Horizontal,
+    content: @Composable () -> Unit
+) {
     Div(
         style = modifier.asStyleBuilderApplier()
     ) {
