@@ -19,8 +19,11 @@ package androidx.compose.foundation.layout.ww
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Row as JRow
+import org.jetbrains.ui.ww.implementation
 
 @Composable
-actual fun Row(modifier: Modifier?, content: @Composable () -> Unit) {
-    JRow() { content.invoke() }
+actual fun Row(modifier: Modifier, content: @Composable () -> Unit) {
+    JRow(modifier.implementation) {
+        content.invoke()
+    }
 }

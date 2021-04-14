@@ -7,11 +7,11 @@ import org.jetbrains.ui.ww.size
 import org.jetbrains.ui.ww.background
 import androidx.compose.ui.unit.ww.dp
 import androidx.core.graphics.ww.Color
-import androidx.compose.foundation.layout.ww.Column
+import androidx.compose.foundation.layout.ww.Row
 
 @Composable
 fun App() {
-    Column(
+    Row(
         Modifier.size(150.dp).background(Color.Yellow)
     ) {
         Box(Modifier.size(50.dp).background(Color.Red)) { }
