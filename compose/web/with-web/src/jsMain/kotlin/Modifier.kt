@@ -13,40 +13,25 @@ private class ActualModifier : Modifier {
     val styleHandlers = mutableListOf<StyleBuilder.() -> Unit>()
 }
 
-actual fun Modifier.size(size: Dp) = when (this) {
-    is ActualModifier -> size(size)
-    else -> ActualModifier().size(size)
-}
+private fun Modifier.castOrCreate(): ActualModifier = (this as? ActualModifier) ?: ActualModifier()
 
-private fun ActualModifier.size(size: Dp): Modifier {
+actual fun Modifier.size(size: Dp): Modifier = castOrCreate().apply {
     styleHandlers.add({
         width(size.value.px)
         height(size.value.px)
     })
-    return this
 }
 
-actual fun Modifier.background(color: Color) = when (this) {
-    is ActualModifier -> background(color)
-    else -> ActualModifier().background(color)
-}
-
-private fun ActualModifier.background(color: Color): Modifier {
+actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
     styleHandlers.add({
         backgroundColor(RGB(color.red, color.green, color.blue))
     })
-    return this
 }
 
-fun Modifier.asStyleBuilderApplier(): StyleBuilder.() -> Unit = when (this) {
-    is ActualModifier -> asStyleBuilderApplier()
-    else -> ActualModifier().asStyleBuilderApplier()
-}
-
-private fun ActualModifier.asStyleBuilderApplier(): StyleBuilder.() -> Unit {
+fun Modifier.asStyleBuilderApplier(): StyleBuilder.() -> Unit = castOrCreate().let { modifier ->
     val st: StyleBuilder.() -> Unit = {
-        styleHandlers.forEach { it.invoke(this) }
+        modifier.styleHandlers.forEach { it.invoke(this) }
     }
 
-    return st
+    st
 }

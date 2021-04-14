@@ -14,25 +14,15 @@ private class ActualModifier : Modifier {
     var modifier: JModifier = ModifierElement()
 }
 
-actual fun Modifier.size(size: Dp) = when (this) {
-    is ActualModifier -> size(size)
-    else -> ActualModifier().size(size)
-}
+private fun Modifier.castOrCreate(): ActualModifier = (this as? ActualModifier) ?: ActualModifier()
 
-private fun ActualModifier.size(size: Dp): Modifier {
+actual fun Modifier.size(size: Dp): Modifier = castOrCreate().apply {
     modifier = modifier.size(size.implementation)
-    return this
 }
 
-actual fun Modifier.background(color: Color) = when (this) {
-    is ActualModifier -> background(color)
-    else -> ActualModifier().background(color)
-}
-
-private fun ActualModifier.background(color: Color): Modifier {
+actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
     modifier = modifier.background(color.implementation)
-    return this
 }
 
 val Modifier.implementation
-    get() = ((this as? ActualModifier) ?: ActualModifier()).modifier
+    get() = castOrCreate().modifier
