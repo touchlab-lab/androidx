@@ -18,6 +18,7 @@ package androidx.wear.watchface.style
 
 import androidx.wear.watchface.style.UserStyleSetting.BooleanUserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.CustomValueUserStyleSetting
+import androidx.wear.watchface.style.UserStyleSetting.CustomValueUserStyleSetting.CustomValueOption
 import androidx.wear.watchface.style.UserStyleSetting.DoubleRangeUserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.LongRangeUserStyleSetting
@@ -313,9 +314,8 @@ public class CurrentUserStyleRepositoryTest {
         )
 
         assertThat(
-            userStyleRepository.userStyle[
-                customStyleSetting
-            ]?.toCustomValueOption()!!.customValue.decodeToString()
+            (userStyleRepository.userStyle[customStyleSetting]!! as CustomValueOption)
+                .customValue.decodeToString()
         ).isEqualTo("test")
     }
 
@@ -346,6 +346,19 @@ public class CurrentUserStyleRepositoryTest {
         assertThat(
             UserStyleData(mapOf("A" to "a".encodeToByteArray(), "B" to "b".encodeToByteArray()))
         ).isNotEqualTo(UserStyleData(mapOf("A" to "a".encodeToByteArray())))
+    }
+
+    @Test
+    public fun userStyleData_toString() {
+        val userStyleData = UserStyleData(
+            mapOf(
+                "A" to "a".encodeToByteArray(),
+                "B" to "b".encodeToByteArray()
+            )
+        )
+
+        assertThat(userStyleData.toString()).contains("A=a")
+        assertThat(userStyleData.toString()).contains("B=b")
     }
 
     @Test

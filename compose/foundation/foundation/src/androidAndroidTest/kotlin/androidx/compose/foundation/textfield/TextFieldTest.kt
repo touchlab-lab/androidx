@@ -102,6 +102,7 @@ import androidx.test.filters.LargeTest
 import androidx.test.filters.MediumTest
 import androidx.test.filters.SdkSuppress
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.argumentCaptor
 import com.nhaarman.mockitokotlin2.atLeastOnce
@@ -111,6 +112,7 @@ import com.nhaarman.mockitokotlin2.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -723,7 +725,7 @@ class TextFieldTest {
 
     @Test
     fun textField_stringOverload_callsOnValueChange_whenTextChange() {
-        var onValueChangeCalled: Boolean
+        var onValueChangeCalled = false
 
         rule.setContent {
             val state = remember { mutableStateOf("abc") }
@@ -743,7 +745,9 @@ class TextFieldTest {
             .performTextInputSelection(TextRange(0, 0))
 
         // reset
-        onValueChangeCalled = false
+        rule.runOnIdle {
+            onValueChangeCalled = false
+        }
 
         // change selection
         @OptIn(ExperimentalTestApi::class)
@@ -764,8 +768,10 @@ class TextFieldTest {
     }
 
     @Test
+    @Ignore // b/184750119
     fun textField_callsOnValueChange_whenTextFieldValueChange() {
-        var onValueChangeCalled: Boolean
+        var onValueChangeCalled = false
+        var lastSeenTextFieldValue = TextFieldValue()
 
         rule.setContent {
             val state = remember { mutableStateOf(TextFieldValue("abc")) }
@@ -774,6 +780,7 @@ class TextFieldTest {
                 value = state.value,
                 onValueChange = {
                     onValueChangeCalled = true
+                    lastSeenTextFieldValue = it
                     state.value = it
                 }
             )
@@ -785,7 +792,9 @@ class TextFieldTest {
             .performTextInputSelection(TextRange(0, 0))
 
         // reset flag since click might change selection
-        onValueChangeCalled = false
+        rule.runOnIdle {
+            onValueChangeCalled = false
+        }
 
         @OptIn(ExperimentalTestApi::class)
         rule.onNodeWithTag(Tag)
@@ -793,11 +802,11 @@ class TextFieldTest {
 
         // selection changed
         rule.runOnIdle {
-            assertThat(onValueChangeCalled).isTrue()
+            assertWithMessage("$lastSeenTextFieldValue").that(onValueChangeCalled).isTrue()
+            // reset flag
+            onValueChangeCalled = false
         }
-
-        // reset flag
-        onValueChangeCalled = false
+        rule.waitUntil { onValueChangeCalled == false }
 
         // set selection to same value, no change should occur
         @OptIn(ExperimentalTestApi::class)
@@ -805,14 +814,14 @@ class TextFieldTest {
             .performTextInputSelection(TextRange(1, 1))
 
         rule.runOnIdle {
-            assertThat(onValueChangeCalled).isFalse()
+            assertWithMessage("$lastSeenTextFieldValue").that(onValueChangeCalled).isFalse()
         }
 
         rule.onNodeWithTag(Tag)
             .performTextInput("d")
 
         rule.runOnIdle {
-            assertThat(onValueChangeCalled).isTrue()
+            assertWithMessage("$lastSeenTextFieldValue").that(onValueChangeCalled).isTrue()
         }
     }
 }

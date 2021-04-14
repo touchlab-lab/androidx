@@ -1,6 +1,11 @@
 // Signature format: 4.0
 package androidx.wear.watchface {
 
+  public final class BackgroundComplicationTapFilter implements androidx.wear.watchface.ComplicationTapFilter {
+    ctor public BackgroundComplicationTapFilter();
+    method public boolean hitTest(androidx.wear.watchface.Complication complication, android.graphics.Rect screenBounds, @Px int x, @Px int y);
+  }
+
   public class CanvasComplicationDrawable {
     ctor public CanvasComplicationDrawable(androidx.wear.watchface.complications.rendering.ComplicationDrawable _drawable, androidx.wear.watchface.WatchState watchState);
     method public void drawOutline(android.graphics.Canvas canvas, android.graphics.Rect bounds, android.icu.util.Calendar calendar, @ColorInt int color);
@@ -19,6 +24,7 @@ package androidx.wear.watchface {
   public final class Complication {
     method public android.graphics.Rect computeBounds(android.graphics.Rect screen);
     method public static androidx.wear.watchface.Complication.Builder createBackgroundComplicationBuilder(int id, androidx.wear.watchface.CanvasComplicationDrawable renderer, java.util.List<? extends androidx.wear.complications.data.ComplicationType> supportedTypes, androidx.wear.complications.DefaultComplicationProviderPolicy defaultProviderPolicy);
+    method public static androidx.wear.watchface.Complication.Builder createEdgeComplicationBuilder(int id, androidx.wear.watchface.CanvasComplicationDrawable renderer, java.util.List<? extends androidx.wear.complications.data.ComplicationType> supportedTypes, androidx.wear.complications.DefaultComplicationProviderPolicy defaultProviderPolicy, androidx.wear.complications.ComplicationBounds bounds, androidx.wear.watchface.ComplicationTapFilter complicationTapFilter);
     method public static androidx.wear.watchface.Complication.Builder createRoundRectComplicationBuilder(int id, androidx.wear.watchface.CanvasComplicationDrawable renderer, java.util.List<? extends androidx.wear.complications.data.ComplicationType> supportedTypes, androidx.wear.complications.DefaultComplicationProviderPolicy defaultProviderPolicy, androidx.wear.complications.ComplicationBounds bounds);
     method public int getBoundsType();
     method @UiThread public androidx.wear.complications.ComplicationBounds getComplicationBounds();
@@ -28,6 +34,7 @@ package androidx.wear.watchface {
     method @UiThread public androidx.wear.complications.data.ComplicationType getDefaultProviderType();
     method public androidx.wear.watchface.CanvasComplicationDrawable getRenderer();
     method @UiThread public java.util.List<androidx.wear.complications.data.ComplicationType> getSupportedTypes();
+    method public androidx.wear.watchface.ComplicationTapFilter getTapFilter();
     method public void invalidate();
     method public boolean isActiveAt(long dateTimeMillis);
     method @UiThread public boolean isEnabled();
@@ -45,6 +52,7 @@ package androidx.wear.watchface {
     property public final boolean initiallyEnabled;
     property public final androidx.wear.watchface.CanvasComplicationDrawable renderer;
     property @UiThread public final java.util.List<androidx.wear.complications.data.ComplicationType> supportedTypes;
+    property public final androidx.wear.watchface.ComplicationTapFilter tapFilter;
     field public static final androidx.wear.watchface.Complication.Companion Companion;
   }
 
@@ -58,6 +66,7 @@ package androidx.wear.watchface {
 
   public static final class Complication.Companion {
     method public androidx.wear.watchface.Complication.Builder createBackgroundComplicationBuilder(int id, androidx.wear.watchface.CanvasComplicationDrawable renderer, java.util.List<? extends androidx.wear.complications.data.ComplicationType> supportedTypes, androidx.wear.complications.DefaultComplicationProviderPolicy defaultProviderPolicy);
+    method public androidx.wear.watchface.Complication.Builder createEdgeComplicationBuilder(int id, androidx.wear.watchface.CanvasComplicationDrawable renderer, java.util.List<? extends androidx.wear.complications.data.ComplicationType> supportedTypes, androidx.wear.complications.DefaultComplicationProviderPolicy defaultProviderPolicy, androidx.wear.complications.ComplicationBounds bounds, androidx.wear.watchface.ComplicationTapFilter complicationTapFilter);
     method public androidx.wear.watchface.Complication.Builder createRoundRectComplicationBuilder(int id, androidx.wear.watchface.CanvasComplicationDrawable renderer, java.util.List<? extends androidx.wear.complications.data.ComplicationType> supportedTypes, androidx.wear.complications.DefaultComplicationProviderPolicy defaultProviderPolicy, androidx.wear.complications.ComplicationBounds bounds);
   }
 
@@ -69,6 +78,10 @@ package androidx.wear.watchface {
 
   public static final class ComplicationOutlineRenderer.Companion {
     method public void drawComplicationOutline(android.graphics.Canvas canvas, android.graphics.Rect bounds, @ColorInt int color);
+  }
+
+  public interface ComplicationTapFilter {
+    method public boolean hitTest(androidx.wear.watchface.Complication complication, android.graphics.Rect screenBounds, @Px int x, @Px int y);
   }
 
   public final class ComplicationsManager {
@@ -235,9 +248,15 @@ package androidx.wear.watchface {
   public final class RendererKt {
   }
 
+  public final class RoundRectComplicationTapFilter implements androidx.wear.watchface.ComplicationTapFilter {
+    ctor public RoundRectComplicationTapFilter();
+    method public boolean hitTest(androidx.wear.watchface.Complication complication, android.graphics.Rect screenBounds, @Px int x, @Px int y);
+  }
+
   public final class WatchFace {
     ctor public WatchFace(int watchFaceType, androidx.wear.watchface.style.CurrentUserStyleRepository currentUserStyleRepository, androidx.wear.watchface.Renderer renderer, optional androidx.wear.watchface.ComplicationsManager complicationsManager);
     ctor public WatchFace(int watchFaceType, androidx.wear.watchface.style.CurrentUserStyleRepository currentUserStyleRepository, androidx.wear.watchface.Renderer renderer);
+    method @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) @UiThread @VisibleForTesting public static void clearAllEditorDelegates();
     method public androidx.wear.watchface.style.CurrentUserStyleRepository getCurrentUserStyleRepository();
     method public androidx.wear.watchface.WatchFace.LegacyWatchFaceOverlayStyle getLegacyWatchFaceStyle();
     method @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) @UiThread public static kotlinx.coroutines.CompletableDeferred<androidx.wear.watchface.WatchFace.EditorDelegate> getOrCreateEditorDelegate(android.content.ComponentName componentName);
@@ -255,6 +274,7 @@ package androidx.wear.watchface {
   }
 
   public static final class WatchFace.Companion {
+    method @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) @UiThread @VisibleForTesting public void clearAllEditorDelegates();
     method @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) @UiThread public kotlinx.coroutines.CompletableDeferred<androidx.wear.watchface.WatchFace.EditorDelegate> getOrCreateEditorDelegate(android.content.ComponentName componentName);
     method public boolean isLegacyWatchFaceOverlayStyleSupported();
     method @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) @UiThread public void registerEditorDelegate(android.content.ComponentName componentName, androidx.wear.watchface.WatchFace.EditorDelegate editorDelegate);

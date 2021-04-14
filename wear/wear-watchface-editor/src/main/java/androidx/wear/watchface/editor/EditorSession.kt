@@ -55,14 +55,16 @@ import androidx.wear.watchface.data.ComplicationBoundsType
 import androidx.wear.watchface.data.IdAndComplicationDataWireFormat
 import androidx.wear.watchface.editor.data.EditorStateWireFormat
 import androidx.wear.watchface.style.UserStyle
-import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleData
+import androidx.wear.watchface.style.UserStyleSchema
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /**
  * Interface for manipulating watch face state during an editing session for a watch face editing
@@ -128,7 +130,10 @@ public abstract class EditorSession : AutoCloseable {
     @get:SuppressWarnings("AutoBoxing")
     public abstract val backgroundComplicationId: Int?
 
-    /** Returns the ID of the complication at the given coordinates or `null` if there isn't one. */
+    /**
+     * Returns the ID of the complication at the given coordinates or `null` if there isn't one.
+     * Only complications with [ComplicationBoundsType.ROUND_RECT] are supported by this function.
+     */
     @SuppressWarnings("AutoBoxing")
     @UiThread
     public abstract fun getComplicationIdAt(@Px x: Int, @Px y: Int): Int?
@@ -276,6 +281,11 @@ public abstract class BaseEditorSession internal constructor(
         }
     }
 
+    private companion object {
+        /** Timeout for fetching ComplicationsPreviewData in [BaseEditorSession.close]. */
+        private const val CLOSE_BROADCAST_TIMEOUT_MILLIS = 500L
+    }
+
     init {
         EditorService.globalEditorService.addCloseCallback(closeCallback)
     }
@@ -290,34 +300,41 @@ public abstract class BaseEditorSession internal constructor(
     }
 
     // Pending result for [launchComplicationProviderChooser].
-    private var pendingComplicationProviderChooserResult: CompletableDeferred<Boolean>? = null
+    internal var pendingComplicationProviderChooserResult: CompletableDeferred<Boolean>? = null
 
     // The id of the complication being configured due to [launchComplicationProviderChooser].
     private var pendingComplicationProviderId: Int = -1
 
     private val chooseComplicationProvider =
         activity.registerForActivityResult(ComplicationProviderChooserContract()) {
-            if (it != null) {
-                coroutineScope.launch {
-                    // Update preview data.
-                    val providerInfoRetriever =
-                        providerInfoRetrieverProvider.getProviderInfoRetriever()
-                    val previewData = getPreviewData(providerInfoRetriever, it.providerInfo)
-                    val complicationPreviewDataMap = deferredComplicationPreviewDataMap.await()
-                    if (previewData == null) {
-                        complicationPreviewDataMap.remove(pendingComplicationProviderId)
-                    } else {
-                        complicationPreviewDataMap[pendingComplicationProviderId] = previewData
-                    }
-                    providerInfoRetriever.close()
-                    pendingComplicationProviderChooserResult!!.complete(true)
-                    pendingComplicationProviderChooserResult = null
+            updatePreviewData(it)
+        }
+
+    internal fun updatePreviewData(
+        complicationProviderChooserResult: ComplicationProviderChooserResult
+    ) {
+        val providerInfoRetriever =
+            providerInfoRetrieverProvider.getProviderInfoRetriever()
+        coroutineScope.launchWithTracing("BaseEditorSession.updatePreviewData") {
+            try {
+                val previewData = getPreviewData(
+                    providerInfoRetriever,
+                    complicationProviderChooserResult.providerInfo
+                )
+                val complicationPreviewDataMap = deferredComplicationPreviewDataMap.await()
+                if (previewData == null) {
+                    complicationPreviewDataMap.remove(pendingComplicationProviderId)
+                } else {
+                    complicationPreviewDataMap[pendingComplicationProviderId] = previewData
                 }
-            } else {
-                pendingComplicationProviderChooserResult!!.complete(false)
+                pendingComplicationProviderChooserResult!!.complete(true)
                 pendingComplicationProviderChooserResult = null
+            } finally {
+                // This gets called after the above coroutine has finished.
+                providerInfoRetriever.close()
             }
         }
+    }
 
     override suspend fun openComplicationProviderChooser(
         complicationId: Int
@@ -374,7 +391,7 @@ public abstract class BaseEditorSession internal constructor(
         // Fetch preview ComplicationData if possible.
         return providerInfo.providerComponentName?.let {
             try {
-                providerInfoRetriever.requestPreviewComplicationData(
+                providerInfoRetriever.retrievePreviewComplicationData(
                     it,
                     ComplicationType.fromWireType(providerInfo.complicationType)
                 )
@@ -404,29 +421,32 @@ public abstract class BaseEditorSession internal constructor(
     }
 
     protected fun fetchComplicationPreviewData() {
+        val providerInfoRetriever = providerInfoRetrieverProvider.getProviderInfoRetriever()
         coroutineScope.launchWithTracing("BaseEditorSession.fetchComplicationPreviewData") {
-            val providerInfoRetriever = providerInfoRetrieverProvider.getProviderInfoRetriever()
-            // Unlikely but WCS could conceivably crash during this call. We could retry but it's
-            // not obvious if that'd succeed or if WCS session state is recoverable, it's probably
-            // better to crash and start over.
-            val providerInfoArray = providerInfoRetriever.retrieveProviderInfo(
-                watchFaceComponentName,
-                complicationsState.keys.toIntArray()
-            )
-            deferredComplicationPreviewDataMap.complete(
-                // Parallel fetch preview ComplicationData.
-                providerInfoArray?.associateBy(
-                    { it.watchFaceComplicationId },
-                    { async { getPreviewData(providerInfoRetriever, it.info) } }
-                    // Coerce to a Map<Int, ComplicationData> omitting null values.
-                    // If mapNotNullValues existed we would use it here.
-                )?.filterValues {
-                    it.await() != null
-                }?.mapValues {
-                    it.value.await()!!
-                }?.toMutableMap() ?: mutableMapOf()
-            )
-            providerInfoRetriever.close()
+            try {
+                // Unlikely but WCS could conceivably crash during this call. We could retry but it's
+                // not obvious if that'd succeed or if WCS session state is recoverable, it's probably
+                // better to crash and start over.
+                val providerInfoArray = providerInfoRetriever.retrieveProviderInfo(
+                    watchFaceComponentName,
+                    complicationsState.keys.toIntArray()
+                )
+                deferredComplicationPreviewDataMap.complete(
+                    // Parallel fetch preview ComplicationData.
+                    providerInfoArray?.associateBy(
+                        { it.watchFaceComplicationId },
+                        { async { getPreviewData(providerInfoRetriever, it.info) } }
+                        // Coerce to a Map<Int, ComplicationData> omitting null values.
+                        // If mapNotNullValues existed we would use it here.
+                    )?.filterValues {
+                        it.await() != null
+                    }?.mapValues {
+                        it.value.await()!!
+                    }?.toMutableMap() ?: mutableMapOf()
+                )
+            } finally {
+                providerInfoRetriever.close()
+            }
         }
     }
 
@@ -437,22 +457,32 @@ public abstract class BaseEditorSession internal constructor(
         }
         requireNotClosed()
         EditorService.globalEditorService.removeCloseCallback(closeCallback)
+        // We need to send the preview data which we obtain asynchronously.
         coroutineScope.launchWithTracing("BaseEditorSession.close") {
-            val editorState = EditorStateWireFormat(
-                watchFaceId.id,
-                userStyle.toWireFormat(),
-                getComplicationsPreviewData().map {
-                    IdAndComplicationDataWireFormat(
-                        it.key,
-                        it.value.asWireComplicationData()
+            try {
+                withTimeout(CLOSE_BROADCAST_TIMEOUT_MILLIS) {
+                    EditorService.globalEditorService.broadcastEditorState(
+                        EditorStateWireFormat(
+                            watchFaceId.id,
+                            userStyle.toWireFormat(),
+                            getComplicationsPreviewData().map {
+                                IdAndComplicationDataWireFormat(
+                                    it.key,
+                                    it.value.asWireComplicationData()
+                                )
+                            },
+                            commitChangesOnClose
+                        )
                     )
-                },
-                commitChangesOnClose
-            )
+                }
+            } catch (e: TimeoutCancellationException) {
+                // Ignore this, nothing we can do.
+            }
+
             releaseResources()
             closed = true
-            EditorService.globalEditorService.broadcastEditorState(editorState)
             editorSessionTraceEvent.close()
+            coroutineScope.cancel()
         }
     }
 
@@ -465,6 +495,7 @@ public abstract class BaseEditorSession internal constructor(
         activity.finish()
         EditorService.globalEditorService.removeCloseCallback(closeCallback)
         editorSessionTraceEvent.close()
+        coroutineScope.cancel()
     }
 
     protected fun requireNotClosed() {
@@ -549,7 +580,7 @@ internal class OnWatchFaceEditorSessionImpl(
             editorDelegate.onDestroy()
         }
         // Revert any changes to the UserStyle if needed.
-        if (!commitChangesOnClose) {
+        if (!commitChangesOnClose && this::previousWatchFaceUserStyle.isInitialized) {
             userStyle = previousWatchFaceUserStyle
         }
     }

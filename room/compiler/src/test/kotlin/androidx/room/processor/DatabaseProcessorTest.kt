@@ -571,7 +571,7 @@ class DatabaseProcessorTest {
                 public abstract class MyDb extends RoomDatabase {
                 }
                 """,
-            entity1, Source.fromJavaFileObject(COMMON.USER)
+            entity1, COMMON.USER
         ) { _, invocation ->
             invocation.assertCompilationResult {
                 hasErrorContaining(
@@ -607,7 +607,7 @@ class DatabaseProcessorTest {
                 public abstract class MyDb extends RoomDatabase {
                 }
                 """,
-            entity1, Source.fromJavaFileObject(COMMON.USER)
+            entity1, COMMON.USER
         ) { _, invocation ->
             invocation.assertCompilationResult {
                 hasErrorContaining(
@@ -1214,7 +1214,8 @@ class DatabaseProcessorTest {
         singleDb(
             """
                 @Database(entities = {User.class}, version = 42, exportSchema = false,
-                autoMigrations = {MyAutoMigration.class})
+                autoMigrations = {@AutoMigration(from = 1, to = 2, callback = MyAutoMigration
+                .class), @AutoMigration(from = 2, to = 3)})
                 public abstract class MyDb extends RoomDatabase {}
                 """,
             USER, AUTOMIGRATION
