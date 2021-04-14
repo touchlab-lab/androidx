@@ -18,9 +18,14 @@ package androidx.compose.foundation.layout.ww
 
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
-import androidx.compose.web.elements.Text
+import org.jetbrains.ui.ww.asStyleBuilderApplier
+import androidx.compose.web.elements.Div
 
 @Composable
-actual fun Column(modifier: Modifier?, content: @Composable () -> Unit) {
-    Text("I AM A COLUMN")
+actual fun Column(modifier: Modifier, content: @Composable () -> Unit) {
+    Div(
+        style = modifier.asStyleBuilderApplier()
+    ) {
+        content()
+    }
 }

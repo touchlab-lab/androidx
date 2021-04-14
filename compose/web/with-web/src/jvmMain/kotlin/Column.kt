@@ -19,8 +19,11 @@ package androidx.compose.foundation.layout.ww
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Column as JColumn
+import org.jetbrains.ui.ww.implementation
 
 @Composable
-actual fun Column(modifier: Modifier?, content: @Composable () -> Unit) {
-    JColumn() { content.invoke() }
+actual fun Column(modifier: Modifier, content: @Composable () -> Unit) {
+    JColumn(modifier = modifier.implementation) {
+        content.invoke()
+    }
 }
