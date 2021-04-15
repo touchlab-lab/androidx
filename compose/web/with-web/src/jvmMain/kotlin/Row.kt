@@ -20,16 +20,20 @@ import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Row as JRow
 import org.jetbrains.ui.ww.implementation
+import androidx.compose.ui.ww.implementation
+import androidx.compose.ui.ww.Alignment
 
 @Composable
 internal actual fun RowActual(
     modifier: Modifier,
     horizontalArrangement: Arrangement.Horizontal,
+    verticalAlignment: Alignment.Vertical,
     content: @Composable () -> Unit
 ) {
     JRow(
         modifier.implementation,
-        horizontalArrangement.implementation
+        horizontalArrangement.implementation,
+        verticalAlignment.implementation
     ) {
         content.invoke()
     }

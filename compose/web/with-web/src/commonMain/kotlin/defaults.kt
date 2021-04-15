@@ -17,22 +17,24 @@ package androidx.compose.foundation.layout.ww
 
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ww.Alignment
 
 @Composable
 fun Box(
     modifier: Modifier = Modifier.Companion,
     content: @Composable () -> Unit
-) = BoxActual(modifier, content)
+) { BoxActual(modifier, content) }
 
 @Composable
 fun Column(
     modifier: Modifier = Modifier.Companion,
     content: @Composable () -> Unit
-) = ColumnActual(modifier, content)
+) { ColumnActual(modifier, content) }
 
 @Composable
 fun Row(
     modifier: Modifier = Modifier.Companion,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    verticalAlignment: Alignment.Vertical = Alignment.Top,
     content: @Composable () -> Unit
-) = RowActual(modifier, horizontalArrangement, content)
+) { RowActual(modifier, horizontalArrangement, verticalAlignment, content) }

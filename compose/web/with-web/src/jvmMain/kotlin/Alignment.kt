@@ -13,25 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package androidx.compose.ui.ww
 
-package androidx.compose.foundation.layout.ww
+import androidx.compose.ui.Alignment as JAlignment
 
-import org.jetbrains.ui.ww.Modifier
-import androidx.compose.runtime.Composable
-import androidx.compose.web.elements.Div
-import org.jetbrains.ui.ww.asStyleBuilderApplier
-import androidx.compose.ui.ww.Alignment
-
-@Composable
-internal actual fun RowActual(
-    modifier: Modifier,
-    horizontalArrangement: Arrangement.Horizontal,
-    verticalAlignment: Alignment.Vertical,
-    content: @Composable () -> Unit
-) {
-    Div(
-        style = modifier.asStyleBuilderApplier()
-    ) {
-        content()
+val Alignment.Vertical.implementation: JAlignment.Vertical
+    get() = when (this) {
+        Alignment.Top -> JAlignment.Top
+        Alignment.CenterVertically -> JAlignment.CenterVertically
+        else -> JAlignment.Bottom
     }
-}

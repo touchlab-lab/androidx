@@ -17,10 +17,12 @@ package androidx.compose.foundation.layout.ww
 
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ww.Alignment
 
 @Composable
 internal expect fun RowActual(
     modifier: Modifier,
     horizontalArrangement: Arrangement.Horizontal,
+    verticalAlignment: Alignment.Vertical,
     content: @Composable () -> Unit
 )
