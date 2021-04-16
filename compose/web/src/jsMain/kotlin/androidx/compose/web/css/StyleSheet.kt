@@ -61,7 +61,6 @@ open class StyleSheet(
                 it.selector is CSSSelector.CSSClass && it.properties == properties &&
                 (boundClasses[it.selector.className] ?: emptyList()) == newCssRules
         }.unsafeCast<CSSStyleRuleDeclaration?>()
-        js("debugger")
         return if (cssRule != null) {
             cssRule.selector.unsafeCast<CSSSelector.CSSClass>().className
         } else {

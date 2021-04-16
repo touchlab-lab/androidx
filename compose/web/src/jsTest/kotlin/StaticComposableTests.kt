@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import androidx.compose.web.css.Color
+import androidx.compose.web.css.StylePropertyValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -105,19 +107,19 @@ class StaticComposableTests {
         ) {
             Div(
                 style = {
-                    border("1px solid red")
+                    add("border", StylePropertyValue("1px solid red"))
                 }
             ) {}
             Div(
                 style = {
-                    border(2.px, "green")
+                    border(2.px, color = Color("green"))
                 }
             ) {}
         }
 
         assertEquals("border: 1px solid red;", (root.children[0] as HTMLElement).style.cssText)
         assertEquals(
-            "border-width: 2px; border-color: green; border-style: solid;",
+            "border: 2px green;",
             (root.children[1] as HTMLElement).style.cssText
         )
     }

@@ -38,7 +38,7 @@ abstract class CSSRuleDeclaration {
 class CSSStyleRuleDeclaration(
     val selector: CSSSelector,
     val properties: StylePropertyList
-): CSSRuleDeclaration() {
+) : CSSRuleDeclaration() {
     override val header
         get() = selector.toString()
     // StylePropertyValue is js native object without equals
@@ -55,7 +55,7 @@ class CSSStyleRuleDeclaration(
 
 abstract class CSSGroupingRuleDeclaration(
     val rules: CSSRuleDeclarationList
-): CSSRuleDeclaration()
+) : CSSRuleDeclaration()
 
 typealias CSSRuleDeclarationList = List<CSSRuleDeclaration>
 typealias MutableCSSRuleDeclarationList = MutableList<CSSRuleDeclaration>

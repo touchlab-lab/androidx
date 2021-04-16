@@ -40,4 +40,8 @@ sealed class Color {
 
         override fun toString(): String = "hsla($h, $s%, $l%, a)"
     }
+
+    companion object {
+        operator fun invoke(name: String) = Named(name)
+    }
 }
