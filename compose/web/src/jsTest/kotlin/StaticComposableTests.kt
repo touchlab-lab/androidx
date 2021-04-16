@@ -112,16 +112,22 @@ class StaticComposableTests {
             ) {}
             Div(
                 style = {
-                    border(2.px, color = Color("green"))
+                    border(3.px, color = Color("green"))
                 }
             ) {}
         }
 
         assertEquals("border: 1px solid red;", (root.children[0] as HTMLElement).style.cssText)
-        assertEquals(
-            "border: 2px green;",
-            (root.children[1] as HTMLElement).style.cssText
-        )
+        root.children[1]?.let { el ->
+            assertEquals(
+                "green",
+                el.asDynamic().attributeStyleMap.get("border-color").toString(),
+            )
+            assertEquals(
+                "3px",
+                el.asDynamic().attributeStyleMap.get("border-width").toString(),
+            )
+        }
     }
 
     @Test
