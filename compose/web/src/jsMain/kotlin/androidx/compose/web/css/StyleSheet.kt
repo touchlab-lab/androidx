@@ -57,9 +57,10 @@ open class StyleSheet(
         val selfSelector = CSSSelfSelector()
         val (properties, newCssRules) = buildCSS(selfSelector, selfSelector, cssBuilder)
         val cssRule = cssRules.find {
-            it.selector is CSSSelector.CSSClass && it.properties == properties &&
+            it is CSSStyleRuleDeclaration &&
+                it.selector is CSSSelector.CSSClass && it.properties == properties &&
                 (boundClasses[it.selector.className] ?: emptyList()) == newCssRules
-        }
+        }.unsafeCast<CSSStyleRuleDeclaration?>()
         js("debugger")
         return if (cssRule != null) {
             cssRule.selector.unsafeCast<CSSSelector.CSSClass>().className
@@ -89,6 +90,9 @@ open class StyleSheet(
             }
         }
     }
+
+    override fun buildRules(cssRules: GenericStyleSheetBuilder<CSSStyleRuleBuilder>.() -> Unit) =
+        StyleSheet().apply(cssRules).cssRules
 }
 
 fun buildCSS(

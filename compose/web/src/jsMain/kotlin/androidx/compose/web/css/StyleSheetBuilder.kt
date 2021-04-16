@@ -22,29 +22,35 @@ interface CSSRulesHolder {
     val cssRules: CSSRuleDeclarationList
     fun add(cssRule: CSSRuleDeclaration)
     fun add(selector: CSSSelector, properties: StylePropertyList) {
-        add(CSSRuleDeclaration(selector, properties))
+        add(CSSStyleRuleDeclaration(selector, properties))
     }
 }
 
-interface StyleSheetBuilder : CSSRulesHolder {
-    fun rule(selector: CSSSelector, cssRule: CSSRuleBuilder.() -> Unit) {
-        add(selector, buildCSSRule(cssRule))
+interface GenericStyleSheetBuilder<TBuilder> : CSSRulesHolder {
+    fun buildRules(cssRules: GenericStyleSheetBuilder<TBuilder>.() -> Unit): CSSRuleDeclarationList
+
+    fun style(selector: CSSSelector, cssRule: TBuilder.() -> Unit)
+
+    operator fun CSSSelector.invoke(cssRule: TBuilder.() -> Unit) {
+        style(this, cssRule)
     }
 
-    operator fun CSSSelector.invoke(cssRule: CSSRuleBuilder.() -> Unit) {
-        rule(this, cssRule)
+    infix fun CSSSelector.style(cssRule: TBuilder.() -> Unit) {
+        style(this, cssRule)
     }
 
-    infix fun CSSSelector.style(cssRule: CSSRuleBuilder.() -> Unit) {
-        rule(this, cssRule)
+    operator fun String.invoke(cssRule: TBuilder.() -> Unit) {
+        style(CSSSelector.Raw(this), cssRule)
     }
 
-    operator fun String.invoke(cssRule: CSSRuleBuilder.() -> Unit) {
-        rule(CSSSelector.Raw(this), cssRule)
+    infix fun String.style(cssRule: TBuilder.() -> Unit) {
+        style(CSSSelector.Raw(this), cssRule)
     }
+}
 
-    infix fun String.style(cssRule: CSSRuleBuilder.() -> Unit) {
-        rule(CSSSelector.Raw(this), cssRule)
+interface StyleSheetBuilder : CSSRulesHolder, GenericStyleSheetBuilder<CSSStyleRuleBuilder> {
+    override fun style(selector: CSSSelector, cssRule: CSSStyleRuleBuilder.() -> Unit) {
+        add(selector, buildCSSStyleRule(cssRule))
     }
 }
 
@@ -54,4 +60,7 @@ open class StyleSheetBuilderImpl : StyleSheetBuilder {
     override fun add(cssRule: CSSRuleDeclaration) {
         cssRules.add(cssRule)
     }
+
+    override fun buildRules(cssRules: GenericStyleSheetBuilder<CSSStyleRuleBuilder>.() -> Unit) =
+        StyleSheetBuilderImpl().apply(cssRules).cssRules
 }
