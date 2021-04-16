@@ -20,10 +20,13 @@ import kotlin.test.assertTrue
 import kotlinx.browser.document
 import androidx.compose.web.renderComposable
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.get
 import androidx.compose.web.elements.Text
 import androidx.compose.web.elements.Div
 import androidx.compose.web.css.opacity
 import androidx.compose.web.css.color
+import androidx.compose.web.css.border
+import androidx.compose.web.css.px
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -93,5 +96,30 @@ class StaticComposableTests {
         assertTrue(el is HTMLElement, "element not found")
 
         assertEquals("opacity: 0.2; color: green;", el.style.cssText)
+    }
+
+    @Test
+    fun stylesBorder() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    border("1px solid red")
+                }
+            ) {}
+            Div(
+                style = {
+                    border(2.px, "green")
+                }
+            ) {}
+        }
+
+        assertEquals("border: 1px solid red;", (root.children[0] as HTMLElement).style.cssText)
+        assertEquals(
+            "border-width: 2px; border-color: green; border-style: solid;",
+            (root.children[1] as HTMLElement).style.cssText
+        )
     }
 }

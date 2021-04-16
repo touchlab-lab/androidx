@@ -6,6 +6,7 @@ import androidx.compose.web.css.StyleBuilder
 import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.width
 import androidx.compose.web.css.height
+import androidx.compose.web.css.border
 import androidx.compose.web.css.px
 import androidx.compose.web.css.Color.RGB
 
@@ -25,6 +26,7 @@ actual fun Modifier.size(size: Dp): Modifier = castOrCreate().apply {
 actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
     styleHandlers.add({
         backgroundColor(RGB(color.red, color.green, color.blue))
+        border("1px solid black")
     })
 }
 

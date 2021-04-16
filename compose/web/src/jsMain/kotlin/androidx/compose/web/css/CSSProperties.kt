@@ -41,6 +41,21 @@ fun StyleBuilder.backgroundColor(value: String) {
     add("background-color", StylePropertyValue(value))
 }
 
+fun StyleBuilder.border(value: String) {
+    add("border", StylePropertyValue(value))
+}
+
+fun StyleBuilder.border(width: CSSSizeValue, color: Color) {
+    add("border-width", StylePropertyValue(width.toString()))
+    add("border-color", StylePropertyValue(color.toString()))
+    add("border-color", StylePropertyValue(color.toString()))
+    add("border-style", StylePropertyValue("solid"))
+}
+
+fun StyleBuilder.border(width: CSSSizeValue, color: String) {
+    border(width, Color.Named(color))
+}
+
 fun StyleBuilder.width(value: CSSSizeOrAutoValue) {
     add("width", value)
 }
