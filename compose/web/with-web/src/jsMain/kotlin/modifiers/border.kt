@@ -21,11 +21,12 @@ import androidx.core.graphics.ww.Color
 import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.compose.web.ww.internal.castOrCreate
 import androidx.compose.web.css.px
+import androidx.compose.web.css.LineStyle
 import androidx.compose.web.css.border
 import androidx.compose.web.css.Color.RGB
 
 actual fun Modifier.border(size: Dp, color: Color): Modifier = castOrCreate().apply {
     styleHandlers.add({
-        border(size.value.px, RGB(color.red, color.green, color.blue))
+        border(size.value.px, LineStyle.solid, RGB(color.red, color.green, color.blue))
     })
 }
