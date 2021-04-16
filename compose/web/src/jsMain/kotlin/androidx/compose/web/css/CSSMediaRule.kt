@@ -17,13 +17,13 @@
 package androidx.compose.web.css
 
 interface CSSMediaQuery {
-    interface Invertible: CSSMediaQuery
-    interface Combinable: CSSMediaQuery
-    interface Atomic: Invertible, Combinable
-    data class Raw(val string: String): Atomic {
+    interface Invertible : CSSMediaQuery
+    interface Combinable : CSSMediaQuery
+    interface Atomic : Invertible, Combinable
+    data class Raw(val string: String) : Atomic {
         override fun toString() = string
     }
-    data class MediaType(val type: Enum): Atomic {
+    data class MediaType(val type: Enum) : Atomic {
         enum class Enum {
             all, print, screen, speech
         }
@@ -34,7 +34,7 @@ interface CSSMediaQuery {
     data class MediaFeature(
         val name: String,
         val value: StylePropertyValue? = null
-    ): CSSMediaQuery, Atomic {
+    ) : CSSMediaQuery, Atomic {
         override fun equals(other: Any?): Boolean {
             return if (other is MediaFeature) {
                 name == other.name && value.toString() == other.value.toString()
@@ -45,23 +45,23 @@ interface CSSMediaQuery {
     }
 
     // looks like it doesn't work at least in chrome
-    data class NotFeature(val query: MediaFeature): CSSMediaQuery {
+    data class NotFeature(val query: MediaFeature) : CSSMediaQuery {
         override fun toString() = "(not $query)"
     }
 
-    data class And(val mediaList: MutableList<Atomic>): CSSMediaQuery, Invertible, Combinable {
+    data class And(val mediaList: MutableList<Atomic>) : CSSMediaQuery, Invertible, Combinable {
         override fun toString() = mediaList.joinToString(" and ")
     }
 
-    data class Not(val query: Invertible): CSSMediaQuery {
+    data class Not(val query: Invertible) : CSSMediaQuery {
         override fun toString() = "not $query"
     }
 
-    data class Combine(val mediaList: MutableList<CSSMediaQuery>): CSSMediaQuery {
+    data class Combine(val mediaList: MutableList<CSSMediaQuery>) : CSSMediaQuery {
         override fun toString() = mediaList.joinToString(", ")
     }
 
-    data class Only(val type: MediaType, val query: Combinable): CSSMediaQuery, Invertible {
+    data class Only(val type: MediaType, val query: Combinable) : CSSMediaQuery, Invertible {
         override fun toString() = "only $type and $query"
     }
 
@@ -74,7 +74,7 @@ interface CSSMediaQuery {
 class CSSMediaRuleDeclaration(
     val query: CSSMediaQuery,
     rules: CSSRuleDeclarationList
-): CSSGroupingRuleDeclaration(rules) {
+) : CSSGroupingRuleDeclaration(rules) {
     override val header: String
         get() = "@media $query"
 
