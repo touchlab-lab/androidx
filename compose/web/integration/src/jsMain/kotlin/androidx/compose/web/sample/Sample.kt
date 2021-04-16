@@ -48,6 +48,10 @@ import androidx.compose.web.elements.TextArea
 import androidx.compose.web.renderComposable
 import androidx.compose.web.css.Style
 import androidx.compose.web.css.StyleSheet
+import androidx.compose.web.css.and
+import androidx.compose.web.css.maxWidth
+import androidx.compose.web.css.media
+import androidx.compose.web.css.minWidth
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -160,6 +164,12 @@ fun main() {
 
             ".${AppStyleSheet.myClass}:hover" {
                 color("red")
+            }
+
+            media(minWidth(500.px) and maxWidth(700.px)) {
+                className(MyClassName) style {
+                    fontSize(40.px)
+                }
             }
         }
         Style(AppStyleSheet)

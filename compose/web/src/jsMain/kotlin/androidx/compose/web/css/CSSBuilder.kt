@@ -18,37 +18,22 @@ package androidx.compose.web.css
 
 import androidx.compose.web.css.selectors.CSSSelector
 
-interface CSSBuilder : CSSRuleBuilder {
+interface CSSBuilder : CSSStyleRuleBuilder, GenericStyleSheetBuilder<CSSBuilder> {
     val root: CSSSelector
     val self: CSSSelector
-
-    fun rule(selector: CSSSelector, cssRule: CSSBuilder.() -> Unit)
-
-    operator fun CSSSelector.invoke(cssRule: CSSBuilder.() -> Unit) {
-        rule(this, cssRule)
-    }
-
-    infix fun CSSSelector.style(cssRule: CSSBuilder.() -> Unit) {
-        rule(this, cssRule)
-    }
-
-    operator fun String.invoke(cssRule: CSSBuilder.() -> Unit) {
-        rule(CSSSelector.Raw(this), cssRule)
-    }
-
-    infix fun String.style(cssRule: CSSBuilder.() -> Unit) {
-        rule(CSSSelector.Raw(this), cssRule)
-    }
 }
 
 class CSSBuilderImpl(
     override val root: CSSSelector,
     override val self: CSSSelector,
-    sheet: StyleSheetBuilder
-) : CSSBuilder, CSSRuleBuilderImpl(), StyleSheetBuilder by sheet {
-    override fun rule(selector: CSSSelector, cssRule: CSSBuilder.() -> Unit) {
+    rulesHolder: CSSRulesHolder
+) : CSSRuleBuilderImpl(), CSSBuilder, CSSRulesHolder by rulesHolder {
+    override fun style(selector: CSSSelector, cssRule: CSSBuilder.() -> Unit) {
         val (properties, rules) = buildCSS(root, selector, cssRule)
-        add(selector, properties)
         rules.forEach { add(it) }
+        add(selector, properties)
     }
+
+    override fun buildRules(cssRules: GenericStyleSheetBuilder<CSSBuilder>.() -> Unit) =
+        CSSBuilderImpl(root, self, this).apply(cssRules).cssRules
 }

@@ -20,21 +20,30 @@ import androidx.compose.web.attributes.AttrsBuilder
 import androidx.compose.web.attributes.Tag
 import androidx.compose.web.css.selectors.CSSSelector
 import org.w3c.dom.HTMLStyleElement
+import org.w3c.dom.css.CSSGroupingRule
 import org.w3c.dom.css.CSSRule
 import org.w3c.dom.css.StyleSheet
 import kotlin.js.Promise
 
-interface CSSRuleBuilder : StyleBuilder
+interface CSSStyleRuleBuilder : StyleBuilder
 
-open class CSSRuleBuilderImpl : CSSRuleBuilder, StyleBuilderImpl()
+open class CSSRuleBuilderImpl : CSSStyleRuleBuilder, StyleBuilderImpl()
 
-data class CSSRuleDeclaration(
+abstract class CSSRuleDeclaration {
+    abstract val header: String
+
+    abstract override fun equals(other: Any?): Boolean
+}
+
+class CSSStyleRuleDeclaration(
     val selector: CSSSelector,
     val properties: StylePropertyList
-) {
+): CSSRuleDeclaration() {
+    override val header
+        get() = selector.toString()
     // StylePropertyValue is js native object without equals
     override fun equals(other: Any?): Boolean {
-        return if (other is CSSRuleDeclaration) {
+        return if (other is CSSStyleRuleDeclaration) {
             var index = 0
             selector == other.selector && properties.all { prop ->
                 val otherProp = other.properties[index++]
@@ -44,6 +53,10 @@ data class CSSRuleDeclaration(
     }
 }
 
+abstract class CSSGroupingRuleDeclaration(
+    val rules: CSSRuleDeclarationList
+): CSSRuleDeclaration()
+
 typealias CSSRuleDeclarationList = List<CSSRuleDeclaration>
 typealias MutableCSSRuleDeclarationList = MutableList<CSSRuleDeclaration>
 
@@ -52,10 +65,36 @@ private fun StyleSheet.addRule(cssRule: String): CSSRule {
     return this.cssRules[cssRuleIndex]
 }
 
-private fun StyleSheet.addRule(rule: CSSRuleDeclaration) {
-    val cssRule = addRule("${rule.selector} {}")
-    rule.properties.forEach { (name, value) ->
-        cssRule.styleMap.set(name, value)
+private fun CSSGroupingRule.addRule(cssRule: String): CSSRule {
+    val cssRuleIndex = this.insertRule(cssRule, this.cssRules.length)
+    return this.cssRules[cssRuleIndex]
+}
+
+private fun StyleSheet.addRule(cssRuleDeclaration: CSSRuleDeclaration) {
+    val cssRule = addRule("${cssRuleDeclaration.header} {}")
+    fillRule(cssRuleDeclaration, cssRule)
+}
+
+private fun CSSGroupingRule.addRule(cssRuleDeclaration: CSSRuleDeclaration) {
+    val cssRule = addRule("${cssRuleDeclaration.header} {}")
+    fillRule(cssRuleDeclaration, cssRule)
+}
+
+private fun fillRule(
+    cssRuleDeclaration: CSSRuleDeclaration,
+    cssRule: CSSRule
+) {
+    when (cssRuleDeclaration) {
+        is CSSStyleRuleDeclaration ->
+            cssRuleDeclaration.properties.forEach { (name, value) ->
+                cssRule.styleMap.set(name, value)
+            }
+        is CSSGroupingRuleDeclaration -> {
+            val cssGroupingRule = cssRule.unsafeCast<CSSGroupingRule>()
+            cssRuleDeclaration.rules.forEach { childRuleDeclaration ->
+                cssGroupingRule.addRule(childRuleDeclaration)
+            }
+        }
     }
 }
 
@@ -88,7 +127,7 @@ private fun setCSSRules(sheet: StyleSheet, cssRules: CSSRuleDeclarationList) {
     }
 }
 
-fun buildCSSRule(cssRule: CSSRuleBuilder.() -> Unit): StylePropertyList {
+fun buildCSSStyleRule(cssRule: CSSStyleRuleBuilder.() -> Unit): StylePropertyList {
     val builder = CSSRuleBuilderImpl()
     builder.cssRule()
     return builder.properties
