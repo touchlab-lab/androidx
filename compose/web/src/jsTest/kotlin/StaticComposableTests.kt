@@ -27,6 +27,8 @@ import androidx.compose.web.css.opacity
 import androidx.compose.web.css.color
 import androidx.compose.web.css.border
 import androidx.compose.web.css.px
+import androidx.compose.web.css.width
+import androidx.compose.web.css.height
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -92,10 +94,7 @@ class StaticComposableTests {
             ) {}
         }
 
-        val el = root.firstChild
-        assertTrue(el is HTMLElement, "element not found")
-
-        assertEquals("opacity: 0.2; color: green;", el.style.cssText)
+        assertEquals("opacity: 0.2; color: green;", (root.children[0] as HTMLElement).style.cssText)
     }
 
     @Test
@@ -121,5 +120,37 @@ class StaticComposableTests {
             "border-width: 2px; border-color: green; border-style: solid;",
             (root.children[1] as HTMLElement).style.cssText
         )
+    }
+
+    @Test
+    fun stylesWidth() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    width(100.px)
+                }
+            ) {}
+        }
+
+        assertEquals("width: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesHeight() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    height(100.px)
+                }
+            ) {}
+        }
+
+        assertEquals("height: 100px;", (root.children[0] as HTMLElement).style.cssText)
     }
 }
