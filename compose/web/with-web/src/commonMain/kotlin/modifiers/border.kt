@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.ui.ww
+package androidx.compose.foundation.ww
 
 import androidx.compose.ui.unit.ww.Dp
-import androidx.compose.ui.unit.ww.implementation
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.background
 import androidx.core.graphics.ww.Color
-import androidx.core.graphics.ww.implementation
-import org.jetbrains.compose.web.ww.internal.castOrCreate
+import org.jetbrains.ui.ww.Modifier
 
-actual fun Modifier.size(size: Dp): Modifier = castOrCreate().apply {
-    modifier = modifier.size(size.implementation)
-}
-
-actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
-    modifier = modifier.background(color.implementation)
-}
-
-val Modifier.implementation
-    get() = castOrCreate().modifier
+expect fun Modifier.border(size: Dp, color: Color): Modifier
