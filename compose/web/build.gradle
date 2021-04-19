@@ -65,27 +65,6 @@ kotlin {
     }
 }
 
-afterEvaluate {
-    project.publishing.publications.all {
-        groupId = "org.jetbrains.compose"
-        version = "0.0.1-SNAPSHOT"
-    }
-}
-
-
-
-publishing {
-     repositories {
-        maven {
-            url "https://maven.pkg.jetbrains.space/public/p/compose/dev"
-            credentials {
-                username = project.hasProperty("COMPOSE_REPO_USERNAME") ? "$COMPOSE_REPO_USERNAME" : ""
-                password = project.hasProperty("COMPOSE_REPO_KEY") ? "$COMPOSE_REPO_KEY" : ""
-            }
-        }
-    } 
-}
-
 androidx {
     name = "Compose Web"
     publish = Publish.SNAPSHOT_AND_RELEASE
