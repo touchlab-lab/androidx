@@ -27,6 +27,6 @@ import androidx.compose.web.css.Color.RGB
 
 actual fun Modifier.border(size: Dp, color: Color): Modifier = castOrCreate().apply {
     styleHandlers.add({
-        border(size.value.px, LineStyle.solid, RGB(color.red, color.green, color.blue))
+        border(size.value.px, LineStyle.Solid, RGB(color.red, color.green, color.blue))
     })
 }

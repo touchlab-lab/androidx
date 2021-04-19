@@ -42,16 +42,16 @@ fun StyleBuilder.backgroundColor(value: String) {
 }
 
 enum class LineStyle {
-    none,
-    hidden,
-    dotted,
-    dashed,
-    solid,
-    double,
-    groove,
-    ridge,
-    inset,
-    outset
+    None,
+    Hidden,
+    Dotted,
+    Dashed,
+    Solid,
+    Double,
+    Groove,
+    Ridge,
+    Inset,
+    Outset
 }
 
 fun StyleBuilder.border(
