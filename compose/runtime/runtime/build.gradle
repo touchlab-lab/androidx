@@ -132,6 +132,26 @@ if(AndroidXUiPlugin.isMultiplatformEnabled(project)) {
     }
 }
 
+afterEvaluate {
+    project.publishing.publications.all {
+        groupId = "org.jetbrains.compose"
+        artifactId = "runtime-with-web"
+        version = "0.0.1-SNAPSHOT"
+    }
+}
+
+publishing {
+     repositories {
+        maven {
+            url "https://maven.pkg.jetbrains.space/public/p/compose/dev"
+            credentials {
+                username = project.hasProperty("COMPOSE_REPO_USERNAME") ? "$COMPOSE_REPO_USERNAME" : ""
+                password = project.hasProperty("COMPOSE_REPO_KEY") ? "$COMPOSE_REPO_KEY" : ""
+            }
+        }
+    } 
+}
+
 android {
     buildTypes {
         debug {
