@@ -34,6 +34,10 @@ private fun String.asHtmlElement() = document.createElement("div") as HTMLElemen
 
 class DomSideEffectTests {
 
+    private suspend fun waitForRecomposition() {
+        delay(10) // This approach is not perfect. We'll rethink it.
+    }
+
     @Test
     fun canCreateElementsInDomSideEffect() {
         val root = "div".asHtmlElement()
@@ -96,7 +100,7 @@ class DomSideEffectTests {
 
         i = 1
 
-        delay(1) // to let the composition recompose before we make assertions
+        waitForRecomposition() // to let the composition recompose before we make assertions
         assertEquals(
             expected = 1,
             actual = disposeCalls.size,
@@ -140,7 +144,7 @@ class DomSideEffectTests {
 
         showDiv = false
 
-        delay(1) // to let the composition recompose before we make assertions
+        waitForRecomposition() // to let the composition recompose before we make assertions
         assertEquals(1, onDisposeCalledTimes)
         assertEquals(
             expected = "<div></div>",
