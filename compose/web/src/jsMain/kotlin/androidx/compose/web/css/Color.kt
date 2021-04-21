@@ -16,7 +16,9 @@
 
 package androidx.compose.web.css
 
-sealed class Color {
+abstract class Color: CustomStyleValue {
+    override fun styleValue(): StylePropertyValue = StylePropertyValue(toString())
+
     data class Named(val value: String) : Color() {
         override fun toString(): String = value
     }

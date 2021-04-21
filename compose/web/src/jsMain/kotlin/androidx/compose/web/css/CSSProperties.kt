@@ -30,15 +30,15 @@ fun StyleBuilder.color(value: String) {
 
 fun StyleBuilder.color(value: Color) {
     // color hasn't Typed OM yet
-    property("color", value(value.toString()))
+    property("color", value.styleValue())
 }
 
-fun StyleBuilder.backgroundColor(value: StylePropertyValue) {
+fun StyleBuilder.backgroundColor(value: CSSVariableValue<Color>) {
     property("background-color", value)
 }
 
 fun StyleBuilder.backgroundColor(value: Color) {
-    property("background-color", value(value.toString()))
+    property("background-color", value.styleValue())
 }
 
 fun StyleBuilder.backgroundColor(value: String) {
@@ -95,7 +95,7 @@ fun StyleBuilder.border(
     style: LineStyle? = null,
     color: Color? = null
 ) {
-    val values = listOfNotNull(width?.toString(), style?.name, color?.toString())
+    val values = listOfNotNull(width, style?.name, color?.styleValue())
     property("border", value(values.joinToString(" ")))
 }
 

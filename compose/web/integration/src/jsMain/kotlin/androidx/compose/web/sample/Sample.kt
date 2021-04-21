@@ -27,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.web.attributes.Draggable
 import androidx.compose.web.attributes.InputType
 import androidx.compose.web.attributes.name
+import androidx.compose.web.css.CSSVariables
+import androidx.compose.web.css.Color
 import androidx.compose.web.css.selectors.className
 import androidx.compose.web.css.color
 import androidx.compose.web.css.fontSize
@@ -53,8 +55,7 @@ import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.maxWidth
 import androidx.compose.web.css.media
 import androidx.compose.web.css.minWidth
-import androidx.compose.web.css.value
-import androidx.compose.web.css.variableValue
+import androidx.compose.web.css.variable
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -68,8 +69,9 @@ class State {
 val globalState = State()
 val globalInt = mutableStateOf(1)
 
-enum class MyCSSVariables {
-    MyVar
+object MyCSSVariables : CSSVariables {
+    val myVar by variable<Color>()
+    val myVar2 by variable<String>()
 }
 
 object AppStyleSheet : StyleSheet() {
@@ -80,7 +82,8 @@ object AppStyleSheet : StyleSheet() {
     val classWithNested by style {
         color("green")
 
-        variable(MyCSSVariables.MyVar.name, value("blue"))
+        MyCSSVariables.myVar(Color("blue"))
+        MyCSSVariables.myVar2("red")
 
         hover(self) style {
             color("red")
@@ -88,7 +91,8 @@ object AppStyleSheet : StyleSheet() {
 
         media(maxWidth(640.px)) {
             self style {
-                backgroundColor(variableValue(MyCSSVariables.MyVar.name))
+                backgroundColor(MyCSSVariables.myVar.value())
+                property("color", MyCSSVariables.myVar2.value())
             }
         }
     }
