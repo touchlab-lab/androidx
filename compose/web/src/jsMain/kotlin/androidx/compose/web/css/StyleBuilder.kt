@@ -27,30 +27,39 @@ interface StyleBuilder {
     }
 
     fun <TValue> CSSStyleVariable<TValue>.value(fallback: TValue? = null) =
-        CSSVariableValue<TValue>(variableValue(
-            name,
-            fallback?.let {
-                (fallback as? CustomStyleValue)?.styleValue() ?: value(fallback.toString())
-            }
-        ))
+        CSSVariableValue<TValue>(
+            variableValue(
+                name,
+                fallback?.let {
+                    (fallback as? CustomStyleValue)?.styleValue() ?: value(fallback.toString())
+                }
+            )
+        )
 }
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun StyleBuilder.value(value: String) = StylePropertyValue(value)
+
 @Suppress("NOTHING_TO_INLINE")
 inline fun StyleBuilder.value(value: Number) = StylePropertyValue(value)
+
 @Suppress("NOTHING_TO_INLINE")
 inline fun StyleBuilder.value(value: CSSStyleValue) = StylePropertyValue(value)
 
 fun StyleBuilder.variableValue(variableName: String, fallback: StylePropertyValue? = null) =
-    StylePropertyValue("var(--$variableName${fallback?.let { ", $it" } ?: "" })")
+    StylePropertyValue("var(--$variableName${fallback?.let { ", $it" } ?: ""})")
 
-interface CSSVariableValue<TValue>: StylePropertyValue {
+interface CSSVariableValue<TValue> : StylePropertyValue {
     companion object {
-        operator fun <TValue> invoke(value: String) = StylePropertyValue(value).unsafeCast<CSSVariableValue<TValue>>()
-        operator fun <TValue> invoke(value: Number) = StylePropertyValue(value).unsafeCast<CSSVariableValue<TValue>>()
-        operator fun <TValue: CSSStyleValue> invoke(value: TValue) = StylePropertyValue(value).unsafeCast<CSSVariableValue<TValue>>()
-        operator fun <TValue> invoke(value: StylePropertyValue) = value.unsafeCast<CSSVariableValue<TValue>>()
+        operator fun <TValue> invoke(value: String) =
+            StylePropertyValue(value).unsafeCast<CSSVariableValue<TValue>>()
+        operator fun <TValue> invoke(value: Number) =
+            StylePropertyValue(value).unsafeCast<CSSVariableValue<TValue>>()
+        operator fun <TValue : CSSStyleValue> invoke(value: TValue) =
+            StylePropertyValue(value).unsafeCast<CSSVariableValue<TValue>>()
+
+        operator fun <TValue> invoke(value: StylePropertyValue) =
+            value.unsafeCast<CSSVariableValue<TValue>>()
     }
 }
 
@@ -64,8 +73,6 @@ fun StyleBuilder.add(
     value: StylePropertyValue
 ) = property(propertyName, value)
 
-
-
 interface CSSVariables
 
 interface CSSVariable {
@@ -76,7 +83,7 @@ interface CustomStyleValue {
     fun styleValue(): StylePropertyValue
 }
 
-data class CSSStyleVariable<TValue>(override val name: String): CSSVariable
+data class CSSStyleVariable<TValue>(override val name: String) : CSSVariable
 
 fun <TValue> CSSVariables.variable() =
     ReadOnlyProperty<Any?, CSSStyleVariable<TValue>> { _, property ->
