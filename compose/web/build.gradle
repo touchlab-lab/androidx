@@ -74,3 +74,25 @@ androidx {
     description = ""
     legacyDisableKotlinStrictApiMode = true
 }
+
+
+task buildAll {
+    dependsOn = [build, ":compose:web:integration:build", ":compose:web:with-web:build"]
+}
+
+tasks.register("publishAll") {
+    group = 'publishing'
+    description = 'Publishes all Maven publications to the external Maven repository.'
+    dependsOn tasks.withType(PublishToMavenRepository).matching {
+        if (it.publication.name == "js") {
+            println("${it.name} will be triggered")
+            return true
+        } else if (it.publication.name == "kotlinMultiplatform") {
+            println("${it.name} will be triggered")
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
