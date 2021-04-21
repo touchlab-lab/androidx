@@ -24,6 +24,8 @@ plugins {
     id("kotlin-multiplatform")
 }
 
+apply plugin: org.jetbrains.kotlin.gradle.targets.js.npm.NpmResolverPlugin
+
 AndroidXUiPlugin.applyAndConfigureKotlinPlugin(project)
 dependencies {
     kotlinPlugin project(":compose:compiler:compiler")
