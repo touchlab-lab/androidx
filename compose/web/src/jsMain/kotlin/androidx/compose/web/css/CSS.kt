@@ -21,9 +21,10 @@ import kotlinx.browser.window
 import org.w3c.dom.DOMMatrix
 import org.w3c.dom.DOMMatrixReadOnly
 import org.w3c.dom.Element
-import org.w3c.dom.HTMLElement
 import org.w3c.dom.css.CSSRule
 import org.w3c.dom.css.CSSRuleList
+import org.w3c.dom.css.CSSStyleRule
+import org.w3c.dom.css.ElementCSSInlineStyle
 import org.w3c.dom.css.StyleSheet
 
 inline val StyleSheet.cssRules
@@ -33,7 +34,7 @@ inline fun StyleSheet.deleteRule(index: Int) {
     this.asDynamic().deleteRule(index)
 }
 
-inline val CSSRule.styleMap
+inline val CSSStyleRule.styleMap
     get() = this.asDynamic().styleMap.unsafeCast<StylePropertyMap>()
 
 inline operator fun CSSRuleList.get(index: Int): CSSRule {
@@ -48,7 +49,7 @@ fun StyleSheet.insertRule(cssRule: String, index: Int? = null): Int {
     }
 }
 
-val HTMLElement.attributeStyleMap
+val ElementCSSInlineStyle.attributeStyleMap
     get() = this.asDynamic().attributeStyleMap.unsafeCast<StylePropertyMap>()
 
 external interface CSSStyleValue {
@@ -390,14 +391,6 @@ external class StylePropertyMap : StylePropertyMapReadOnly {
 
 inline fun Element.computedStyleMap(): StylePropertyMapReadOnly =
     this.asDynamic().computedStyleMap().unsafeCast<StylePropertyMapReadOnly>()
-
-interface CSSStyleRule {
-    val styleMap: StylePropertyMap
-}
-
-interface ElementCSSInlineStyle {
-    val attributeStyleMap: StylePropertyMap
-}
 
 external class CSS {
     companion object {

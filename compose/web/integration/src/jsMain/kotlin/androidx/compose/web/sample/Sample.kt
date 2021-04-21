@@ -47,12 +47,15 @@ import androidx.compose.web.elements.Text
 import androidx.compose.web.elements.TextArea
 import androidx.compose.web.renderComposable
 import androidx.compose.web.css.Style
+import androidx.compose.web.css.StylePropertyValue
 import androidx.compose.web.css.StyleSheet
 import androidx.compose.web.css.and
 import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.maxWidth
 import androidx.compose.web.css.media
 import androidx.compose.web.css.minWidth
+import androidx.compose.web.css.value
+import androidx.compose.web.css.variableValue
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -66,6 +69,10 @@ class State {
 val globalState = State()
 val globalInt = mutableStateOf(1)
 
+enum class MyCSSVariables {
+    MyVar
+}
+
 object AppStyleSheet : StyleSheet() {
     val myClass by style {
         color("green")
@@ -74,13 +81,15 @@ object AppStyleSheet : StyleSheet() {
     val classWithNested by style {
         color("green")
 
+        variable(MyCSSVariables.MyVar.name, value("blue"))
+
         hover(self) style {
             color("red")
         }
 
         media(maxWidth(640.px)) {
             self style {
-                backgroundColor("blue")
+                backgroundColor(variableValue(MyCSSVariables.MyVar.name))
             }
         }
     }

@@ -17,28 +17,32 @@
 package androidx.compose.web.css
 
 fun StyleBuilder.opacity(value: Number) {
-    add("opacity", StylePropertyValue(value))
+    property("opacity", value(value))
 }
 
 fun StyleBuilder.opacity(value: CSSpercentValue) {
-    add("opacity", StylePropertyValue(value.value as Double / 100))
+    property("opacity", value(value.value as Double / 100))
 }
 
 fun StyleBuilder.color(value: String) {
-    add("color", StylePropertyValue(value))
+    property("color", value(value))
 }
 
 fun StyleBuilder.color(value: Color) {
     // color hasn't Typed OM yet
-    add("color", StylePropertyValue(value.toString()))
+    property("color", value(value.toString()))
+}
+
+fun StyleBuilder.backgroundColor(value: StylePropertyValue) {
+    property("background-color", value)
 }
 
 fun StyleBuilder.backgroundColor(value: Color) {
-    add("background-color", StylePropertyValue(value.toString()))
+    property("background-color", value(value.toString()))
 }
 
 fun StyleBuilder.backgroundColor(value: String) {
-    add("background-color", StylePropertyValue(value))
+    property("background-color", value(value))
 }
 
 enum class LineStyle {
@@ -92,7 +96,7 @@ fun StyleBuilder.border(
     color: Color? = null
 ) {
     val values = listOfNotNull(width?.toString(), style?.name, color?.toString())
-    add("border", StylePropertyValue(values.joinToString(" ")))
+    property("border", value(values.joinToString(" ")))
 }
 
 fun StyleBuilder.display(displayStyle: DisplayStyle) {
@@ -100,7 +104,7 @@ fun StyleBuilder.display(displayStyle: DisplayStyle) {
 }
 
 fun StyleBuilder.width(value: CSSSizeOrAutoValue) {
-    add("width", value)
+    property("width", value)
 }
 
 fun StyleBuilder.width(value: CSSSizeValue) {
@@ -112,7 +116,7 @@ fun StyleBuilder.width(value: CSSAutoValue) {
 }
 
 fun StyleBuilder.height(value: CSSSizeOrAutoValue) {
-    add("height", value)
+    property("height", value)
 }
 
 fun StyleBuilder.height(value: CSSSizeValue) {
@@ -124,15 +128,15 @@ fun StyleBuilder.height(value: CSSAutoValue) {
 }
 
 fun StyleBuilder.fontSize(value: CSSSizeValue) {
-    add("font-size", StylePropertyValue(value))
+    property("font-size", value(value))
 }
 
 fun StyleBuilder.margin(value: CSSSizeValue) {
     // marign hasn't Typed OM yet
-    add("margin", StylePropertyValue(value.toString()))
+    property("margin", value(value.toString()))
 }
 
 fun StyleBuilder.padding(value: CSSSizeValue) {
     // padding hasn't Typed OM yet
-    add("padding", StylePropertyValue(value.toString()))
+    property("padding", value(value.toString()))
 }

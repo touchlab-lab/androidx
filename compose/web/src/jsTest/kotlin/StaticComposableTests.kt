@@ -15,7 +15,6 @@
  */
 
 import androidx.compose.web.css.Color
-import androidx.compose.web.css.StylePropertyValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -33,6 +32,7 @@ import androidx.compose.web.css.width
 import androidx.compose.web.css.height
 import androidx.compose.web.css.DisplayStyle
 import androidx.compose.web.css.display
+import androidx.compose.web.css.value
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -109,7 +109,7 @@ class StaticComposableTests {
         ) {
             Div(
                 style = {
-                    add("border", StylePropertyValue("1px solid red"))
+                    property("border", value("1px solid red"))
                 }
             ) {}
             Div(

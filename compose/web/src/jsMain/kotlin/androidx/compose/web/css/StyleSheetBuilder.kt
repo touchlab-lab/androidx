@@ -21,8 +21,8 @@ import androidx.compose.web.css.selectors.CSSSelector
 interface CSSRulesHolder {
     val cssRules: CSSRuleDeclarationList
     fun add(cssRule: CSSRuleDeclaration)
-    fun add(selector: CSSSelector, properties: StylePropertyList) {
-        add(CSSStyleRuleDeclaration(selector, properties))
+    fun add(selector: CSSSelector, style: StyleHolder) {
+        add(CSSStyleRuleDeclaration(selector, style))
     }
 }
 

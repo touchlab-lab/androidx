@@ -24,9 +24,11 @@ import androidx.compose.runtime.ControlledComposition
 import androidx.compose.runtime.DefaultMonotonicFrameClock
 import androidx.compose.runtime.Recomposer
 import androidx.compose.web.attributes.WrappedEventListener
-import androidx.compose.web.css.StylePropertyList
+import androidx.compose.web.css.StyleHolder
 import androidx.compose.web.css.attributeStyleMap
 import androidx.compose.web.elements.DOMScope
+import androidx.compose.web.elements.setProperty
+import androidx.compose.web.elements.setVariable
 import androidx.compose.web.events.EventModifier
 import kotlinx.browser.document
 import kotlinx.coroutines.CoroutineScope
@@ -136,13 +138,16 @@ class DomNodeWrapper(val node: Node) {
         }
     }
 
-    fun updateStyleDeclarations(declarations: StylePropertyList?) {
+    fun updateStyleDeclarations(style: StyleHolder?) {
         val htmlElement = node as? HTMLElement ?: return
         // TODO: typed-om-polyfill hasn't StylePropertyMap::clear()
         htmlElement.style.cssText = ""
-        val attributeStyleMap = htmlElement.attributeStyleMap
-        declarations?.forEach { (name, value) ->
-            attributeStyleMap.set(name, value)
+
+        style?.properties?.forEach { (name, value) ->
+            setProperty(htmlElement.attributeStyleMap, name, value)
+        }
+        style?.variables?.forEach { (name, value) ->
+            setVariable(htmlElement.style, name, value)
         }
     }
 
@@ -235,7 +240,7 @@ class DomNodeWrapper(val node: Node) {
         val UpdateProperties: DomNodePropertiesUpdater = {
             this.updateProperties(it)
         }
-        val UpdateStyleDeclarations: DomNodeWrapper.(StylePropertyList?) -> Unit = {
+        val UpdateStyleDeclarations: DomNodeWrapper.(StyleHolder?) -> Unit = {
             this.updateStyleDeclarations(it)
         }
     }

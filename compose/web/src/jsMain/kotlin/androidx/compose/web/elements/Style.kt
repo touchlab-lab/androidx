@@ -23,6 +23,8 @@ import androidx.compose.web.css.CSSGroupingRuleDeclaration
 import androidx.compose.web.css.CSSRuleDeclaration
 import androidx.compose.web.css.CSSRuleDeclarationList
 import androidx.compose.web.css.CSSStyleRuleDeclaration
+import androidx.compose.web.css.StylePropertyMap
+import androidx.compose.web.css.StylePropertyValue
 import androidx.compose.web.css.StyleSheetBuilder
 import androidx.compose.web.css.StyleSheetBuilderImpl
 import androidx.compose.web.css.cssRules
@@ -33,6 +35,8 @@ import androidx.compose.web.css.styleMap
 import org.w3c.dom.HTMLStyleElement
 import org.w3c.dom.css.CSSGroupingRule
 import org.w3c.dom.css.CSSRule
+import org.w3c.dom.css.CSSStyleDeclaration
+import org.w3c.dom.css.CSSStyleRule
 import org.w3c.dom.css.StyleSheet
 
 @Composable
@@ -105,10 +109,15 @@ private fun fillRule(
     cssRule: CSSRule
 ) {
     when (cssRuleDeclaration) {
-        is CSSStyleRuleDeclaration ->
-            cssRuleDeclaration.properties.forEach { (name, value) ->
-                cssRule.styleMap.set(name, value)
+        is CSSStyleRuleDeclaration -> {
+            val cssStyleRule = cssRule.unsafeCast<CSSStyleRule>()
+            cssRuleDeclaration.style.properties.forEach { (name, value) ->
+                setProperty(cssStyleRule.styleMap, name, value)
             }
+            cssRuleDeclaration.style.variables.forEach { (name, value) ->
+                setVariable(cssStyleRule.style, name, value)
+            }
+        }
         is CSSGroupingRuleDeclaration -> {
             val cssGroupingRule = cssRule.unsafeCast<CSSGroupingRule>()
             cssRuleDeclaration.rules.forEach { childRuleDeclaration ->
@@ -116,4 +125,20 @@ private fun fillRule(
             }
         }
     }
+}
+
+fun setProperty(
+    styleMap: StylePropertyMap,
+    name: String,
+    value: StylePropertyValue
+) {
+    styleMap.set(name, value)
+}
+
+fun setVariable(
+    style: CSSStyleDeclaration,
+    name: String,
+    value: StylePropertyValue
+) {
+    style.setProperty("--$name", value.toString())
 }
