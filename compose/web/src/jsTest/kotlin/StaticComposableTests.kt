@@ -31,6 +31,8 @@ import androidx.compose.web.css.border
 import androidx.compose.web.css.px
 import androidx.compose.web.css.width
 import androidx.compose.web.css.height
+import androidx.compose.web.css.DisplayStyle
+import androidx.compose.web.css.display
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -160,5 +162,29 @@ class StaticComposableTests {
         }
 
         assertEquals("height: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesDisplay() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<DisplayStyle>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { displayStyle ->
+                Div(
+                    style = {
+                        display(displayStyle)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, displayStyle ->
+            assertEquals(
+                "display: ${displayStyle.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
     }
 }

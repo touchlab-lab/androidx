@@ -54,6 +54,38 @@ enum class LineStyle {
     Outset
 }
 
+enum class DisplayStyle(val value: String) {
+    Block("block"),
+    Inline("inline"),
+    InlineBlock("inline-block"),
+    Flex("flex"),
+    LegacyInlineFlex("inline-flex"),
+    Grid("grid"),
+    LegacyInlineGrid("inline-grid"),
+    FlowRoot("flow-root"),
+
+    None("none"),
+    Contents("contents"),
+
+// TODO(shabunc): This properties behave them iconsistenly in both Chrome and Firefox so I turned the off so far
+//    BlockFlow("block flow"),
+//    InlineFlow("inline flow"),
+//    InlineFlowRoot("inline flow-root"),
+//    BlocklFlex("block flex"),
+//    InlineFlex("inline flex"),
+//    BlockGrid("block grid"),
+//    InlineGrid("inline grid"),
+//    BlockFlowRoot("block flow-root"),
+
+    Table("table"),
+    TableRow("table-row"),
+    ListItem("list-item"),
+
+    Inherit("inherit"),
+    Initial("initial"),
+    Unset("unset")
+}
+
 fun StyleBuilder.border(
     width: CSSSizeValue? = null,
     style: LineStyle? = null,
@@ -61,6 +93,10 @@ fun StyleBuilder.border(
 ) {
     val values = listOfNotNull(width?.toString(), style?.name, color?.toString())
     add("border", StylePropertyValue(values.joinToString(" ")))
+}
+
+fun StyleBuilder.display(displayStyle: DisplayStyle) {
+    add("display", StylePropertyValue(displayStyle.value))
 }
 
 fun StyleBuilder.width(value: CSSSizeOrAutoValue) {
