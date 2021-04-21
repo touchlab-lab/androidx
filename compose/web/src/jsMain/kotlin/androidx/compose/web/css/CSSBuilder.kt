@@ -29,9 +29,9 @@ class CSSBuilderImpl(
     rulesHolder: CSSRulesHolder
 ) : CSSRuleBuilderImpl(), CSSBuilder, CSSRulesHolder by rulesHolder {
     override fun style(selector: CSSSelector, cssRule: CSSBuilder.() -> Unit) {
-        val (properties, rules) = buildCSS(root, selector, cssRule)
+        val (style, rules) = buildCSS(root, selector, cssRule)
         rules.forEach { add(it) }
-        add(selector, properties)
+        add(selector, style)
     }
 
     override fun buildRules(rulesBuild: GenericStyleSheetBuilder<CSSBuilder>.() -> Unit) =

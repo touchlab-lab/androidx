@@ -28,22 +28,12 @@ abstract class CSSRuleDeclaration {
     abstract override fun equals(other: Any?): Boolean
 }
 
-class CSSStyleRuleDeclaration(
+data class CSSStyleRuleDeclaration(
     val selector: CSSSelector,
-    val properties: StylePropertyList
+    val style: StyleHolder
 ) : CSSRuleDeclaration() {
     override val header
         get() = selector.toString()
-    // StylePropertyValue is js native object without equals
-    override fun equals(other: Any?): Boolean {
-        return if (other is CSSStyleRuleDeclaration) {
-            var index = 0
-            selector == other.selector && properties.all { prop ->
-                val otherProp = other.properties[index++]
-                prop.name == otherProp.name && prop.value.toString() == otherProp.value.toString()
-            }
-        } else false
-    }
 }
 
 abstract class CSSGroupingRuleDeclaration(
@@ -53,8 +43,8 @@ abstract class CSSGroupingRuleDeclaration(
 typealias CSSRuleDeclarationList = List<CSSRuleDeclaration>
 typealias MutableCSSRuleDeclarationList = MutableList<CSSRuleDeclaration>
 
-fun buildCSSStyleRule(cssRule: CSSStyleRuleBuilder.() -> Unit): StylePropertyList {
+fun buildCSSStyleRule(cssRule: CSSStyleRuleBuilder.() -> Unit): StyleHolder {
     val builder = CSSRuleBuilderImpl()
     builder.cssRule()
-    return builder.properties
+    return builder
 }

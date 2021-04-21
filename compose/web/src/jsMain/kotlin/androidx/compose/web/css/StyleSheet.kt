@@ -55,10 +55,10 @@ open class StyleSheet(
     // TODO: just proof of concept, do not use it
     fun css(cssBuild: CSSBuilder.() -> Unit): String {
         val selfSelector = CSSSelfSelector()
-        val (properties, newCssRules) = buildCSS(selfSelector, selfSelector, cssBuild)
+        val (style, newCssRules) = buildCSS(selfSelector, selfSelector, cssBuild)
         val cssRule = cssRules.find {
             it is CSSStyleRuleDeclaration &&
-                it.selector is CSSSelector.CSSClass && it.properties == properties &&
+                it.selector is CSSSelector.CSSClass && it.style == style &&
                 (boundClasses[it.selector.className] ?: emptyList()) == newCssRules
         }.unsafeCast<CSSStyleRuleDeclaration?>()
         return if (cssRule != null) {
@@ -66,7 +66,7 @@ open class StyleSheet(
         } else {
             val classNameSelector = className("auto-${counter++}")
             selfSelector.selector = classNameSelector
-            add(classNameSelector, properties)
+            add(classNameSelector, style)
             newCssRules.forEach { add(it) }
             boundClasses[classNameSelector.className] = newCssRules
             classNameSelector.className
@@ -98,11 +98,11 @@ fun buildCSS(
     thisClass: CSSSelector,
     thisContext: CSSSelector,
     cssRule: CSSBuilder.() -> Unit
-): Pair<StylePropertyList, CSSRuleDeclarationList> {
+): Pair<StyleHolder, CSSRuleDeclarationList> {
     val styleSheet = StyleSheetBuilderImpl()
     val builder = CSSBuilderImpl(thisClass, thisContext, styleSheet)
     builder.cssRule()
-    return builder.properties to styleSheet.cssRules
+    return builder to styleSheet.cssRules
 }
 
 @Composable

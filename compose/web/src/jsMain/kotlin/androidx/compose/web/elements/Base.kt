@@ -96,9 +96,9 @@ inline fun <TTag : Tag, THTMLElement : HTMLElement> TagElement(
             }
         },
         styleSkippableUpdate = {
-            val properties = StyleBuilderImpl().apply(applyStyle).properties
+            val style = StyleBuilderImpl().apply(applyStyle)
             update {
-                set(properties, DomNodeWrapper.UpdateStyleDeclarations)
+                set(style, DomNodeWrapper.UpdateStyleDeclarations)
             }
         },
         elementScope = scope,
