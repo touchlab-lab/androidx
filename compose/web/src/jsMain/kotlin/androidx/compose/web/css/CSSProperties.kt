@@ -20,6 +20,18 @@ fun StyleBuilder.opacity(value: Number) {
     property("opacity", value(value))
 }
 
+fun StyleBuilder.order(value: Int) {
+    property("order", StylePropertyValue(value))
+}
+
+fun StyleBuilder.flexGrow(value: Number) {
+    property("flex-grow", StylePropertyValue(value))
+}
+
+fun StyleBuilder.flexShrink(value: Number) {
+    property("flex-shrink", StylePropertyValue(value))
+}
+
 fun StyleBuilder.opacity(value: CSSpercentValue) {
     property("opacity", value(value.value as Double / 100))
 }
@@ -90,6 +102,100 @@ enum class DisplayStyle(val value: String) {
     Unset("unset")
 }
 
+enum class FlexDirection(val value: String) {
+    Row("row"),
+    RowReverse("row-reverse"),
+    Column("column"),
+    ColumnReverse("column-reverse")
+}
+
+enum class FlexWrap(val value: String) {
+    Wrap("wrap"),
+    Nowrap("nowrap"),
+    WrapReverse("wrap-reverse")
+}
+
+enum class JustifyContent(val value: String) {
+    Center("center"),
+    Start("start"),
+    End("end"),
+    FlexStart("flex-start"),
+    FlexEnd("flex-end"),
+    Left("left"),
+    Right("right"),
+    Normal("normal"),
+    SpaceBetween("space-between"),
+    SpaceAround("space-around"),
+    SpaceEvenly("space-evenly"),
+    Stretch("stretch"),
+    Inherit("inherit"),
+    Initial("initial"),
+    Unset("unset"),
+    SafeCenter("safe center"),
+    UnsafeCenter("unsafe center"),
+}
+
+enum class AlignSelf(val value: String) {
+    Auto("auto"),
+    Normal("normal"),
+    Center("center"),
+    Start("start"),
+    End("end"),
+    SelfStart("self-start"),
+    SelfEnd("self-end"),
+    FlexStart("flex-start"),
+    FlexEnd("flex-end"),
+    Baseline("baseline"),
+//    FirstBaseline("first baseline"),
+//    LastBaseline("last baseline"),
+    Stretch("stretch"),
+    SafeCenter("safe center"),
+    UnsafeCenter("unsafe center"),
+    Inherit("inherit"),
+    Initial("initial"),
+    Unset("unset")
+}
+
+enum class AlignItems(val value: String) {
+    Normal("normal"),
+    Stretch("stretch"),
+    Center("center"),
+    Start("start"),
+    End("end"),
+    FlexStart("flex-start"),
+    FlexEnd("flex-end"),
+    Baseline("baseline"),
+//    FirstBaseline("first baseline"),
+//    LastBaseline("last baseline"),
+    SafeCenter("safe center"),
+    UnsafeCenter("unsafe center"),
+
+    Inherit("inherit"),
+    Initial("initial"),
+    Unset("unset")
+}
+
+enum class AlignContent(val value: String) {
+    Center("center"),
+    Start("start"),
+    End("end"),
+    FlexStart("flex-start"),
+    FlexEnd("flex-end"),
+    Baseline("baseline"),
+//    FirstBaseline("first baseline"),
+//    LastBaseline("last baseline"),
+    SafeCenter("safe center"),
+    UnsafeCenter("unsafe center"),
+    SpaceBetween("space-between"),
+    SpaceAround("space-around"),
+    SpaceEvenly("space-evenly"),
+    Stretch("stretch"),
+
+    Inherit("inherit"),
+    Initial("initial"),
+    Unset("unset")
+}
+
 fun StyleBuilder.border(
     width: CSSSizeValue? = null,
     style: LineStyle? = null,
@@ -100,7 +206,49 @@ fun StyleBuilder.border(
 }
 
 fun StyleBuilder.display(displayStyle: DisplayStyle) {
-    add("display", StylePropertyValue(displayStyle.value))
+    property("display", StylePropertyValue(displayStyle.value))
+}
+
+fun StyleBuilder.flexDirection(flexDirection: FlexDirection) {
+    property("flex-direction", StylePropertyValue(flexDirection.value))
+}
+
+fun StyleBuilder.flexWrap(flexWrap: FlexWrap) {
+    property("flex-wrap", StylePropertyValue(flexWrap.value))
+}
+
+fun StyleBuilder.flexFlow(flexDirection: FlexDirection, flexWrap: FlexWrap) {
+    property(
+        "flex-flow",
+        StylePropertyValue("${flexDirection.value} ${flexWrap.value}")
+    )
+}
+
+fun StyleBuilder.justifyContent(justifyContent: JustifyContent) {
+    property(
+        "justify-content",
+        StylePropertyValue(justifyContent.value)
+    )
+}
+fun StyleBuilder.alignSelf(alignSelf: AlignSelf) {
+    property(
+        "align-self",
+        StylePropertyValue(alignSelf.value)
+    )
+}
+
+fun StyleBuilder.alignItems(alignItems: AlignItems) {
+    property(
+        "align-items",
+        StylePropertyValue(alignItems.value)
+    )
+}
+
+fun StyleBuilder.alignContent(alignContent: AlignContent) {
+    property(
+        "align-content",
+        StylePropertyValue(alignContent.value)
+    )
 }
 
 fun StyleBuilder.width(value: CSSSizeOrAutoValue) {

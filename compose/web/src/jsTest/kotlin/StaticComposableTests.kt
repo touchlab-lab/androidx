@@ -24,6 +24,7 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.get
 import androidx.compose.web.elements.Text
 import androidx.compose.web.elements.Div
+import androidx.compose.web.elements.Span
 import androidx.compose.web.css.opacity
 import androidx.compose.web.css.color
 import androidx.compose.web.css.border
@@ -31,8 +32,24 @@ import androidx.compose.web.css.px
 import androidx.compose.web.css.width
 import androidx.compose.web.css.height
 import androidx.compose.web.css.DisplayStyle
+import androidx.compose.web.css.FlexDirection
+import androidx.compose.web.css.FlexWrap
 import androidx.compose.web.css.display
+import androidx.compose.web.css.flexDirection
+import androidx.compose.web.css.flexWrap
+import androidx.compose.web.css.order
+import androidx.compose.web.css.flexGrow
+import androidx.compose.web.css.flexFlow
+import androidx.compose.web.css.flexShrink
 import androidx.compose.web.css.value
+import androidx.compose.web.css.justifyContent
+import androidx.compose.web.css.JustifyContent
+import androidx.compose.web.css.alignSelf
+import androidx.compose.web.css.AlignSelf
+import androidx.compose.web.css.alignItems
+import androidx.compose.web.css.AlignItems
+import androidx.compose.web.css.alignContent
+import androidx.compose.web.css.AlignContent
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -133,6 +150,96 @@ class StaticComposableTests {
     }
 
     @Test
+    fun stylesOrder() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    order(-4)
+                }
+            ) {}
+            Div(
+                style = {
+                    order(3)
+                }
+            ) {}
+        }
+
+        assertEquals("order: -4;", (root.children[0] as HTMLElement).style.cssText)
+        assertEquals("order: 3;", (root.children[1] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesFlexGrow() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    flexGrow(3)
+                }
+            ) {}
+            Div(
+                style = {
+                    flexGrow(2.5)
+                }
+            ) {}
+            Div(
+                style = {
+                    flexGrow(1e2)
+                }
+            ) {}
+            Div(
+                style = {
+                    flexGrow(.6)
+                }
+            ) {}
+        }
+
+        assertEquals("flex-grow: 3;", (root.children[0] as HTMLElement).style.cssText)
+        assertEquals("flex-grow: 2.5;", (root.children[1] as HTMLElement).style.cssText)
+        assertEquals("flex-grow: 100;", (root.children[2] as HTMLElement).style.cssText)
+        assertEquals("flex-grow: 0.6;", (root.children[3] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesFlexShrink() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    flexShrink(3)
+                }
+            ) {}
+            Div(
+                style = {
+                    flexShrink(2.5)
+                }
+            ) {}
+            Div(
+                style = {
+                    flexShrink(1e2)
+                }
+            ) {}
+            Div(
+                style = {
+                    flexShrink(.6)
+                }
+            ) {}
+        }
+
+        assertEquals("flex-shrink: 3;", (root.children[0] as HTMLElement).style.cssText)
+        assertEquals("flex-shrink: 2.5;", (root.children[1] as HTMLElement).style.cssText)
+        assertEquals("flex-shrink: 100;", (root.children[2] as HTMLElement).style.cssText)
+        assertEquals("flex-shrink: 0.6;", (root.children[3] as HTMLElement).style.cssText)
+    }
+
+    @Test
     fun stylesWidth() {
         val root = "div".asHtmlElement()
         renderComposable(
@@ -183,6 +290,179 @@ class StaticComposableTests {
         enumValues.forEachIndexed { index, displayStyle ->
             assertEquals(
                 "display: ${displayStyle.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesFlexDirection() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<FlexDirection>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { flexDirection ->
+                Span(
+                    style = {
+                        flexDirection(flexDirection)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, displayStyle ->
+            assertEquals(
+                "flex-direction: ${displayStyle.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesFlexWrap() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<FlexWrap>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { flexWrap ->
+                Span(
+                    style = {
+                        flexWrap(flexWrap)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, displayStyle ->
+            assertEquals(
+                "flex-wrap: ${displayStyle.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesFlexFlow() {
+        val root = "div".asHtmlElement()
+        val flexWraps = enumValues<FlexWrap>()
+        val flexDirections = enumValues<FlexDirection>()
+        renderComposable(
+            root = root
+        ) {
+            flexDirections.forEach { flexDirection ->
+                flexWraps.forEach { flexWrap ->
+                    Span(
+                        style = {
+                            flexFlow(flexDirection, flexWrap)
+                        }
+                    ) { }
+                }
+            }
+        }
+
+        flexDirections.forEachIndexed { i, flexDirection ->
+            flexWraps.forEachIndexed { j, flexWrap ->
+                assertEquals(
+                    "flex-flow: ${flexDirection.value} ${flexWrap.value};",
+                    (root.children[3 * i + j % 3] as HTMLElement).style.cssText
+                )
+            }
+        }
+    }
+
+    @Test
+    fun stylesJustifyContent() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<JustifyContent>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { justifyContent ->
+                Span(
+                    style = {
+                        justifyContent(justifyContent)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, justifyContent ->
+            assertEquals(
+                "justify-content: ${justifyContent.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesAlignSelf() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<AlignSelf>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { alignSelf ->
+                Span(
+                    style = {
+                        alignSelf(alignSelf)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, alignSelf ->
+            assertEquals(
+                "align-self: ${alignSelf.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesAlignItems() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<AlignItems>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { alignItems ->
+                Span(
+                    style = {
+                        alignItems(alignItems)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, alignItems ->
+            assertEquals(
+                "align-items: ${alignItems.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesAlignContent() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<AlignContent>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { alignContent ->
+                Span(
+                    style = {
+                        alignContent(alignContent)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, alignContent ->
+            assertEquals(
+                "align-content: ${alignContent.value};",
                 (root.children[index] as HTMLElement).style.cssText
             )
         }

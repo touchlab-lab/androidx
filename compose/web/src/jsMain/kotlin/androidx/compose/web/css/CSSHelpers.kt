@@ -17,7 +17,7 @@
 
 package androidx.compose.web.css
 
-external interface CSSAutoValue : CSSKeywordValue
+interface CSSAutoValue : CSSKeywordValue
 
 val auto = CSSKeywordValueJS("auto").unsafeCast<CSSAutoValue>()
 fun asCSSAutoValue(value: dynamic) = (value as? CSSKeywordValueJS).unsafeCast<CSSAutoValue>()
