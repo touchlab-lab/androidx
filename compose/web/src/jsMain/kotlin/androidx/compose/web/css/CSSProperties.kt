@@ -33,8 +33,8 @@ fun StyleBuilder.color(value: Color) {
     property("color", value.styleValue())
 }
 
-fun StyleBuilder.backgroundColor(value: CSSVariableValue<Color>) {
-    property("background-color", value)
+fun StyleBuilder.backgroundColor(value: CSSStyleVariable<Color>) {
+    property("background-color", value.value())
 }
 
 fun StyleBuilder.backgroundColor(value: Color) {

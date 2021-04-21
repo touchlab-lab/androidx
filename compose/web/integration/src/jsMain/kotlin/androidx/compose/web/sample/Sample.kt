@@ -91,7 +91,7 @@ object AppStyleSheet : StyleSheet() {
 
         media(maxWidth(640.px)) {
             self style {
-                backgroundColor(MyCSSVariables.myVar.value())
+                backgroundColor(MyCSSVariables.myVar)
                 property("color", MyCSSVariables.myVar2.value())
             }
         }
