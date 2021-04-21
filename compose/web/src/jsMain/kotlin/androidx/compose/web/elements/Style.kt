@@ -38,10 +38,10 @@ import org.w3c.dom.css.StyleSheet
 @Composable
 inline fun Style(
     crossinline applyAttrs: AttrsBuilder<Tag.Style>.() -> Unit = {},
-    cssRules: StyleSheetBuilder.() -> Unit
+    rulesBuild: StyleSheetBuilder.() -> Unit
 ) {
     val builder = StyleSheetBuilderImpl()
-    builder.cssRules()
+    builder.rulesBuild()
     Style(applyAttrs, builder.cssRules)
 }
 

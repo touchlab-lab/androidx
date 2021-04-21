@@ -87,26 +87,26 @@ class CSSMediaRuleDeclaration(
 
 fun <TBuilder> GenericStyleSheetBuilder<TBuilder>.media(
     query: CSSMediaQuery,
-    cssRules: GenericStyleSheetBuilder<TBuilder>.() -> Unit
+    rulesBuild: GenericStyleSheetBuilder<TBuilder>.() -> Unit
 ) {
-    val rules = buildRules(cssRules)
+    val rules = buildRules(rulesBuild)
     add(CSSMediaRuleDeclaration(query, rules))
 }
 
 fun <TBuilder> GenericStyleSheetBuilder<TBuilder>.media(
     query: String,
-    cssRules: GenericStyleSheetBuilder<TBuilder>.() -> Unit
+    rulesBuild: GenericStyleSheetBuilder<TBuilder>.() -> Unit
 ) {
-    media(CSSMediaQuery.Raw(query), cssRules)
+    media(CSSMediaQuery.Raw(query), rulesBuild)
 }
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun <TBuilder> GenericStyleSheetBuilder<TBuilder>.media(
     name: String,
     value: StylePropertyValue? = null,
-    noinline cssRules: GenericStyleSheetBuilder<TBuilder>.() -> Unit
+    noinline rulesBuild: GenericStyleSheetBuilder<TBuilder>.() -> Unit
 ) {
-    media(feature(name, value), cssRules)
+    media(feature(name, value), rulesBuild)
 }
 
 fun feature(
@@ -117,9 +117,9 @@ fun feature(
 @Suppress("NOTHING_TO_INLINE")
 inline fun <TBuilder> GenericStyleSheetBuilder<TBuilder>.media(
     vararg mediaList: CSSMediaQuery,
-    noinline cssRules: GenericStyleSheetBuilder<TBuilder>.() -> Unit
+    noinline rulesBuild: GenericStyleSheetBuilder<TBuilder>.() -> Unit
 ) {
-    media(combine(*mediaList), cssRules)
+    media(combine(*mediaList), rulesBuild)
 }
 
 fun combine(

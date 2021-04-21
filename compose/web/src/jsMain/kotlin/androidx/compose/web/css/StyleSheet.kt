@@ -53,9 +53,9 @@ open class StyleSheet(
     }
 
     // TODO: just proof of concept, do not use it
-    fun css(cssBuilder: CSSBuilder.() -> Unit): String {
+    fun css(cssBuild: CSSBuilder.() -> Unit): String {
         val selfSelector = CSSSelfSelector()
-        val (properties, newCssRules) = buildCSS(selfSelector, selfSelector, cssBuilder)
+        val (properties, newCssRules) = buildCSS(selfSelector, selfSelector, cssBuild)
         val cssRule = cssRules.find {
             it is CSSStyleRuleDeclaration &&
                 it.selector is CSSSelector.CSSClass && it.properties == properties &&
@@ -90,8 +90,8 @@ open class StyleSheet(
         }
     }
 
-    override fun buildRules(cssRules: GenericStyleSheetBuilder<CSSStyleRuleBuilder>.() -> Unit) =
-        StyleSheet().apply(cssRules).cssRules
+    override fun buildRules(rulesBuild: GenericStyleSheetBuilder<CSSStyleRuleBuilder>.() -> Unit) =
+        StyleSheet().apply(rulesBuild).cssRules
 }
 
 fun buildCSS(

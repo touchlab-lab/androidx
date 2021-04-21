@@ -49,6 +49,7 @@ import androidx.compose.web.renderComposable
 import androidx.compose.web.css.Style
 import androidx.compose.web.css.StyleSheet
 import androidx.compose.web.css.and
+import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.maxWidth
 import androidx.compose.web.css.media
 import androidx.compose.web.css.minWidth
@@ -75,6 +76,12 @@ object AppStyleSheet : StyleSheet() {
 
         hover(self) style {
             color("red")
+        }
+
+        media(maxWidth(640.px)) {
+            self style {
+                backgroundColor("blue")
+            }
         }
     }
 }
