@@ -34,6 +34,6 @@ class CSSBuilderImpl(
         add(selector, properties)
     }
 
-    override fun buildRules(cssRules: GenericStyleSheetBuilder<CSSBuilder>.() -> Unit) =
-        CSSBuilderImpl(root, self, this).apply(cssRules).cssRules
+    override fun buildRules(rulesBuild: GenericStyleSheetBuilder<CSSBuilder>.() -> Unit) =
+        CSSBuilderImpl(root, self, StyleSheetBuilderImpl()).apply(rulesBuild).cssRules
 }
