@@ -50,6 +50,8 @@ import androidx.compose.web.css.alignItems
 import androidx.compose.web.css.AlignItems
 import androidx.compose.web.css.alignContent
 import androidx.compose.web.css.AlignContent
+import androidx.compose.web.css.position
+import androidx.compose.web.css.Position
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -463,6 +465,30 @@ class StaticComposableTests {
         enumValues.forEachIndexed { index, alignContent ->
             assertEquals(
                 "align-content: ${alignContent.value};",
+                (root.children[index] as HTMLElement).style.cssText
+            )
+        }
+    }
+
+    @Test
+    fun stylesPosition() {
+        val root = "div".asHtmlElement()
+        val enumValues = enumValues<Position>()
+        renderComposable(
+            root = root
+        ) {
+            enumValues.forEach { position ->
+                Span(
+                    style = {
+                        position(position)
+                    }
+                ) { }
+            }
+        }
+
+        enumValues.forEachIndexed { index, position ->
+            assertEquals(
+                "position: ${position.value};",
                 (root.children[index] as HTMLElement).style.cssText
             )
         }

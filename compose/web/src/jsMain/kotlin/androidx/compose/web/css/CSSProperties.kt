@@ -196,6 +196,14 @@ enum class AlignContent(val value: String) {
     Unset("unset")
 }
 
+enum class Position(val value: String) {
+    Static("static"),
+    Relative("relative"),
+    Absolute("absolute"),
+    Sticky("sticky"),
+    Fixed("fixed")
+}
+
 fun StyleBuilder.border(
     width: CSSSizeValue? = null,
     style: LineStyle? = null,
@@ -248,6 +256,13 @@ fun StyleBuilder.alignContent(alignContent: AlignContent) {
     property(
         "align-content",
         StylePropertyValue(alignContent.value)
+    )
+}
+
+fun StyleBuilder.position(position: Position) {
+    property(
+        "position",
+        StylePropertyValue(position.value)
     )
 }
 
