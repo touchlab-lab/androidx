@@ -52,6 +52,10 @@ import androidx.compose.web.css.alignContent
 import androidx.compose.web.css.AlignContent
 import androidx.compose.web.css.position
 import androidx.compose.web.css.Position
+import androidx.compose.web.css.bottom
+import androidx.compose.web.css.top
+import androidx.compose.web.css.left
+import androidx.compose.web.css.right
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 
@@ -255,6 +259,70 @@ class StaticComposableTests {
         }
 
         assertEquals("width: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesTop() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    top(100.px)
+                }
+            ) {}
+        }
+
+        assertEquals("top: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesBottom() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    bottom(100.px)
+                }
+            ) {}
+        }
+
+        assertEquals("bottom: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesLeft() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    left(100.px)
+                }
+            ) {}
+        }
+
+        assertEquals("left: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesRight() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    right(100.px)
+                }
+            ) {}
+        }
+
+        assertEquals("right: 100px;", (root.children[0] as HTMLElement).style.cssText)
     }
 
     @Test

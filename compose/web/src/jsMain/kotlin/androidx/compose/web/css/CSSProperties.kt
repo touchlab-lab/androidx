@@ -290,6 +290,54 @@ fun StyleBuilder.height(value: CSSAutoValue) {
     height(CSSSizeOrAutoValue(value))
 }
 
+fun StyleBuilder.top(value: CSSSizeOrAutoValue) {
+    property("top", value)
+}
+
+fun StyleBuilder.top(value: CSSSizeValue) {
+    top(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.top(value: CSSAutoValue) {
+    top(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.bottom(value: CSSSizeOrAutoValue) {
+    property("bottom", value)
+}
+
+fun StyleBuilder.bottom(value: CSSSizeValue) {
+    bottom(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.bottom(value: CSSAutoValue) {
+    bottom(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.left(value: CSSSizeOrAutoValue) {
+    property("left", value)
+}
+
+fun StyleBuilder.left(value: CSSSizeValue) {
+    left(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.left(value: CSSAutoValue) {
+    left(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.right(value: CSSSizeOrAutoValue) {
+    property("right", value)
+}
+
+fun StyleBuilder.right(value: CSSSizeValue) {
+    right(CSSSizeOrAutoValue(value))
+}
+
+fun StyleBuilder.right(value: CSSAutoValue) {
+    right(CSSSizeOrAutoValue(value))
+}
+
 fun StyleBuilder.fontSize(value: CSSSizeValue) {
     property("font-size", value(value))
 }
