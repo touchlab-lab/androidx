@@ -12,12 +12,18 @@ import androidx.compose.foundation.layout.ww.Column
 import androidx.compose.foundation.layout.ww.Arrangement
 import androidx.compose.ui.ww.Alignment
 import androidx.compose.foundation.ww.border
+import androidx.compose.material.ww.Text
 
 @Composable
-fun App() {
+fun TwoTexts() {
+    Text("Alfred Sisley")
+    Text("3 minutes ago")
+}
+
+@Composable
+fun Layouts() {
     val horizontalArrangements = listOf(Arrangement.End, Arrangement.Start)
     val verticalAlignments = listOf(Alignment.Top, Alignment.CenterVertically, Alignment.Bottom)
-
     Column() {
         horizontalArrangements.forEach { horizontalArrangement ->
             verticalAlignments.forEach { verticalAlignment ->
@@ -35,4 +41,10 @@ fun App() {
             }
         }
     }
+}
+
+@Composable
+fun App() {
+    TwoTexts()
+//    Layouts()
 }
