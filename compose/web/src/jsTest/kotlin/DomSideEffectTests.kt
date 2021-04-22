@@ -35,7 +35,7 @@ private fun String.asHtmlElement() = document.createElement("div") as HTMLElemen
 class DomSideEffectTests {
 
     private suspend fun waitForRecomposition() {
-        delay(10) // This approach is not perfect. We'll rethink it.
+        delay(100) // This approach is not perfect. We'll rethink it.
     }
 
     @Test
