@@ -29,6 +29,7 @@ import androidx.compose.web.attributes.InputType
 import androidx.compose.web.attributes.name
 import androidx.compose.web.css.CSSVariables
 import androidx.compose.web.css.Color
+import androidx.compose.web.css.LineStyle
 import androidx.compose.web.css.selectors.className
 import androidx.compose.web.css.color
 import androidx.compose.web.css.fontSize
@@ -52,9 +53,11 @@ import androidx.compose.web.css.Style
 import androidx.compose.web.css.StyleSheet
 import androidx.compose.web.css.and
 import androidx.compose.web.css.backgroundColor
+import androidx.compose.web.css.border
 import androidx.compose.web.css.maxWidth
 import androidx.compose.web.css.media
 import androidx.compose.web.css.minWidth
+import androidx.compose.web.css.value
 import androidx.compose.web.css.variable
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
@@ -87,6 +90,12 @@ object AppStyleSheet : StyleSheet() {
 
         hover(self) style {
             color("red")
+        }
+
+        border {
+            width(1.px)
+            style(LineStyle.Solid)
+            color(MyCSSVariables.myVar.value())
         }
 
         media(maxWidth(640.px)) {
