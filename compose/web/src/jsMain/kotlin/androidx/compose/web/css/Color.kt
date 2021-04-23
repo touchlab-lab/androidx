@@ -40,7 +40,7 @@ abstract class Color : CustomStyleValue {
     data class HSLA(val h: CSSangleValue, val s: Number, val l: Number, val a: Number) : Color() {
         constructor(h: Number, s: Number, l: Number, a: Number) : this(h.deg, s, l, a)
 
-        override fun toString(): String = "hsla($h, $s%, $l%, a)"
+        override fun toString(): String = "hsla($h, $s%, $l%, $a)"
     }
 
     companion object {
