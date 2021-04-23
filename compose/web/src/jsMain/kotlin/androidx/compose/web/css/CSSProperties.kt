@@ -311,6 +311,31 @@ fun StyleBuilder.width(value: CSSSizeOrAutoValue) {
     property("width", value)
 }
 
+fun StyleBuilder.borderRadius(r: CSSSizeValue) {
+    property("border-radius", StylePropertyValue(r.toString()))
+}
+
+fun StyleBuilder.borderRadius(topLeft: CSSSizeValue, bottomRight: CSSSizeValue) {
+    property("border-radius", StylePropertyValue("$topLeft $bottomRight"))
+}
+
+fun StyleBuilder.borderRadius(
+    topLeft: CSSSizeValue,
+    topRightAndBottomLeft: CSSSizeValue,
+    bottomRight: CSSSizeValue
+) {
+    property("border-radius", StylePropertyValue("$topLeft $topRightAndBottomLeft $bottomRight"))
+}
+
+fun StyleBuilder.borderRadius(
+    topLeft: CSSSizeValue,
+    topRight: CSSSizeValue,
+    bottomRight: CSSSizeValue,
+    bottomLeft:     CSSSizeValue
+) {
+    property("border-radius", StylePropertyValue("$topLeft $topRight $bottomRight $bottomLeft"))
+}
+
 fun StyleBuilder.width(value: CSSSizeValue) {
     width(CSSSizeOrAutoValue(value))
 }

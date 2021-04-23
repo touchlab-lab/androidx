@@ -28,6 +28,7 @@ import androidx.compose.web.elements.Span
 import androidx.compose.web.css.opacity
 import androidx.compose.web.css.color
 import androidx.compose.web.css.border
+import androidx.compose.web.css.borderRadius
 import androidx.compose.web.css.px
 import androidx.compose.web.css.width
 import androidx.compose.web.css.height
@@ -259,6 +260,43 @@ class StaticComposableTests {
         }
 
         assertEquals("width: 100px;", (root.children[0] as HTMLElement).style.cssText)
+    }
+
+    @Test
+    fun stylesBorderRadius() {
+        val root = "div".asHtmlElement()
+        renderComposable(
+            root = root
+        ) {
+            Div(
+                style = {
+                    borderRadius(3.px)
+                }
+            ) {}
+            Div(
+                style = {
+                    borderRadius(3.px, 5.px)
+                }
+            ) {}
+            Div(
+                style = {
+                    borderRadius(3.px, 5.px, 4.px)
+                }
+            ) {}
+            Div(
+                style = {
+                    borderRadius(3.px, 5.px, 4.px, 1.px)
+                }
+            ) {}
+        }
+
+        assertEquals("border-radius: 3px;", (root.children[0] as HTMLElement).style.cssText)
+        assertEquals("border-radius: 3px 5px;", (root.children[1] as HTMLElement).style.cssText)
+        assertEquals("border-radius: 3px 5px 4px;", (root.children[2] as HTMLElement).style.cssText)
+        assertEquals(
+            "border-radius: 3px 5px 4px 1px;",
+            (root.children[3] as HTMLElement).style.cssText
+        )
     }
 
     @Test
