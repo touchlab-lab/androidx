@@ -80,7 +80,8 @@ fun <TValue> CSSStyleVariable<TValue>.value(fallback: TValue? = null) =
         variableValue(
             name,
             fallback?.let {
-                (fallback as? CustomStyleValue)?.styleValue() ?: StylePropertyValue(fallback.toString())
+                (fallback as? CustomStyleValue)?.styleValue()
+                    ?: StylePropertyValue(fallback.toString())
             }
         )
     )

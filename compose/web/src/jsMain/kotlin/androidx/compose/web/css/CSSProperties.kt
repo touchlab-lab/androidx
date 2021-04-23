@@ -204,7 +204,7 @@ enum class Position(val value: String) {
     Fixed("fixed")
 }
 
-class CSSBorder: CustomStyleValue {
+class CSSBorder : CustomStyleValue {
     var width: StylePropertyValue? = null
     var style: StylePropertyValue? = null
     var color: StylePropertyValue? = null
