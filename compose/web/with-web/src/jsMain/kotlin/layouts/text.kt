@@ -21,11 +21,20 @@ import androidx.compose.web.elements.Span
 import org.jetbrains.compose.web.ui.Styles
 import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.asStyleBuilderApplier
+import androidx.core.graphics.ww.Color
+import androidx.compose.web.css.color
+import androidx.compose.web.css.Color.RGB
 
 @Composable
-actual fun TextActual(text: String, modifier: Modifier) {
+actual fun TextActual(
+    text: String,
+    modifier: Modifier,
+    color: Color
+) {
     Span(
-        style = modifier.asStyleBuilderApplier(),
+        style = modifier.asStyleBuilderApplier() {
+            color(RGB(color.red, color.green, color.blue))
+        },
         attrs = {
             classes(Styles.textClass)
         }

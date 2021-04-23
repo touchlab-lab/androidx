@@ -17,6 +17,11 @@ package androidx.compose.material.ww
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.ui.ww.Modifier
+import androidx.core.graphics.ww.Color
 
 @Composable
-expect fun TextActual(text: String, modifier: Modifier)
+expect fun TextActual(
+    text: String,
+    modifier: Modifier,
+    color: Color
+)

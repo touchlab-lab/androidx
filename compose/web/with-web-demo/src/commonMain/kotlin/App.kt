@@ -25,7 +25,7 @@ object LayoutSamples {
     fun TwoTextsInColumn() {
         Column {
             Text("Alfred Sisley")
-            Text("3 minutes ago")
+            Text("3 minutes ago", color = Color(0, 0, 200))
         }
     }
 

@@ -17,8 +17,13 @@ package androidx.compose.material.ww
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.ui.ww.Modifier
+import androidx.core.graphics.ww.Color
 
 @Composable
-fun Text(text: String, modifier: Modifier = Modifier.Companion) {
-    TextActual(text, modifier)
+fun Text(
+    text: String,
+    modifier: Modifier = Modifier.Companion,
+    color: Color = Color.Black
+) {
+    TextActual(text, modifier, color)
 }

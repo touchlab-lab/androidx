@@ -19,8 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.material.Text as JText
 import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.implementation
+import androidx.core.graphics.ww.Color
+import androidx.core.graphics.ww.implementation
 
 @Composable
-actual fun TextActual(text: String, modifier: Modifier) {
-    JText(text, modifier = modifier.implementation)
+actual fun TextActual(
+    text: String,
+    modifier: Modifier,
+    color: Color
+) {
+    JText(
+        text,
+        modifier = modifier.implementation,
+        color = color.implementation
+    )
 }

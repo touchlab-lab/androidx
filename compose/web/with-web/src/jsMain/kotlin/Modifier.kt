@@ -23,9 +23,12 @@ actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
     })
 }
 
-fun Modifier.asStyleBuilderApplier(): StyleBuilder.() -> Unit = castOrCreate().let { modifier ->
+fun Modifier.asStyleBuilderApplier(
+    followingHandler: (StyleBuilder.() -> Unit)? = null
+): StyleBuilder.() -> Unit = castOrCreate().let { modifier ->
     val st: StyleBuilder.() -> Unit = {
         modifier.styleHandlers.forEach { it.invoke(this) }
+        followingHandler?.invoke(this)
     }
 
     st
