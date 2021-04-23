@@ -204,13 +204,54 @@ enum class Position(val value: String) {
     Fixed("fixed")
 }
 
+class CSSBorder: CustomStyleValue {
+    var width: StylePropertyValue? = null
+    var style: StylePropertyValue? = null
+    var color: StylePropertyValue? = null
+
+    fun width(size: CSSSizeValue) {
+        width = StylePropertyValue(size)
+    }
+
+    fun style(style: LineStyle) {
+        this.style = StylePropertyValue(style.name)
+    }
+
+    fun color(color: Color) {
+        this.color = color.styleValue()
+    }
+
+    fun color(color: CSSVariableValue<Color>) {
+        this.color = color
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return if (other is CSSBorder) {
+            styleValue().toString() == other.styleValue().toString()
+        } else false
+    }
+
+    override fun styleValue(): StylePropertyValue {
+        val values = listOfNotNull(width, style, color)
+        return StylePropertyValue(values.joinToString(" "))
+    }
+}
+
+inline fun StyleBuilder.border(crossinline borderBuild: CSSBorder.() -> Unit) {
+    val border = CSSBorder().apply(borderBuild)
+    property("border", border.styleValue())
+}
+
 fun StyleBuilder.border(
     width: CSSSizeValue? = null,
     style: LineStyle? = null,
     color: Color? = null
 ) {
-    val values = listOfNotNull(width, style?.name, color?.styleValue())
-    property("border", value(values.joinToString(" ")))
+    border {
+        width?.let { width(it) }
+        style?.let { style(it) }
+        color?.let { color(it) }
+    }
 }
 
 fun StyleBuilder.display(displayStyle: DisplayStyle) {
