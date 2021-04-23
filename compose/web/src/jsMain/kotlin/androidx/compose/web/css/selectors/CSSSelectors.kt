@@ -94,12 +94,16 @@ open class CSSSelector {
         override fun toString(): String = "$parent $selected"
     }
 
+    data class Child(val parent: CSSSelector, val selected: CSSSelector) : CSSSelector() {
+        override fun toString(): String = "$parent > $selected"
+    }
+
     data class Sibling(val prev: CSSSelector, val selected: CSSSelector) : CSSSelector() {
-        override fun toString(): String = "$prev~$selected"
+        override fun toString(): String = "$prev ~ $selected"
     }
 
     data class Adjacent(val prev: CSSSelector, val selected: CSSSelector) : CSSSelector() {
-        override fun toString(): String = "$prev+$selected"
+        override fun toString(): String = "$prev + $selected"
     }
 
     open class PseudoClass(val name: String) : CSSSelector() {
@@ -243,6 +247,8 @@ fun attr(
 fun group(vararg selectors: CSSSelector) = CSSSelector.Group(selectors.toList())
 fun descendant(parent: CSSSelector, selected: CSSSelector) =
     CSSSelector.Descendant(parent, selected)
+fun child(parent: CSSSelector, selected: CSSSelector) =
+    CSSSelector.Child(parent, selected)
 fun sibling(sibling: CSSSelector, selected: CSSSelector) = CSSSelector.Descendant(sibling, selected)
 fun adjacent(sibling: CSSSelector, selected: CSSSelector) = CSSSelector.Adjacent(sibling, selected)
 
