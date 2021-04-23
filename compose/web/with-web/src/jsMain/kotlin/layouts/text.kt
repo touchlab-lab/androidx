@@ -17,8 +17,19 @@ package androidx.compose.material.ww
 
 import androidx.compose.runtime.Composable
 import androidx.compose.web.elements.Text as TextNode
+import androidx.compose.web.elements.Span
+import org.jetbrains.compose.web.ui.Styles
+import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.ui.ww.asStyleBuilderApplier
 
 @Composable
-actual fun Text(text: String) {
-    TextNode(text)
+actual fun TextActual(text: String, modifier: Modifier) {
+    Span(
+        style = modifier.asStyleBuilderApplier(),
+        attrs = {
+            classes(Styles.textClass)
+        }
+    ) {
+        TextNode(text)
+    }
 }

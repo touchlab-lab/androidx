@@ -14,29 +14,45 @@ import androidx.compose.ui.ww.Alignment
 import androidx.compose.foundation.ww.border
 import androidx.compose.material.ww.Text
 
-@Composable
-fun TwoTexts() {
-    Text("Alfred Sisley")
-    Text("3 minutes ago")
-}
+object LayoutSamples {
+    @Composable
+    fun TwoTexts() {
+        Text("Alfred Sisley")
+        Text("3 minutes ago")
+    }
 
-@Composable
-fun Layouts() {
-    val horizontalArrangements = listOf(Arrangement.End, Arrangement.Start)
-    val verticalAlignments = listOf(Alignment.Top, Alignment.CenterVertically, Alignment.Bottom)
-    Column() {
-        horizontalArrangements.forEach { horizontalArrangement ->
-            verticalAlignments.forEach { verticalAlignment ->
-                Row(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .border(1.dp, Color(0, 0, 200))
-                        .background(Color.Yellow),
-                    horizontalArrangement = horizontalArrangement,
-                    verticalAlignment = verticalAlignment
-                ) {
-                    Box(Modifier.size(50.dp).background(Color.Red)) { }
-                    Box(Modifier.size(30.dp).background(Color.Blue)) { }
+    @Composable
+    fun TwoTextsInColumn() {
+        Column {
+            Text("Alfred Sisley")
+            Text("3 minutes ago")
+        }
+    }
+
+    @Composable
+    fun TwoTextsInRow() {
+        Text("Alfred Sisley")
+        Text("3 minutes ago")
+    }
+
+    @Composable
+    fun Layouts() {
+        val horizontalArrangements = listOf(Arrangement.End, Arrangement.Start)
+        val verticalAlignments = listOf(Alignment.Top, Alignment.CenterVertically, Alignment.Bottom)
+        Column() {
+            horizontalArrangements.forEach { horizontalArrangement ->
+                verticalAlignments.forEach { verticalAlignment ->
+                    Row(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .border(1.dp, Color(0, 0, 200))
+                            .background(Color.Yellow),
+                        horizontalArrangement = horizontalArrangement,
+                        verticalAlignment = verticalAlignment
+                    ) {
+                        Box(Modifier.size(50.dp).background(Color.Red)) { }
+                        Box(Modifier.size(30.dp).background(Color.Blue)) { }
+                    }
                 }
             }
         }
@@ -45,6 +61,5 @@ fun Layouts() {
 
 @Composable
 fun App() {
-    TwoTexts()
-//    Layouts()
+    LayoutSamples.TwoTextsInColumn()
 }

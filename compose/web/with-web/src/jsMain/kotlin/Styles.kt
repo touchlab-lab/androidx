@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.compose.web.ui
 
-package androidx.compose.foundation.layout.ww
-
-import org.jetbrains.ui.ww.Modifier
-import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.asStyleBuilderApplier
-import androidx.compose.web.elements.Div
-import org.jetbrains.compose.web.ui.Styles
-
-@Composable
-internal actual fun ColumnActual(modifier: Modifier, content: @Composable () -> Unit) {
-    Div(
-        attrs = {
-            classes(Styles.columnClass)
-        },
-        style = modifier.asStyleBuilderApplier()
-    ) {
-        content()
-    }
+object Styles {
+    val textClass = "compose-web-text"
+    val columnClass = "compose-web-column"
 }

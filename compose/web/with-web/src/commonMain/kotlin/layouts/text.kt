@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package androidx.compose.material.ww
 
-package androidx.compose.foundation.layout.ww
-
-import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.asStyleBuilderApplier
-import androidx.compose.web.elements.Div
-import org.jetbrains.compose.web.ui.Styles
+import org.jetbrains.ui.ww.Modifier
 
 @Composable
-internal actual fun ColumnActual(modifier: Modifier, content: @Composable () -> Unit) {
-    Div(
-        attrs = {
-            classes(Styles.columnClass)
-        },
-        style = modifier.asStyleBuilderApplier()
-    ) {
-        content()
-    }
-}
+expect fun TextActual(text: String, modifier: Modifier)

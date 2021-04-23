@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-package androidx.compose.foundation.layout.ww
+.compose-web-text {
+    position: absolute;
+    display: block;
+    left: 0;
+}
 
-import org.jetbrains.ui.ww.Modifier
-import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.asStyleBuilderApplier
-import androidx.compose.web.elements.Div
-import org.jetbrains.compose.web.ui.Styles
-
-@Composable
-internal actual fun ColumnActual(modifier: Modifier, content: @Composable () -> Unit) {
-    Div(
-        attrs = {
-            classes(Styles.columnClass)
-        },
-        style = modifier.asStyleBuilderApplier()
-    ) {
-        content()
-    }
+.compose-web-column > .compose-web-text {
+    position: unset;
 }

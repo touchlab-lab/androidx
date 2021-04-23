@@ -16,9 +16,9 @@
 package androidx.compose.material.ww
 
 import androidx.compose.runtime.Composable
-import androidx.compose.material.Text as JText
+import org.jetbrains.ui.ww.Modifier
 
 @Composable
-actual fun Text(text: String) {
-    JText(text)
+fun Text(text: String, modifier: Modifier = Modifier.Companion) {
+    TextActual(text, modifier)
 }
