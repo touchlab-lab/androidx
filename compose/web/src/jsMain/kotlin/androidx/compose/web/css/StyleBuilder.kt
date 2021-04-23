@@ -25,16 +25,6 @@ interface StyleBuilder {
     operator fun <TValue> CSSStyleVariable<TValue>.invoke(value: TValue) {
         variable(this.name, (value as? CustomStyleValue)?.styleValue() ?: value(value.toString()))
     }
-
-    fun <TValue> CSSStyleVariable<TValue>.value(fallback: TValue? = null) =
-        CSSVariableValue<TValue>(
-            variableValue(
-                name,
-                fallback?.let {
-                    (fallback as? CustomStyleValue)?.styleValue() ?: value(fallback.toString())
-                }
-            )
-        )
 }
 
 @Suppress("NOTHING_TO_INLINE")
@@ -46,7 +36,7 @@ inline fun StyleBuilder.value(value: Number) = StylePropertyValue(value)
 @Suppress("NOTHING_TO_INLINE")
 inline fun StyleBuilder.value(value: CSSStyleValue) = StylePropertyValue(value)
 
-fun StyleBuilder.variableValue(variableName: String, fallback: StylePropertyValue? = null) =
+fun variableValue(variableName: String, fallback: StylePropertyValue? = null) =
     StylePropertyValue("var(--$variableName${fallback?.let { ", $it" } ?: ""})")
 
 interface CSSVariableValue<TValue> : StylePropertyValue {
@@ -84,6 +74,16 @@ interface CustomStyleValue {
 }
 
 data class CSSStyleVariable<TValue>(override val name: String) : CSSVariable
+
+fun <TValue> CSSStyleVariable<TValue>.value(fallback: TValue? = null) =
+    CSSVariableValue<TValue>(
+        variableValue(
+            name,
+            fallback?.let {
+                (fallback as? CustomStyleValue)?.styleValue() ?: StylePropertyValue(fallback.toString())
+            }
+        )
+    )
 
 fun <TValue> CSSVariables.variable() =
     ReadOnlyProperty<Any?, CSSStyleVariable<TValue>> { _, property ->
