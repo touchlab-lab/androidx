@@ -331,7 +331,7 @@ fun StyleBuilder.borderRadius(
     topLeft: CSSSizeValue,
     topRight: CSSSizeValue,
     bottomRight: CSSSizeValue,
-    bottomLeft:     CSSSizeValue
+    bottomLeft: CSSSizeValue
 ) {
     property("border-radius", StylePropertyValue("$topLeft $topRight $bottomRight $bottomLeft"))
 }
