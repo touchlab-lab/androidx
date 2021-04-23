@@ -67,7 +67,15 @@ if(AndroidXUiPlugin.isMultiplatformEnabled(project)) {
         android()
         jvm("desktop")
         js(IR) {
-            browser()
+            browser() {
+                testTask {
+                    testLogging.showStandardStreams = true
+                    useKarma {
+                        useChromeHeadless()
+                        useFirefox()
+                    }
+                }
+            }
         }
 
         /*
