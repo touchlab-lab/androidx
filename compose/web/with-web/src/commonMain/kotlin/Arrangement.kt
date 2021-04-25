@@ -16,11 +16,11 @@
 package androidx.compose.foundation.layout.ww
 
 object Arrangement {
-    open class Horizontal
-    open class Vertical
+    interface Horizontal
+    interface Vertical
 
-    val End = object : Horizontal() {}
-    val Start = object : Horizontal() {}
-    val Top = object : Vertical() {}
-    val Bottom = object : Vertical() {}
+    val End = object : Horizontal {}
+    val Start = object : Horizontal {}
+    val Top = object : Vertical {}
+    val Bottom = object : Vertical {}
 }
