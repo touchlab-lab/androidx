@@ -21,6 +21,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.web.elements.Div
 import org.jetbrains.ui.ww.asStyleBuilderApplier
 import androidx.compose.ui.ww.Alignment
+import org.jetbrains.compose.web.ui.Styles
+
+private fun Arrangement.Horizontal.asClassName() = when (this) {
+    Arrangement.End -> "compose-web-arrangement-horizontal-end"
+    else -> "compose-web-arrangement-horizontal-start"
+}
+
+private fun Alignment.Vertical.asClassName() = when (this) {
+    Alignment.Top -> "compose-web-alignment-vertical-top"
+    Alignment.CenterVertically -> "compose-web-alignment-vertical-center"
+    else -> "compose-web-alignment-vertical-bottom"
+}
 
 @Composable
 internal actual fun RowActual(
@@ -30,6 +42,15 @@ internal actual fun RowActual(
     content: @Composable () -> Unit
 ) {
     Div(
+        attrs = {
+            classes(
+                *arrayOf(
+                    Styles.rowClass,
+                    horizontalArrangement.asClassName(),
+                    verticalAlignment.asClassName()
+                )
+            )
+        },
         style = modifier.asStyleBuilderApplier()
     ) {
         content()

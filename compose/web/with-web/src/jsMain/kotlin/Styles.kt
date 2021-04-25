@@ -18,4 +18,5 @@ package org.jetbrains.compose.web.ui
 object Styles {
     val textClass = "compose-web-text"
     val columnClass = "compose-web-column"
+    val rowClass = "compose-web-row"
 }

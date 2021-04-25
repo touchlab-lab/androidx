@@ -37,7 +37,7 @@ object LayoutSamples {
 
     @Composable
     fun Layouts() {
-        val horizontalArrangements = listOf(Arrangement.End, Arrangement.Start)
+        val horizontalArrangements = listOf(Arrangement.Start, Arrangement.End)
         val verticalAlignments = listOf(Alignment.Top, Alignment.CenterVertically, Alignment.Bottom)
         Column() {
             horizontalArrangements.forEach { horizontalArrangement ->
@@ -61,5 +61,5 @@ object LayoutSamples {
 
 @Composable
 fun App() {
-    LayoutSamples.TwoTextsInColumn()
+    LayoutSamples.Layouts()
 }
