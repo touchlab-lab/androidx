@@ -19,4 +19,7 @@ import org.jetbrains.ui.ww.Modifier
 import androidx.compose.runtime.Composable
 
 @Composable
-internal expect fun BoxActual(modifier: Modifier, content: @Composable () -> Unit)
+fun Column(
+    modifier: Modifier = Modifier.Companion,
+    content: @Composable () -> Unit
+) { ColumnActual(modifier, content) }
