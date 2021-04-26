@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ww.Box
 import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.size
 import org.jetbrains.ui.ww.background
+import org.jetbrains.ui.ww.padding
 import androidx.compose.ui.unit.ww.dp
 import androidx.core.graphics.ww.Color
 import androidx.compose.foundation.layout.ww.Row
@@ -45,6 +46,7 @@ object LayoutSamples {
                     Row(
                         modifier = Modifier
                             .size(150.dp)
+                            .padding(4.dp)
                             .border(1.dp, Color(0, 0, 200))
                             .background(Color.Yellow),
                         horizontalArrangement = horizontalArrangement,

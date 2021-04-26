@@ -5,6 +5,7 @@ import androidx.core.graphics.ww.Color
 import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.width
 import androidx.compose.web.css.height
+import androidx.compose.web.css.margin
 import androidx.compose.web.css.px
 import androidx.compose.web.css.Color.RGB
 import org.jetbrains.compose.web.ww.internal.castOrCreate
@@ -32,4 +33,11 @@ fun Modifier.asStyleBuilderApplier(
     }
 
     st
+}
+
+actual fun Modifier.padding(all: Dp): Modifier = castOrCreate().apply {
+    // yes, it's not a typo, what Modifier.padding does is actually adding margin
+    styleHandlers.add({
+        margin(all.value.px)
+    })
 }

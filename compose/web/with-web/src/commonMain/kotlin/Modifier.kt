@@ -10,3 +10,4 @@ interface Modifier {
 
 expect fun Modifier.size(size: Dp): Modifier
 expect fun Modifier.background(color: Color): Modifier
+expect fun Modifier.padding(all: Dp): Modifier
