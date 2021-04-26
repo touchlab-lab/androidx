@@ -57,107 +57,103 @@ class MultiWidgetSelectionDelegateTest {
 
     @Test
     fun getHandlePosition_StartHandle_invalid() {
-        with(defaultDensity) {
-            composeTestRule.setContent {
-                val text = "hello world\n"
-                val fontSize = 20.sp
+        composeTestRule.setContent {
+            val text = "hello world\n"
+            val fontSize = 20.sp
 
-                val layoutResult = simpleTextLayout(
-                    text = text,
-                    fontSize = fontSize,
-                    density = defaultDensity
-                )
+            val layoutResult = simpleTextLayout(
+                text = text,
+                fontSize = fontSize,
+                density = defaultDensity
+            )
 
-                val layoutCoordinates = mock<LayoutCoordinates>()
-                whenever(layoutCoordinates.isAttached).thenReturn(true)
+            val layoutCoordinates = mock<LayoutCoordinates>()
+            whenever(layoutCoordinates.isAttached).thenReturn(true)
 
-                val selectableId = 1L
-                val selectable = MultiWidgetSelectionDelegate(
-                    selectableId = selectableId,
-                    coordinatesCallback = { layoutCoordinates },
-                    layoutResultCallback = { layoutResult }
-                )
+            val selectableId = 1L
+            val selectable = MultiWidgetSelectionDelegate(
+                selectableId = selectableId,
+                coordinatesCallback = { layoutCoordinates },
+                layoutResultCallback = { layoutResult }
+            )
 
-                val selectableInvalidId = 2L
-                val startOffset = text.indexOf('h')
-                val endOffset = text.indexOf('o')
+            val selectableInvalidId = 2L
+            val startOffset = text.indexOf('h')
+            val endOffset = text.indexOf('o')
 
-                val selection = Selection(
-                    start = Selection.AnchorInfo(
-                        direction = ResolvedTextDirection.Ltr,
-                        offset = startOffset,
-                        selectableId = selectableInvalidId
-                    ),
-                    end = Selection.AnchorInfo(
-                        direction = ResolvedTextDirection.Ltr,
-                        offset = endOffset,
-                        selectableId = selectableInvalidId
-                    ),
-                    handlesCrossed = false
-                )
+            val selection = Selection(
+                start = Selection.AnchorInfo(
+                    direction = ResolvedTextDirection.Ltr,
+                    offset = startOffset,
+                    selectableId = selectableInvalidId
+                ),
+                end = Selection.AnchorInfo(
+                    direction = ResolvedTextDirection.Ltr,
+                    offset = endOffset,
+                    selectableId = selectableInvalidId
+                ),
+                handlesCrossed = false
+            )
 
-                // Act.
-                val coordinates = selectable.getHandlePosition(
-                    selection = selection,
-                    isStartHandle = true
-                )
+            // Act.
+            val coordinates = selectable.getHandlePosition(
+                selection = selection,
+                isStartHandle = true
+            )
 
-                // Assert.
-                assertThat(coordinates).isEqualTo(Offset.Zero)
-            }
+            // Assert.
+            assertThat(coordinates).isEqualTo(Offset.Zero)
         }
     }
 
     @Test
     fun getHandlePosition_EndHandle_invalid() {
-        with(defaultDensity) {
-            composeTestRule.setContent {
-                val text = "hello world\n"
-                val fontSize = 20.sp
+        composeTestRule.setContent {
+            val text = "hello world\n"
+            val fontSize = 20.sp
 
-                val layoutResult = simpleTextLayout(
-                    text = text,
-                    fontSize = fontSize,
-                    density = defaultDensity
-                )
+            val layoutResult = simpleTextLayout(
+                text = text,
+                fontSize = fontSize,
+                density = defaultDensity
+            )
 
-                val layoutCoordinates = mock<LayoutCoordinates>()
-                whenever(layoutCoordinates.isAttached).thenReturn(true)
+            val layoutCoordinates = mock<LayoutCoordinates>()
+            whenever(layoutCoordinates.isAttached).thenReturn(true)
 
-                val selectableId = 1L
-                val selectable = MultiWidgetSelectionDelegate(
-                    selectableId = selectableId,
-                    coordinatesCallback = { layoutCoordinates },
-                    layoutResultCallback = { layoutResult }
-                )
+            val selectableId = 1L
+            val selectable = MultiWidgetSelectionDelegate(
+                selectableId = selectableId,
+                coordinatesCallback = { layoutCoordinates },
+                layoutResultCallback = { layoutResult }
+            )
 
-                val selectableInvalidId = 2L
-                val startOffset = text.indexOf('h')
-                val endOffset = text.indexOf('o')
+            val selectableInvalidId = 2L
+            val startOffset = text.indexOf('h')
+            val endOffset = text.indexOf('o')
 
-                val selection = Selection(
-                    start = Selection.AnchorInfo(
-                        direction = ResolvedTextDirection.Ltr,
-                        offset = startOffset,
-                        selectableId = selectableInvalidId
-                    ),
-                    end = Selection.AnchorInfo(
-                        direction = ResolvedTextDirection.Ltr,
-                        offset = endOffset,
-                        selectableId = selectableInvalidId
-                    ),
-                    handlesCrossed = false
-                )
+            val selection = Selection(
+                start = Selection.AnchorInfo(
+                    direction = ResolvedTextDirection.Ltr,
+                    offset = startOffset,
+                    selectableId = selectableInvalidId
+                ),
+                end = Selection.AnchorInfo(
+                    direction = ResolvedTextDirection.Ltr,
+                    offset = endOffset,
+                    selectableId = selectableInvalidId
+                ),
+                handlesCrossed = false
+            )
 
-                // Act.
-                val coordinates = selectable.getHandlePosition(
-                    selection = selection,
-                    isStartHandle = false
-                )
+            // Act.
+            val coordinates = selectable.getHandlePosition(
+                selection = selection,
+                isStartHandle = false
+            )
 
-                // Assert.
-                assertThat(coordinates).isEqualTo(Offset.Zero)
-            }
+            // Assert.
+            assertThat(coordinates).isEqualTo(Offset.Zero)
         }
     }
 
@@ -831,51 +827,47 @@ class MultiWidgetSelectionDelegateTest {
 
     @Test
     fun getText_textLayoutResult_Null_Return_Empty_AnnotatedString() {
-        with(defaultDensity) {
-            composeTestRule.setContent {
-                val layoutResult = null
+        composeTestRule.setContent {
+            val layoutResult = null
 
-                val layoutCoordinates = mock<LayoutCoordinates>()
-                whenever(layoutCoordinates.isAttached).thenReturn(true)
+            val layoutCoordinates = mock<LayoutCoordinates>()
+            whenever(layoutCoordinates.isAttached).thenReturn(true)
 
-                val selectable = MultiWidgetSelectionDelegate(
-                    0,
-                    coordinatesCallback = { layoutCoordinates },
-                    layoutResultCallback = { layoutResult }
-                )
+            val selectable = MultiWidgetSelectionDelegate(
+                0,
+                coordinatesCallback = { layoutCoordinates },
+                layoutResultCallback = { layoutResult }
+            )
 
-                assertThat(selectable.getText()).isEqualTo(AnnotatedString(""))
-            }
+            assertThat(selectable.getText()).isEqualTo(AnnotatedString(""))
         }
     }
 
     @Test
     fun getText_textLayoutResult_NotNull_Return_AnnotatedString() {
-        with(defaultDensity) {
-            composeTestRule.setContent {
-                val textLtr = "Hello"
-                val textRtl = "\u05D0\u05D1\u05D2"
-                val text = textLtr + textRtl
-                val fontSize = 20.sp
-                val spanStyle = SpanStyle(fontSize = fontSize, fontFamily = fontFamily)
+        composeTestRule.setContent {
+            val textLtr = "Hello"
+            val textRtl = "\u05D0\u05D1\u05D2"
+            val text = textLtr + textRtl
+            val fontSize = 20.sp
+            val spanStyle = SpanStyle(fontSize = fontSize, fontFamily = fontFamily)
 
-                val layoutResult = simpleTextLayout(
-                    text = text,
-                    fontSize = fontSize,
-                    density = defaultDensity
-                )
+            val layoutResult = simpleTextLayout(
+                text = text,
+                fontSize = fontSize,
+                density = defaultDensity
+            )
 
-                val layoutCoordinates = mock<LayoutCoordinates>()
-                whenever(layoutCoordinates.isAttached).thenReturn(true)
+            val layoutCoordinates = mock<LayoutCoordinates>()
+            whenever(layoutCoordinates.isAttached).thenReturn(true)
 
-                val selectable = MultiWidgetSelectionDelegate(
-                    0,
-                    coordinatesCallback = { layoutCoordinates },
-                    layoutResultCallback = { layoutResult }
-                )
+            val selectable = MultiWidgetSelectionDelegate(
+                0,
+                coordinatesCallback = { layoutCoordinates },
+                layoutResultCallback = { layoutResult }
+            )
 
-                assertThat(selectable.getText()).isEqualTo(AnnotatedString(text, spanStyle))
-            }
+            assertThat(selectable.getText()).isEqualTo(AnnotatedString(text, spanStyle))
         }
     }
 
@@ -969,7 +961,7 @@ class MultiWidgetSelectionDelegateTest {
                 whenever(layoutCoordinates.isAttached).thenReturn(true)
 
                 val selectable = MultiWidgetSelectionDelegate(
-                    0,
+                    selectableId = 1,
                     coordinatesCallback = { layoutCoordinates },
                     layoutResultCallback = { layoutResult }
                 )
@@ -1005,7 +997,7 @@ class MultiWidgetSelectionDelegateTest {
         val textSelectionInfo = getTextSelectionInfo(
             textLayoutResult = textLayoutResult,
             selectionCoordinates = Pair(start, end),
-            selectable = mock(),
+            selectableId = 1,
             adjustment = SelectionAdjustment.WORD
         )
 
@@ -1044,7 +1036,7 @@ class MultiWidgetSelectionDelegateTest {
         val textSelectionInfo = getTextSelectionInfo(
             textLayoutResult = textLayoutResult,
             selectionCoordinates = Pair(start, end),
-            selectable = mock(),
+            selectableId = 1,
             adjustment = SelectionAdjustment.WORD
         )
 
@@ -1085,7 +1077,7 @@ class MultiWidgetSelectionDelegateTest {
         val textSelectionInfo = getTextSelectionInfo(
             textLayoutResult = textLayoutResult,
             selectionCoordinates = Pair(start, end),
-            selectable = mock(),
+            selectableId = 1,
             adjustment = SelectionAdjustment.WORD
         )
 
@@ -1128,7 +1120,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 textLayoutResult = textLayoutResult,
                 selectionCoordinates = Pair(start, end),
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.WORD
             )
 
@@ -1165,13 +1157,12 @@ class MultiWidgetSelectionDelegateTest {
         // long pressed between "h" and "e", "hello" should be selected
         val start = Offset((fontSizeInPx * 2), (fontSizeInPx / 2))
         val end = start
-        val selectable = mock<Selectable>()
 
         // Act.
         val textSelectionInfo1 = getTextSelectionInfo(
             textLayoutResult = textLayoutResult,
             selectionCoordinates = Pair(start, end),
-            selectable = selectable,
+            selectableId = 1,
             adjustment = SelectionAdjustment.WORD
         )
 
@@ -1179,7 +1170,7 @@ class MultiWidgetSelectionDelegateTest {
         val textSelectionInfo2 = getTextSelectionInfo(
             textLayoutResult = textLayoutResult,
             selectionCoordinates = Pair(start, end + Offset(0f, fontSizeInPx / 4)),
-            selectable = selectable,
+            selectableId = 1,
             adjustment = SelectionAdjustment.WORD,
             previousSelection = textSelectionInfo1,
             isStartHandle = false
@@ -1227,7 +1218,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 textLayoutResult = textLayoutResult,
                 selectionCoordinates = Pair(start, end),
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
 
@@ -1277,7 +1268,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 textLayoutResult = textLayoutResult,
                 selectionCoordinates = Pair(start, end),
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
 
@@ -1329,7 +1320,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 textLayoutResult = textLayoutResult,
                 selectionCoordinates = Pair(start, end),
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
 
@@ -1370,7 +1361,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -1418,7 +1409,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -1468,7 +1459,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -1504,7 +1495,6 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("l")
             val oldEndOffset = text.indexOf("o") + 1
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1526,8 +1516,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -1561,7 +1551,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("\u05D1")
             val oldEndOffset = text.length
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1589,8 +1579,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -1624,7 +1614,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("l")
             val oldEndOffset = text.indexOf("o") + 1
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1646,8 +1636,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = true
             )
@@ -1682,7 +1672,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("o") + 1
             val oldEndOffset = text.indexOf("l")
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1704,8 +1694,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = true
             )
@@ -1740,7 +1730,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("e")
             val oldEndOffset = text.indexOf("l")
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1762,8 +1752,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = true
             )
@@ -1788,7 +1778,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("l")
             val oldEndOffset = text.indexOf("e")
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1810,8 +1800,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = true
             )
@@ -1836,7 +1826,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.length - 1
             val oldEndOffset = text.length
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1864,8 +1854,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = true
             )
@@ -1890,7 +1880,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("e")
             val oldEndOffset = 0
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1912,8 +1902,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = true
             )
@@ -1938,7 +1928,6 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("o") + 1
             val oldEndOffset = text.indexOf("l")
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -1960,8 +1949,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -1996,7 +1985,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("e")
             val oldEndOffset = text.indexOf("l")
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -2018,8 +2007,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -2044,7 +2033,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.indexOf("l")
             val oldEndOffset = text.indexOf("e")
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -2066,8 +2055,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -2092,7 +2081,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = 0
             val oldEndOffset = text.indexOf('e')
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -2120,8 +2109,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -2146,7 +2135,7 @@ class MultiWidgetSelectionDelegateTest {
             val oldStartOffset = text.length
             val oldEndOffset = text.length - 1
             val selectableId = 1L
-            val selectable: Selectable = mockSelectable(selectableId)
+
             val previousSelection = Selection(
                 start = Selection.AnchorInfo(
                     offset = oldStartOffset,
@@ -2174,8 +2163,8 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = selectable,
-                adjustment = SelectionAdjustment.NONE,
+                selectableId = 1,
+                adjustment = SelectionAdjustment.CHARACTER,
                 previousSelection = previousSelection,
                 isStartHandle = false
             )
@@ -2205,7 +2194,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -2247,7 +2236,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -2288,7 +2277,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -2330,7 +2319,7 @@ class MultiWidgetSelectionDelegateTest {
             val textSelectionInfo = getTextSelectionInfo(
                 selectionCoordinates = Pair(start, end),
                 textLayoutResult = textLayoutResult,
-                selectable = mock(),
+                selectableId = 1,
                 adjustment = SelectionAdjustment.NONE
             )
             // Assert.
@@ -2353,25 +2342,23 @@ class MultiWidgetSelectionDelegateTest {
 
     @Test
     fun getTextSelectionInfo_not_selected() {
-        with(defaultDensity) {
-            val text = "hello world\n"
-            val fontSize = 20.sp
-            val textLayoutResult = simpleTextLayout(
-                text = text,
-                fontSize = fontSize,
-                density = defaultDensity
-            )
-            val start = Offset(-50f, -50f)
-            val end = Offset(-20f, -20f)
-            // Act.
-            val textSelectionInfo = getTextSelectionInfo(
-                selectionCoordinates = Pair(start, end),
-                textLayoutResult = textLayoutResult,
-                selectable = mock(),
-                adjustment = SelectionAdjustment.WORD
-            )
-            assertThat(textSelectionInfo).isNull()
-        }
+        val text = "hello world\n"
+        val fontSize = 20.sp
+        val textLayoutResult = simpleTextLayout(
+            text = text,
+            fontSize = fontSize,
+            density = defaultDensity
+        )
+        val start = Offset(-50f, -50f)
+        val end = Offset(-20f, -20f)
+        // Act.
+        val textSelectionInfo = getTextSelectionInfo(
+            selectionCoordinates = Pair(start, end),
+            textLayoutResult = textLayoutResult,
+            selectableId = 1,
+            adjustment = SelectionAdjustment.WORD
+        )
+        assertThat(textSelectionInfo).isNull()
     }
 
     @OptIn(InternalFoundationTextApi::class)
@@ -2389,10 +2376,4 @@ class MultiWidgetSelectionDelegateTest {
             resourceLoader = resourceLoader
         ).layout(Constraints(), LayoutDirection.Ltr)
     }
-}
-
-private fun mockSelectable(selectableId: Long): Selectable {
-    val selectable: Selectable = mock()
-    whenever(selectable.selectableId).thenReturn(selectableId)
-    return selectable
 }

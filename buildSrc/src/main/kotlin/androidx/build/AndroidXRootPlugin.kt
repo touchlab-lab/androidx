@@ -103,9 +103,17 @@ class AndroidXRootPlugin : Plugin<Project> {
             )
             project.plugins.withType(AndroidBasePlugin::class.java) {
                 buildOnServerTask.dependsOn("${project.path}:assembleDebug")
-                buildOnServerTask.dependsOn("${project.path}:assembleAndroidTest")
                 if (!project.usingMaxDepVersions()) {
-                    buildOnServerTask.dependsOn("${project.path}:lintDebug")
+                    project.afterEvaluate {
+                        project.agpVariants.all { variant ->
+                            // in AndroidX, release and debug variants are essentially the same,
+                            // so we don't run the lintRelease task on the build server
+                            if (!variant.name.toLowerCase().contains("release")) {
+                                val taskName = "lint${variant.name.capitalize()}"
+                                buildOnServerTask.dependsOn("${project.path}:$taskName")
+                            }
+                        }
+                    }
                 }
             }
             project.plugins.withType(JavaPlugin::class.java) {

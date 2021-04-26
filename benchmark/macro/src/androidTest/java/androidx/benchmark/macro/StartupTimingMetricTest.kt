@@ -18,7 +18,7 @@ package androidx.benchmark.macro
 
 import android.content.Intent
 import androidx.benchmark.macro.perfetto.PerfettoCaptureWrapper
-import androidx.benchmark.macro.perfetto.PerfettoTraceProcessor
+import androidx.benchmark.macro.perfetto.PerfettoHelper.Companion.isAbiSupported
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.filters.SdkSuppress
@@ -29,11 +29,11 @@ import org.junit.runner.RunWith
 
 @SdkSuppress(minSdkVersion = 29)
 @RunWith(AndroidJUnit4::class)
-class StartupTimingMetricTest {
+public class StartupTimingMetricTest {
     @LargeTest
     @Test
-    fun noResults() {
-        assumeTrue(PerfettoTraceProcessor.isAbiSupported())
+    public fun noResults() {
+        assumeTrue(isAbiSupported())
         val packageName = "fake.package.fiction.nostartups"
         val metrics = measureStartup(packageName) {
             // Do nothing
@@ -43,8 +43,8 @@ class StartupTimingMetricTest {
 
     @LargeTest
     @Test
-    fun validateStartup() {
-        assumeTrue(PerfettoTraceProcessor.isAbiSupported())
+    public fun validateStartup() {
+        assumeTrue(isAbiSupported())
         val packageName = "androidx.benchmark.integration.macrobenchmark.target"
         val scope = MacrobenchmarkScope(packageName = packageName, launchWithClearTask = true)
         val metrics = measureStartup(packageName) {
@@ -63,7 +63,7 @@ class StartupTimingMetricTest {
     }
 }
 
-fun measureStartup(packageName: String, measureBlock: () -> Unit): Map<String, Long> {
+public fun measureStartup(packageName: String, measureBlock: () -> Unit): Map<String, Long> {
     val wrapper = PerfettoCaptureWrapper()
     val metric = StartupTimingMetric()
     metric.configure(packageName)

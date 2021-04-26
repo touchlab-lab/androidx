@@ -21,6 +21,7 @@ import androidx.annotation.RestrictTo
 import androidx.wear.complications.ComplicationBounds
 import androidx.wear.watchface.style.UserStyleSetting.ComplicationsUserStyleSetting.ComplicationOverlay
 import androidx.wear.watchface.style.UserStyleSetting.ComplicationsUserStyleSetting.ComplicationsOption
+import androidx.wear.watchface.style.UserStyleSetting.Id.Companion.MAX_LENGTH
 import androidx.wear.watchface.style.data.BooleanOptionWireFormat
 import androidx.wear.watchface.style.data.BooleanUserStyleSettingWireFormat
 import androidx.wear.watchface.style.data.ComplicationOverlayWireFormat
@@ -51,20 +52,19 @@ import java.security.InvalidParameterException
  * as a result the size of serialized UserStyleSettings could become an issue if large.
  *
  * @param id Identifier for the element, must be unique. Styling data gets shared with the companion
- *     (typically via bluetooth) so size is a consideration and short ids are encouraged. There is a
- *     maximum length see [maxIdLength].
+ * (typically via bluetooth) so size is a consideration and short ids are encouraged. There is a
+ * maximum length see [MAX_LENGTH].
  * @param displayName Localized human readable name for the element, used in the userStyle selection
- *     UI.
+ * UI.
  * @param description Localized description string displayed under the displayName.
  * @param icon Icon for use in the style selection UI.
  * @param options List of options for this UserStyleSetting. Depending on the type of
- *     UserStyleSetting this may be an exhaustive list, or just examples to populate a ListView
- *     in case the UserStyleSetting isn't supported by the UI (e.g. a new WatchFace with an old
- *     Companion).
+ * UserStyleSetting this may be an exhaustive list, or just examples to populate a ListView in case
+ * the UserStyleSetting isn't supported by the UI (e.g. a new WatchFace with an old Companion).
  * @param defaultOptionIndex The default option index, used if nothing has been selected within the
- *     [options] list.
- * @param affectedLayers Used by the style configuration UI. Describes which rendering layers this
- *     style affects.
+ * [options] list.
+ * @param affectedWatchFaceLayers Used by the style configuration UI. Describes which rendering
+ * layers this style affects.
  */
 public sealed class UserStyleSetting(
     public val id: Id,
@@ -73,7 +73,7 @@ public sealed class UserStyleSetting(
     public val icon: Icon?,
     public val options: List<Option>,
     public val defaultOptionIndex: Int,
-    public val affectedLayers: Collection<Layer>
+    public val affectedWatchFaceLayers: Collection<WatchFaceLayer>
 ) {
     /**
      * Machine readable identifier for [UserStyleSetting]s. The length of this identifier may not
@@ -93,6 +93,21 @@ public sealed class UserStyleSetting(
         }
 
         override fun toString(): String = value
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Id
+
+            if (value != other.value) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return value.hashCode()
+        }
     }
 
     public companion object {
@@ -138,7 +153,7 @@ public sealed class UserStyleSetting(
         wireFormat.mIcon,
         wireFormat.mOptions.map { Option.createFromWireFormat(it) },
         wireFormat.mDefaultOptionIndex,
-        wireFormat.mAffectsLayers.map { Layer.values()[it] }
+        wireFormat.mAffectsLayers.map { WatchFaceLayer.values()[it] }
     )
 
     /** @hide */
@@ -247,10 +262,10 @@ public sealed class UserStyleSetting(
      * categories that can't sensibly be fully enumerated (e.g. a full 24-bit color picker).
      *
      * @param optionId The ID of the option
-     * @return An [Option] corresponding to the name. This could either be one of the
-     *     options from userStyleSettings or a newly constructed Option depending on the nature
-     *     of the UserStyleSetting. If optionName is unrecognized then the default value for the
-     *     setting should be returned.
+     * @return An [Option] corresponding to the name. This could either be one of the options from
+     * [UserStyleSetting]s or a newly constructed Option depending on the nature of the
+     * UserStyleSetting. If optionName is unrecognized then the default value for the setting should
+     * be returned.
      */
     public open fun getOptionForId(optionId: ByteArray): Option =
         options.find { it.id.value.contentEquals(optionId) } ?: options[defaultOptionIndex]
@@ -263,11 +278,11 @@ public sealed class UserStyleSetting(
          *
          * @param id [Id] for the element, must be unique.
          * @param displayName Localized human readable name for the element, used in the userStyle
-         *     selection UI.
+         * selection UI.
          * @param description Localized description string displayed under the displayName.
          * @param icon [Icon] for use in the userStyle selection UI.
-         * @param affectsLayers Used by the style configuration UI. Describes which rendering
-         *     layers this style affects.
+         * @param affectsWatchFaceLayers Used by the style configuration UI. Describes which watch
+         * face rendering layers this style affects.
          * @param defaultValue The default value for this BooleanUserStyleSetting.
          */
         public constructor (
@@ -275,7 +290,7 @@ public sealed class UserStyleSetting(
             displayName: CharSequence,
             description: CharSequence,
             icon: Icon?,
-            affectsLayers: Collection<Layer>,
+            affectsWatchFaceLayers: Collection<WatchFaceLayer>,
             defaultValue: Boolean
         ) : super(
             id,
@@ -287,7 +302,7 @@ public sealed class UserStyleSetting(
                 true -> 0
                 false -> 1
             },
-            affectsLayers
+            affectsWatchFaceLayers
         )
 
         internal constructor(wireFormat: BooleanUserStyleSettingWireFormat) : super(wireFormat)
@@ -302,7 +317,7 @@ public sealed class UserStyleSetting(
                 icon,
                 getWireFormatOptionsList(),
                 defaultOptionIndex,
-                affectedLayers.map { it.ordinal }
+                affectedWatchFaceLayers.map { it.ordinal }
             )
 
         /** Returns the default value. */
@@ -355,15 +370,21 @@ public sealed class UserStyleSetting(
          *
          * @param complicationId The [Id] of the complication to configure.
          * @param enabled If non null, whether the complication should be enabled for this
-         *     configuration. If null then no changes are made.
-         * @param complicationBounds If non null, the new [ComplicationBounds] for this
-         *     configuration. If null then no changes are made.
+         * configuration. If null then no changes are made.
+         * @param complicationBounds If non null, the [ComplicationBounds] for this
+         * configuration. If null then no changes are made.
+         * @param accessibilityTraversalIndex If non null the accessibility traversal index
+         * for this configuration. This is used to determine the order in which accessibility labels
+         * for the watch face are read to the user.
          */
         public class ComplicationOverlay constructor(
             public val complicationId: Int,
             @get:JvmName("isEnabled")
             public val enabled: Boolean? = null,
-            public val complicationBounds: ComplicationBounds? = null
+            public val complicationBounds: ComplicationBounds? = null,
+            @SuppressWarnings("AutoBoxing")
+            @get:SuppressWarnings("AutoBoxing")
+            public val accessibilityTraversalIndex: Int? = null
         ) {
             public class Builder(
                 /** The id of the complication to configure. */
@@ -371,6 +392,7 @@ public sealed class UserStyleSetting(
             ) {
                 private var enabled: Boolean? = null
                 private var complicationBounds: ComplicationBounds? = null
+                private var accessibilityTraversalIndex: Int? = null
 
                 /** Overrides the complication's enabled flag. */
                 public fun setEnabled(enabled: Boolean): Builder = apply {
@@ -383,11 +405,23 @@ public sealed class UserStyleSetting(
                         this.complicationBounds = complicationBounds
                     }
 
+                /**
+                 * Overrides the complication's accessibility traversal index. This is used to sort
+                 * [androidx.wear.watchface.ContentDescriptionLabel]s. If unset we will order the
+                 * complications by their initial accessibilityTraversalIndex (usually the same
+                 * as their id).
+                 */
+                public fun setAccessibilityTraversalIndex(accessibilityTraversalIndex: Int):
+                    Builder = apply {
+                        this.accessibilityTraversalIndex = accessibilityTraversalIndex
+                    }
+
                 public fun build(): ComplicationOverlay =
                     ComplicationOverlay(
                         complicationId,
                         enabled,
-                        complicationBounds
+                        complicationBounds,
+                        accessibilityTraversalIndex
                     )
             }
 
@@ -403,14 +437,16 @@ public sealed class UserStyleSetting(
                         "Unrecognised wireFormat.mEnabled " + wireFormat.mEnabled
                     )
                 },
-                wireFormat.mPerComplicationTypeBounds?.let { ComplicationBounds(it) }
+                wireFormat.mPerComplicationTypeBounds?.let { ComplicationBounds(it) },
+                wireFormat.accessibilityTraversalIndex
             )
 
             internal fun toWireFormat() =
                 ComplicationOverlayWireFormat(
                     complicationId,
                     enabled,
-                    complicationBounds?.perComplicationTypeBounds
+                    complicationBounds?.perComplicationTypeBounds,
+                    accessibilityTraversalIndex
                 )
         }
 
@@ -419,14 +455,15 @@ public sealed class UserStyleSetting(
          *
          * @param id [Id] for the element, must be unique.
          * @param displayName Localized human readable name for the element, used in the userStyle
-         *     selection UI.
+         * selection UI.
          * @param description Localized description string displayed under the displayName.
          * @param icon [Icon] for use in the userStyle selection UI.
          * @param complicationConfig The configuration for affected complications.
-         * @param affectsLayers Used by the style configuration UI. Describes which rendering layers
-         *     this style affects, must include [Layer.COMPLICATIONS].
+         * @param affectsWatchFaceLayers Used by the style configuration UI. Describes which watch
+         * face rendering layers this style affects, must include
+         * [WatchFaceLayer.COMPLICATIONS].
          * @param defaultOption The default option, used when data isn't persisted. Optional
-         *     parameter which defaults to the first element of [complicationConfig].
+         * parameter which defaults to the first element of [complicationConfig].
          */
         @JvmOverloads
         public constructor (
@@ -435,7 +472,7 @@ public sealed class UserStyleSetting(
             description: CharSequence,
             icon: Icon?,
             complicationConfig: List<ComplicationsOption>,
-            affectsLayers: Collection<Layer>,
+            affectsWatchFaceLayers: Collection<WatchFaceLayer>,
             defaultOption: ComplicationsOption = complicationConfig.first()
         ) : super(
             id,
@@ -444,9 +481,9 @@ public sealed class UserStyleSetting(
             icon,
             complicationConfig,
             complicationConfig.indexOf(defaultOption),
-            affectsLayers
+            affectsWatchFaceLayers
         ) {
-            require(affectsLayers.contains(Layer.COMPLICATIONS))
+            require(affectsWatchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS))
         }
 
         internal constructor(
@@ -463,7 +500,7 @@ public sealed class UserStyleSetting(
                 icon,
                 getWireFormatOptionsList(),
                 defaultOptionIndex,
-                affectedLayers.map { it.ordinal }
+                affectedWatchFaceLayers.map { it.ordinal }
             )
 
         /** Represents an override to the initial complication configuration. */
@@ -485,11 +522,11 @@ public sealed class UserStyleSetting(
              *
              * @param id [Id] for the element, must be unique.
              * @param displayName Localized human readable name for the element, used in the
-             *     userStyle selection UI.
+             * userStyle selection UI.
              * @param icon [Icon] for use in the style selection UI.
              * @param complicationOverlays Overlays to be applied when this ComplicationsOption is
-             *     selected. If this is empty then the net result is the initial complication
-             *     configuration.
+             * selected. If this is empty then the net result is the initial complication
+             * configuration.
              */
             public constructor(
                 id: Id,
@@ -556,14 +593,14 @@ public sealed class UserStyleSetting(
          * Constructs a [DoubleRangeUserStyleSetting].
          *
          * @param id [Id] for the element, must be unique.
-         * @param displayName Localized human readable name for the element, used in the
-         *     userStyle selection UI.
+         * @param displayName Localized human readable name for the element, used in the user style
+         * selection UI.
          * @param description Localized description string displayed under the displayName.
          * @param icon [Icon] for use in the style selection UI.
          * @param minimumValue Minimum value (inclusive).
          * @param maximumValue Maximum value (inclusive).
-         * @param affectsLayers Used by the style configuration UI. Describes which rendering layers
-         *     this style affects.
+         * @param affectsWatchFaceLayers Used by the style configuration UI. Describes which watch
+         * face rendering layers this style affects.
          * @param defaultValue The default value for this DoubleRangeUserStyleSetting.
          */
         public constructor (
@@ -573,7 +610,7 @@ public sealed class UserStyleSetting(
             icon: Icon?,
             minimumValue: Double,
             maximumValue: Double,
-            affectsLayers: Collection<Layer>,
+            affectsWatchFaceLayers: Collection<WatchFaceLayer>,
             defaultValue: Double
         ) : super(
             id,
@@ -586,7 +623,7 @@ public sealed class UserStyleSetting(
                 minimumValue -> 0
                 else -> 1
             },
-            affectsLayers
+            affectsWatchFaceLayers
         )
 
         internal constructor(wireFormat: DoubleRangeUserStyleSettingWireFormat) : super(wireFormat)
@@ -601,7 +638,7 @@ public sealed class UserStyleSetting(
                 icon,
                 getWireFormatOptionsList(),
                 defaultOptionIndex,
-                affectedLayers.map { it.ordinal }
+                affectedWatchFaceLayers.map { it.ordinal }
             )
 
         /** Represents an option as a [Double] in the range [minimumValue .. maximumValue]. */
@@ -672,12 +709,12 @@ public sealed class UserStyleSetting(
          *
          * @param id [Id] for the element, must be unique.
          * @param displayName Localized human readable name for the element, used in the userStyle
-         *     selection UI.
+         * selection UI.
          * @param description Localized description string displayed under the displayName.
          * @param icon [Icon] for use in the userStyle selection UI.
          * @param options List of all options for this ListUserStyleSetting.
-         * @param affectsLayers Used by the style configuration UI. Describes which rendering layers
-         *     this style affects.
+         * @param affectsWatchFaceLayers Used by the style configuration UI. Describes which watch
+         * face rendering layers this style affects.
          * @param defaultOption The default option, used when data isn't persisted.
          */
         @JvmOverloads
@@ -687,7 +724,7 @@ public sealed class UserStyleSetting(
             description: CharSequence,
             icon: Icon?,
             options: List<ListOption>,
-            affectsLayers: Collection<Layer>,
+            affectsWatchFaceLayers: Collection<WatchFaceLayer>,
             defaultOption: ListOption = options.first()
         ) : super(
             id,
@@ -696,7 +733,7 @@ public sealed class UserStyleSetting(
             icon,
             options,
             options.indexOf(defaultOption),
-            affectsLayers
+            affectsWatchFaceLayers
         )
 
         internal constructor(wireFormat: ListUserStyleSettingWireFormat) : super(wireFormat)
@@ -711,7 +748,7 @@ public sealed class UserStyleSetting(
                 icon,
                 getWireFormatOptionsList(),
                 defaultOptionIndex,
-                affectedLayers.map { it.ordinal }
+                affectedWatchFaceLayers.map { it.ordinal }
             )
 
         /**
@@ -728,9 +765,9 @@ public sealed class UserStyleSetting(
              * Constructs a [ListOption].
              *
              * @param id The [Id] of this [ListOption], must be unique within the
-             *     [ListUserStyleSetting].
+             * [ListUserStyleSetting].
              * @param displayName Localized human readable name for the setting, used in the style
-             *     selection UI.
+             * selection UI.
              * @param icon [Icon] for use in the style selection UI.
              */
             public constructor(id: Id, displayName: CharSequence, icon: Icon?) : super(id) {
@@ -792,13 +829,13 @@ public sealed class UserStyleSetting(
          *
          * @param id [Id] for the element, must be unique.
          * @param displayName Localized human readable name for the element, used in the userStyle
-         *     selection UI.
+         * selection UI.
          * @param description Localized description string displayed under the displayName.
          * @param icon [Icon] for use in the userStyle selection UI.
          * @param minimumValue Minimum value (inclusive).
          * @param maximumValue Maximum value (inclusive).
-         * @param affectsLayers Used by the style configuration UI. Describes which rendering layers
-         *     this style affects.
+         * @param affectsWatchFaceLayers Used by the style configuration UI. Describes which watch
+         * face rendering layers this style affects.
          * @param defaultValue The default value for this LongRangeUserStyleSetting.
          */
         public constructor (
@@ -808,7 +845,7 @@ public sealed class UserStyleSetting(
             icon: Icon?,
             minimumValue: Long,
             maximumValue: Long,
-            affectsLayers: Collection<Layer>,
+            affectsWatchFaceLayers: Collection<WatchFaceLayer>,
             defaultValue: Long
         ) : super(
             id,
@@ -821,7 +858,7 @@ public sealed class UserStyleSetting(
                 minimumValue -> 0
                 else -> 1
             },
-            affectsLayers
+            affectsWatchFaceLayers
         )
 
         internal constructor(wireFormat: LongRangeUserStyleSettingWireFormat) : super(wireFormat)
@@ -836,7 +873,7 @@ public sealed class UserStyleSetting(
                 icon,
                 getWireFormatOptionsList(),
                 defaultOptionIndex,
-                affectedLayers.map { it.ordinal }
+                affectedWatchFaceLayers.map { it.ordinal }
             )
 
         /**
@@ -915,12 +952,12 @@ public sealed class UserStyleSetting(
         /**
          * Constructs a [CustomValueUserStyleSetting].
          *
-         * @param affectsLayers Used by the style configuration UI. Describes which rendering layers
-         *     this style affects.
+         * @param affectsWatchFaceLayers Used by the style configuration UI. Describes which watch
+         * face rendering layers this style affects.
          * @param defaultValue The default value [ByteArray].
          */
         public constructor (
-            affectsLayers: Collection<Layer>,
+            affectsWatchFaceLayers: Collection<WatchFaceLayer>,
             defaultValue: ByteArray
         ) : super(
             Id(CUSTOM_VALUE_USER_STYLE_SETTING_ID),
@@ -929,7 +966,7 @@ public sealed class UserStyleSetting(
             null,
             listOf(CustomValueOption(defaultValue)),
             0,
-            affectsLayers
+            affectsWatchFaceLayers
         )
 
         internal constructor(wireFormat: CustomValueUserStyleSettingWireFormat) : super(wireFormat)
@@ -943,7 +980,7 @@ public sealed class UserStyleSetting(
                 description,
                 icon,
                 getWireFormatOptionsList(),
-                affectedLayers.map { it.ordinal }
+                affectedWatchFaceLayers.map { it.ordinal }
             )
 
         /**
@@ -959,7 +996,7 @@ public sealed class UserStyleSetting(
              * Constructs a [CustomValueOption].
              *
              * @param customValue The [ByteArray] [id] and value of this [CustomValueOption]. This
-             *     may not exceed [Id.MAX_LENGTH].
+             * may not exceed [Id.MAX_LENGTH].
              */
             public constructor(customValue: ByteArray) : super(Id(customValue))
 

@@ -35,7 +35,9 @@ import androidx.annotation.UiThread
 import androidx.wear.complications.ComplicationHelperActivity
 import androidx.wear.complications.ProviderInfoRetriever
 import androidx.wear.complications.data.ComplicationData
+import androidx.wear.complications.data.ComplicationText
 import androidx.wear.complications.data.ComplicationType
+import androidx.wear.complications.data.EmptyComplicationData
 import androidx.wear.complications.data.LongTextComplicationData
 import androidx.wear.complications.data.MonochromaticImage
 import androidx.wear.complications.data.PlainComplicationText
@@ -43,6 +45,7 @@ import androidx.wear.complications.data.ShortTextComplicationData
 import androidx.wear.utility.AsyncTraceEvent
 import androidx.wear.utility.TraceEvent
 import androidx.wear.utility.launchWithTracing
+import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.RenderParameters
 import androidx.wear.watchface.WatchFace
 import androidx.wear.watchface.client.ComplicationState
@@ -118,9 +121,9 @@ public abstract class EditorSession : AutoCloseable {
 
     /**
      * Returns a map of complication ids to preview [ComplicationData] suitable for use in rendering
-     * the watch face. Note if a slot is configured to be empty then it will not appear in the map,
-     * however disabled complications are included. Note also unlike live data this is static per
-     * provider, but it may update (on the UiThread) as a result of
+     * the watch face. Note if a slot is configured to be empty then it will an instance of
+     * [EmptyComplicationData]. Disabled complications are included. Note also unlike live data
+     * this is static per provider, but it may update (on the UiThread) as a result of
      * [openComplicationProviderChooser].
      */
     @UiThread
@@ -141,7 +144,7 @@ public abstract class EditorSession : AutoCloseable {
     /**
      * Renders the watch face to a [Bitmap] using the current [userStyle].
      *
-     * @param renderParameters The [RenderParameters] to render with
+     * @param renderParameters The [RenderParameters] to render with. Must be [DrawMode.INTERACTIVE]
      * @param calendarTimeMillis The UTC time in milliseconds since the epoch to render with
      * @param idToComplicationData The [ComplicationData] for each complication to render with
      */
@@ -169,7 +172,7 @@ public abstract class EditorSession : AutoCloseable {
          * @param activity The [ComponentActivity] associated with the [EditorSession].
          * @param editIntent The [Intent] sent by SysUI to launch the editing session.
          * @return Deferred<EditorSession?> which is resolved with either the [EditorSession] or
-         *    `null` if it can't be constructed.
+         * `null` if it can't be constructed.
          */
         @SuppressWarnings("ExecutorRegistration")
         @JvmStatic
@@ -213,7 +216,7 @@ public abstract class EditorSession : AutoCloseable {
                     session.setEditorDelegate(
                         WatchFace.getOrCreateEditorDelegate(
                             editorRequest.watchFaceComponentName
-                        ).await()!!
+                        ).await()
                     )
 
                     // Resolve only after init has been completed.
@@ -299,10 +302,10 @@ public abstract class BaseEditorSession internal constructor(
         return deferredComplicationPreviewDataMap.await()
     }
 
-    // Pending result for [launchComplicationProviderChooser].
+    /** Pending result for [openComplicationProviderChooser]. */
     internal var pendingComplicationProviderChooserResult: CompletableDeferred<Boolean>? = null
 
-    // The id of the complication being configured due to [launchComplicationProviderChooser].
+    /** The id of the complication being configured due to [openComplicationProviderChooser]. */
     private var pendingComplicationProviderId: Int = -1
 
     private val chooseComplicationProvider =
@@ -311,8 +314,14 @@ public abstract class BaseEditorSession internal constructor(
         }
 
     internal fun updatePreviewData(
-        complicationProviderChooserResult: ComplicationProviderChooserResult
+        complicationProviderChooserResult: ComplicationProviderChooserResult?
     ) {
+        // Check if the user cancelled the provider chooser.
+        if (complicationProviderChooserResult == null) {
+            pendingComplicationProviderChooserResult!!.complete(false)
+            pendingComplicationProviderChooserResult = null
+            return
+        }
         val providerInfoRetriever =
             providerInfoRetrieverProvider.getProviderInfoRetriever()
         coroutineScope.launchWithTracing("BaseEditorSession.updatePreviewData") {
@@ -323,7 +332,8 @@ public abstract class BaseEditorSession internal constructor(
                 )
                 val complicationPreviewDataMap = deferredComplicationPreviewDataMap.await()
                 if (previewData == null) {
-                    complicationPreviewDataMap.remove(pendingComplicationProviderId)
+                    complicationPreviewDataMap[pendingComplicationProviderId] =
+                        EmptyComplicationData()
                 } else {
                     complicationPreviewDataMap[pendingComplicationProviderId] = previewData
                 }
@@ -348,7 +358,11 @@ public abstract class BaseEditorSession internal constructor(
         pendingComplicationProviderChooserResult = CompletableDeferred<Boolean>()
         pendingComplicationProviderId = complicationId
         chooseComplicationProvider.launch(
-            ComplicationProviderChooserRequest(this, complicationId, watchFaceId.id)
+            ComplicationProviderChooserRequest(
+                this,
+                complicationId,
+                watchFaceId.id
+            )
         )
         return pendingComplicationProviderChooserResult!!.await()
     }
@@ -409,12 +423,14 @@ public abstract class BaseEditorSession internal constructor(
 
         providerInfo.providerIcon == null ->
             LongTextComplicationData.Builder(
-                PlainComplicationText.Builder(providerInfo.providerName!!).build()
+                PlainComplicationText.Builder(providerInfo.providerName!!).build(),
+                ComplicationText.EMPTY
             ).build()
 
         else ->
             ShortTextComplicationData.Builder(
-                PlainComplicationText.Builder(providerInfo.providerName!!).build()
+                PlainComplicationText.Builder(providerInfo.providerName!!).build(),
+                ComplicationText.EMPTY
             ).setMonochromaticImage(
                 MonochromaticImage.Builder(providerInfo.providerIcon!!).build()
             ).build()
@@ -438,10 +454,8 @@ public abstract class BaseEditorSession internal constructor(
                         { async { getPreviewData(providerInfoRetriever, it.info) } }
                         // Coerce to a Map<Int, ComplicationData> omitting null values.
                         // If mapNotNullValues existed we would use it here.
-                    )?.filterValues {
-                        it.await() != null
-                    }?.mapValues {
-                        it.value.await()!!
+                    )?.mapValues {
+                        it.value.await() ?: EmptyComplicationData()
                     }?.toMutableMap() ?: mutableMapOf()
                 )
             } finally {
@@ -568,6 +582,9 @@ internal class OnWatchFaceEditorSessionImpl(
         idToComplicationData: Map<Int, ComplicationData>?
     ): Bitmap {
         requireNotClosed()
+        require(renderParameters.drawMode == DrawMode.INTERACTIVE) {
+            "Currently only DrawMode.INTERACTIVE is supported"
+        }
         return editorDelegate.renderWatchFaceToBitmap(
             renderParameters,
             calendarTimeMillis,
@@ -653,9 +670,12 @@ internal class ComplicationProviderChooserResult(
     internal val providerInfo: ComplicationProviderInfo?
 )
 
-/** An [ActivityResultContract] for invoking the complication provider chooser. */
+/**
+ * An [ActivityResultContract] for invoking the complication provider chooser. If the user
+ * cancels the provider chooser than the result will be `null`.
+ */
 internal class ComplicationProviderChooserContract : ActivityResultContract<
-    ComplicationProviderChooserRequest, ComplicationProviderChooserResult>() {
+    ComplicationProviderChooserRequest, ComplicationProviderChooserResult?>() {
 
     internal companion object {
         const val EXTRA_PROVIDER_INFO = "android.support.wearable.complications.EXTRA_PROVIDER_INFO"
@@ -683,7 +703,7 @@ internal class ComplicationProviderChooserContract : ActivityResultContract<
         return intent
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): ComplicationProviderChooserResult {
-        return ComplicationProviderChooserResult(intent?.getParcelableExtra(EXTRA_PROVIDER_INFO))
+    override fun parseResult(resultCode: Int, intent: Intent?) = intent?.let {
+        ComplicationProviderChooserResult(it.getParcelableExtra(EXTRA_PROVIDER_INFO))
     }
 }

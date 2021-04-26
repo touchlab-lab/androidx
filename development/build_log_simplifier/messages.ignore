@@ -15,8 +15,6 @@ at org\.jetbrains\.dokka\.Formats\.JavaLayoutHtmlFormatGenerator\.mainUri\(JavaL
 at org\.jetbrains\.dokka\.Formats\.JavaLayoutHtmlUriProvider\$DefaultImpls\.linkTo\(JavaLayoutHtmlFormat\.kt:[0-9]+\)
 at org\.jetbrains\.dokka\.Formats\.JavaLayoutHtmlFormatGenerator\.linkTo\(JavaLayoutHtmlGenerator\.kt:[0-9]+\)
 at jdk\.internal\.reflect\.GeneratedMethodAccessor[0-9]+\.invoke\(Unknown Source\)
-at java\.base/jdk\.internal\.reflect\.DelegatingMethodAccessorImpl\.invoke\(DelegatingMethodAccessorImpl\.java:[0-9]+\)
-at java\.base/java\.lang\.reflect\.Method\.invoke\(Method\.java:[0-9]+\)
 at com\.google\.inject\.internal\.DelegatingInvocationHandler\.invoke\(DelegatingInvocationHandler\.java:[0-9]+\)
 at com\.sun\.proxy\.\$Proxy[0-9]+\.linkTo\(Unknown Source\)
 at org\.jetbrains\.dokka\.Formats\.JavaLayoutHtmlFormatOutputBuilder\.a\(JavaLayoutHtmlFormatOutputBuilder\.kt:[0-9]+\)
@@ -66,93 +64,9 @@ at org\.jetbrains\.dokka\.Formats\.JavaLayoutHtmlFormatGenerator\.buildPages\(Ja
 at org\.jetbrains\.dokka\.GeneratorKt\.buildAll\(Generator\.kt:[0-9]+\)
 at org\.jetbrains\.dokka\.DokkaGenerator\.generate\(DokkaGenerator\.kt:[0-9]+\)
 at org\.jetbrains\.dokka\.DokkaBootstrapImpl\.generate\(DokkaBootstrapImpl\.kt:[0-9]+\)
-at java\.base/jdk\.internal\.reflect\.NativeMethodAccessorImpl\.invoke[0-9]+\(Native Method\)
-at java\.base/jdk\.internal\.reflect\.NativeMethodAccessorImpl\.invoke\(NativeMethodAccessorImpl\.java:[0-9]+\)
 at org\.jetbrains\.dokka\.DelegatedInvocationHandler\.invoke\(ProxyUtils\.kt:[0-9]+\)
 at com\.sun\.proxy\.\$Proxy[0-9]+\.generate\(Unknown Source\)
 at org\.jetbrains\.dokka\.gradle\.DokkaTask\.generate\(main\.kt:[0-9]+\)
-at org\.gradle\.internal\.reflect\.JavaMethod\.invoke\(JavaMethod\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.project\.taskfactory\.StandardTaskAction\.doExecute\(StandardTaskAction\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.project\.taskfactory\.StandardTaskAction\.execute\(StandardTaskAction\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\$[0-9]+\.run\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationRunner\$[0-9]+\.execute\(DefaultBuildOperationRunner\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationRunner\.execute\(DefaultBuildOperationRunner\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationRunner\.run\(DefaultBuildOperationRunner\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationExecutor\.lambda\$run\$[0-9]+\(DefaultBuildOperationExecutor\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.UnmanagedBuildOperationWrapper\.runWithUnmanagedSupport\(UnmanagedBuildOperationWrapper\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationExecutor\.run\(DefaultBuildOperationExecutor\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\.executeAction\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\.executeActions\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\.access\$[0-9]+\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\$TaskExecution\.executeWithPreviousOutputFiles\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\$TaskExecution\.execute\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ExecuteStep\.lambda\$executeOperation\$[0-9]+\(ExecuteStep\.java:[0-9]+\)
-at java\.base/java\.util\.Optional\.orElseGet\(Optional\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ExecuteStep\.executeOperation\(ExecuteStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ExecuteStep\.access\$[0-9]+\(ExecuteStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ExecuteStep\$[0-9]+\.call\(ExecuteStep\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationRunner\$CallableBuildOperationWorker\.execute\(DefaultBuildOperationRunner\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationRunner\.call\(DefaultBuildOperationRunner\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationExecutor\.lambda\$call\$[0-9]+\(DefaultBuildOperationExecutor\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.UnmanagedBuildOperationWrapper\.callWithUnmanagedSupport\(UnmanagedBuildOperationWrapper\.java:[0-9]+\)
-at org\.gradle\.internal\.operations\.DefaultBuildOperationExecutor\.call\(DefaultBuildOperationExecutor\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ExecuteStep\.execute\(ExecuteStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.RemovePreviousOutputsStep\.execute\(RemovePreviousOutputsStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ResolveInputChangesStep\.execute\(ResolveInputChangesStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.CancelExecutionStep\.execute\(CancelExecutionStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.TimeoutStep\.executeWithoutTimeout\(TimeoutStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.TimeoutStep\.execute\(TimeoutStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.CreateOutputsStep\.execute\(CreateOutputsStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.CaptureStateAfterExecutionStep\.execute\(CaptureStateAfterExecutionStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.BroadcastChangingOutputsStep\.execute\(BroadcastChangingOutputsStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.BuildCacheStep\.executeWithoutCache\(BuildCacheStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.BuildCacheStep\.execute\(BuildCacheStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.StoreExecutionStateStep\.execute\(StoreExecutionStateStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.RecordOutputsStep\.execute\(RecordOutputsStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.SkipUpToDateStep\.executeBecause\(SkipUpToDateStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.SkipUpToDateStep\.lambda\$execute\$[0-9]+\(SkipUpToDateStep\.java:[0-9]+\)
-at java\.base/java\.util\.Optional\.map\(Optional\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.SkipUpToDateStep\.execute\(SkipUpToDateStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ResolveChangesStep\.execute\(ResolveChangesStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.legacy\.MarkSnapshottingInputsFinishedStep\.execute\(MarkSnapshottingInputsFinishedStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ResolveCachingStateStep\.execute\(ResolveCachingStateStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.CaptureStateBeforeExecutionStep\.execute\(CaptureStateBeforeExecutionStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.ValidateStep\.execute\(ValidateStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.SkipEmptyWorkStep\.lambda\$execute\$[0-9]+\(SkipEmptyWorkStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.SkipEmptyWorkStep\.execute\(SkipEmptyWorkStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.legacy\.MarkSnapshottingInputsStartedStep\.execute\(MarkSnapshottingInputsStartedStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.LoadExecutionStateStep\.execute\(LoadExecutionStateStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.AssignWorkspaceStep\.lambda\$execute\$[0-9]+\(AssignWorkspaceStep\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\$TaskExecution\$[0-9]+\.withWorkspace\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.AssignWorkspaceStep\.execute\(AssignWorkspaceStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.IdentityCacheStep\.execute\(IdentityCacheStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.steps\.IdentifyStep\.execute\(IdentifyStep\.java:[0-9]+\)
-at org\.gradle\.internal\.execution\.impl\.DefaultExecutionEngine\.execute\(DefaultExecutionEngine\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\.lambda\$executeIfValid\$[0-9]+\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\.executeIfValid\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ExecuteActionsTaskExecuter\.execute\(ExecuteActionsTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.CleanupStaleOutputsExecuter\.execute\(CleanupStaleOutputsExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.FinalizePropertiesTaskExecuter\.execute\(FinalizePropertiesTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.ResolveTaskExecutionModeExecuter\.execute\(ResolveTaskExecutionModeExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.SkipTaskWithNoActionsExecuter\.execute\(SkipTaskWithNoActionsExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.SkipOnlyIfTaskExecuter\.execute\(SkipOnlyIfTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.CatchExceptionTaskExecuter\.execute\(CatchExceptionTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.EventFiringTaskExecuter\$[0-9]+\.executeTask\(EventFiringTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.EventFiringTaskExecuter\$[0-9]+\.call\(EventFiringTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.api\.internal\.tasks\.execution\.EventFiringTaskExecuter\.execute\(EventFiringTaskExecuter\.java:[0-9]+\)
-at org\.gradle\.execution\.plan\.LocalTaskNodeExecutor\.execute\(LocalTaskNodeExecutor\.java:[0-9]+\)
-at org\.gradle\.execution\.taskgraph\.DefaultTaskExecutionGraph\$InvokeNodeExecutorsAction\.execute\(DefaultTaskExecutionGraph\.java:[0-9]+\)
-at org\.gradle\.execution\.taskgraph\.DefaultTaskExecutionGraph\$BuildOperationAwareExecutionAction\.execute\(DefaultTaskExecutionGraph\.java:[0-9]+\)
-at org\.gradle\.execution\.plan\.DefaultPlanExecutor\$ExecutorWorker\.lambda\$run\$[0-9]+\(DefaultPlanExecutor\.java:[0-9]+\)
-at org\.gradle\.execution\.plan\.DefaultPlanExecutor\$ExecutorWorker\.execute\(DefaultPlanExecutor\.java:[0-9]+\)
-at org\.gradle\.execution\.plan\.DefaultPlanExecutor\$ExecutorWorker\.executeNextNode\(DefaultPlanExecutor\.java:[0-9]+\)
-at org\.gradle\.execution\.plan\.DefaultPlanExecutor\$ExecutorWorker\.run\(DefaultPlanExecutor\.java:[0-9]+\)
-at org\.gradle\.internal\.concurrent\.ExecutorPolicy\$CatchAndRecordFailures\.onExecute\(ExecutorPolicy\.java:[0-9]+\)
-at org\.gradle\.internal\.concurrent\.ManagedExecutorImpl\$[0-9]+\.run\(ManagedExecutorImpl\.java:[0-9]+\)
-at java\.base/java\.util\.concurrent\.ThreadPoolExecutor\.runWorker\(ThreadPoolExecutor\.java:[0-9]+\)
-at java\.base/java\.util\.concurrent\.ThreadPoolExecutor\$Worker\.run\(ThreadPoolExecutor\.java:[0-9]+\)
-at org\.gradle\.internal\.concurrent\.ThreadFactoryImpl\$ManagedThreadRunnable\.run\(ThreadFactoryImpl\.java:[0-9]+\)
-at java\.base/java\.lang\.Thread\.run\(Thread\.java:[0-9]+\)
 Exception while resolving link to Module: Package:androidx\.compose\.animation\.core Class:KeyframesSpec Class:KeyframesSpecConfig Function:at Receiver:<this>
 at org\.jetbrains\.dokka\.Formats\.JavaLayoutHtmlFormatOutputBuilder\.nodeContent\(JavaLayoutHtmlFormatOutputBuilder\.kt:[0-9]+\)
 at org\.jetbrains\.dokka\.Formats\.DevsiteLayoutHtmlFormatOutputBuilder\$fullMemberDocs\$[0-9]+\.invoke\(DacHtmlFormat\.kt:[0-9]+\)
@@ -286,6 +200,9 @@ w: \$SUPPORT/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DepthS
 w: \$SUPPORT/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DepthSortedSet\.kt: \([0-9]+, [0-9]+\): The corresponding parameter in the supertype 'Comparator' is named 'b'\. This may cause problems when calling this function with named arguments\.
 # > Task :benchmark:benchmark-common:runErrorProne
 \^
+symbol\:   static FLAG_MUTABLE
+location\: class PendingIntent
+\$OUT_DIR\/androidx\/docs\-public\/build\/unzippedDocsSources\/androidx\/work\/impl\/utils\/ForceStopRunnable\.java\:[0-9]+\: error\: cannot find symbol
 symbol:   class ExtensionDeviceState
 location: package androidx\.window\.extensions
 DeviceState translate\(ExtensionDeviceState deviceState\) \{
@@ -462,7 +379,7 @@ w\: \$CHECKOUT\/prebuilts\/androidx\/external\/org\/jetbrains\/kotlin\/kotlin\-s
 Html results of .* zipped into.*\.zip
 # > Task :annotation:annotation-experimental-lint:test
 WARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access by com\.intellij\.util\.ReflectionUtil \(file:\$CHECKOUT/prebuilts/androidx/external/com/google/devsite/dackka/[0-9]+\.[0-9]+\.[0-9]+\-alpha[0-9]+/dackka\-[0-9]+\.[0-9]+\.[0-9]+\-alpha[0-9]+\.jar\) to method java\.util\.ResourceBundle\.setParent\(java\.util\.ResourceBundle\)
+WARNING: Illegal reflective access by com\.intellij\.util\.ReflectionUtil \(file:\$CHECKOUT/prebuilts/androidx/external/com/google/devsite/dackka/[0-9]+\.[0-9]+\.[0-9]+/dackka\-[0-9]+\.[0-9]+\.[0-9]+\.jar\) to method java\.util\.ResourceBundle\.setParent\(java\.util\.ResourceBundle\)
 WARNING: Illegal reflective access by com\.intellij\.util\.ReflectionUtil \(file:\$OUT_DIR/androidx/compose/compiler/compiler\-hosted/integration\-tests/kotlin\-compiler\-repackaged/build/repackaged/kotlin\-compiler\-repackaged\.jar\) to method java\.util\.ResourceBundle\.setParent\(java\.util\.ResourceBundle\)
 WARNING\: Illegal reflective access using Lookup on org\.gradle\.internal\.classloader\.ClassLoaderUtils\$AbstractClassLoaderLookuper \(file\:\$GRADLE_USER_HOME\/caches\/[0-9]+\.[0-9]+\.[0-9]+\/generated\-gradle\-jars\/gradle\-api\-[0-9]+\.[0-9]+\.[0-9]+\.jar\) to class java\.lang\.ClassLoader
 WARNING\: Please consider reporting this to the maintainers of org\.gradle\.internal\.classloader\.ClassLoaderUtils\$AbstractClassLoaderLookuper
@@ -592,7 +509,6 @@ No documentation for .*
 Found an unresolved type in androidx\.hilt\.navigation\.compose\$hiltNavGraphViewModel\(androidx\.navigation\.NavController, kotlin\.String\) \(NavHostController\.kt:[0-9]+\)
 Unresolved link to .*
 Unresolved function .*
-at java.base.*
 # > Task :compose:ui:ui-inspection:externalNativeBuildDebug
 Build compose_inspection_jni_.*
 # > Task :security:security-identity-credential:lintDebug
@@ -624,6 +540,8 @@ Error processing \$CHECKOUT\/prebuilts\/androidx\/external\/org\/bouncycastle\/b
 # > Task :compose:ui:ui-graphics:ui-graphics-benchmark:processReleaseAndroidTestManifest
 \$OUT_DIR\/androidx\/compose\/ui\/ui\-graphics\/ui\-graphics\-benchmark\/build\/intermediates\/tmp\/manifest\/androidTest\/release\/manifestMerger[0-9]+\.xml\:[0-9]+\:[0-9]+\-[0-9]+\:[0-9]+ Warning\:
 # > Task :docs-public:doclavaDocs
+\$OUT_DIR\/androidx\/docs\-public\/build\/unzippedDocsSources\/androidx\/work\/impl\/WorkManagerImpl\.java\:[0-9]+\: error\: cannot find symbol
+import static android\.app\.PendingIntent\.FLAG_MUTABLE\;
 \$OUT_DIR/androidx/docs\-public/build/unzippedDocsSources/androidx/window/ExtensionAdapter\.java:[0-9]+: error: cannot find symbol
 import androidx\.window\.extensions\.ExtensionDeviceState;
 # > Task :docs-public:dackkaDocs
@@ -713,20 +631,23 @@ Unused extension points found:.*
 generation completed successfully
 PROGRESS:
 === TIME MEASUREMENT ===
-Initializing plugins\:   [0-9]+
-Validity check\:     [0-9]+
-Initializing plugins:  [0-9]+
-Validity check:    [0-9]+
-Creating documentation models: [0-9]+
-Transforming documentation model before merging\:    [0-9]+
-Merging documentation models\:     [0-9]+
-Transforming documentation model before merging:   [0-9]+
-Merging documentation models:    [0-9]+
-Transforming documentation model after merging\:    [0-9]+
-Creating pages\:     [0-9]+
-Transforming pages\:    [0-9]+
-Rendering\:  [0-9]+
-Transforming documentation model after merging:   [0-9]+
-Creating pages:    [0-9]+
-Transforming pages:   [0-9]+
-Rendering: [0-9]+
+Initializing plugins\: *[0-9]+
+Validity check\: *[0-9]+
+Creating documentation models: *[0-9]+
+Transforming documentation model before merging\: *[0-9]+
+Merging documentation models\: *[0-9]+
+Transforming documentation model after merging\: *[0-9]+
+Creating pages\: *[0-9]+
+Transforming pages\: *[0-9]+
+Rendering\: *[0-9]+
+WARNING\: unable to find what is referred to by
+    @param endOfPaginationReached
+in DClass LoadState
+in DClass NotLoading
+    @param error
+in DClass Error
+    @param pagingSourceFactory
+in DClass InvalidatingPagingSourceFactory
+    @param flow
+in DClass LazyPagingItems
+Did you make a typo\? Are you trying to refer to something not visible to users\?

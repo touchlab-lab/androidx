@@ -20,7 +20,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Handler
 import android.support.wearable.complications.ComplicationData
-import android.support.wearable.watchface.accessibility.ContentDescriptionLabel
 import androidx.annotation.RestrictTo
 import androidx.annotation.UiThread
 import androidx.wear.complications.SystemProviders
@@ -59,8 +58,7 @@ public interface WatchFaceHostApi {
      * This is a fairly expensive operation so use it sparingly (e.g. do not call it in
      * `onDraw()`).
      */
-    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun setContentDescriptionLabels(labels: Array<ContentDescriptionLabel>)
+    public fun updateContentDescriptionLabels()
 
     /**
      * Sets the complications which are active in the watchface. Complication data will be
@@ -91,7 +89,7 @@ public interface WatchFaceHostApi {
      * permission, it will not be able to receive data from the provider unless the provider is
      * from the same app package as the watch face, or the provider lists the watch face as a
      * safe watch face. For system providers that may be used before your watch face has the
-     * permission, use [.setDefaultSystemComplicationProvider] with a safe provider
+     * permission, use [setDefaultSystemComplicationProvider] with a safe provider
      * instead.
      *
      * A provider not satisfying the above conditions may still be set as a default using
@@ -100,11 +98,11 @@ public interface WatchFaceHostApi {
      *
      * @param watchFaceComplicationId The watch face's ID for the complication
      * @param providers The list of non-system providers to try in order before falling back to
-     *     fallbackSystemProvider. This list may be null.
-     * @param fallbackSystemProvider The system provider to use if none of the providers could
-     *     be used.
-     * @param type The type of complication data that should be provided. Must be one of the
-     *     types defined in [ComplicationData]
+     * fallbackSystemProvider. This list may be null.
+     * @param fallbackSystemProvider The system provider to use if none of the providers could be
+     * used.
+     * @param type The type of complication data that should be provided. Must be one of the types
+     * defined in [ComplicationData].
      */
     public fun setDefaultComplicationProviderWithFallbacks(
         watchFaceComplicationId: Int,
