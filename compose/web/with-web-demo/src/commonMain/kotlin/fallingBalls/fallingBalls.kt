@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.ww.Column
 import androidx.compose.material.ww.Slider
 import androidx.compose.foundation.layout.ww.Row
 import androidx.compose.foundation.layout.ww.Box
+import androidx.compose.material.ww.Button
+import org.jetbrains.ui.ww.Modifier
 
 @Composable
 fun fallingBalls(game: Game) {
@@ -48,21 +50,21 @@ fun fallingBalls(game: Game) {
                     modifier = WithModifier.width(100)
                 )
             }
-//            WebButton(WithModifier, onClick = {
-//                game.started = !game.started
-//                if (game.started) {
-//                    game.start()
-//                }
-//            }) {
-//                Text(if (game.started) "Stop" else "Start", fontSize = 40)
-//            }
-//            if (game.started) {
-//                WebButton(WithModifier.offset(10, 0), onClick = {
-//                    game.togglePause()
-//                }) {
-//                    Text(if (game.paused) "Resume" else "Pause", fontSize = 40)
-//                }
-//            }
+            Button(onClick = {
+                game.started = !game.started
+                if (game.started) {
+                    game.start()
+                }
+            }) {
+                Text(if (game.started) "Stop" else "Start", size = 40)
+            }
+            if (game.started) {
+                Button(Modifier.offset(10, 0), onClick = {
+                    game.togglePause()
+                }) {
+                    Text(if (game.paused) "Resume" else "Pause", size = 40)
+                }
+            }
         }
 
         if (game.started) {
