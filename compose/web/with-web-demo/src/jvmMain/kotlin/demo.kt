@@ -17,9 +17,19 @@ package androidx.compose.web.ww.demo
 
 import androidx.compose.desktop.Window
 import androidx.compose.ui.unit.IntSize
+import org.jetbrains.compose.demo.falling.views.fallingBalls
+import org.jetbrains.compose.demo.falling.Game
+import androidx.compose.runtime.remember
+
+class JvmGame : Game() {
+    override fun saveTime() {
+        previousTime = System.nanoTime()
+    }
+}
 
 fun main() {
     Window(title = "Demo", size = IntSize(800, 800)) {
-        App()
+        //App()
+        fallingBalls(remember { JvmGame() })
     }
 }
