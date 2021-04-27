@@ -16,20 +16,7 @@
 package org.jetbrains.ui.ww
 
 import androidx.compose.ui.unit.ww.Dp
-import androidx.compose.ui.unit.ww.implementation
-import androidx.compose.foundation.background
-import androidx.core.graphics.ww.Color
-import androidx.core.graphics.ww.implementation
-import org.jetbrains.compose.web.ww.internal.castOrCreate
-import androidx.compose.foundation.layout.padding
 
-actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
-    modifier = modifier.background(color.implementation)
+fun Modifier.size(size: Dp): Modifier {
+    return size(size, size)
 }
-
-actual fun Modifier.padding(all: Dp): Modifier = castOrCreate().apply {
-    modifier = modifier.padding(all.implementation)
-}
-
-val Modifier.implementation
-    get() = castOrCreate().modifier
