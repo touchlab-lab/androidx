@@ -12,16 +12,16 @@ import org.jetbrains.compose.web.ww.internal.castOrCreate
 import androidx.compose.web.css.StyleBuilder
 
 actual fun Modifier.size(size: Dp): Modifier = castOrCreate().apply {
-    styleHandlers.add({
+    add {
         width(size.value.px)
         height(size.value.px)
-    })
+    }
 }
 
 actual fun Modifier.background(color: Color): Modifier = castOrCreate().apply {
-    styleHandlers.add({
+    add {
         backgroundColor(RGB(color.red, color.green, color.blue))
-    })
+    }
 }
 
 fun Modifier.asStyleBuilderApplier(
@@ -37,7 +37,7 @@ fun Modifier.asStyleBuilderApplier(
 
 actual fun Modifier.padding(all: Dp): Modifier = castOrCreate().apply {
     // yes, it's not a typo, what Modifier.padding does is actually adding marginEe
-    styleHandlers.add({
+    add {
         margin(all.value.px)
-    })
+    }
 }
