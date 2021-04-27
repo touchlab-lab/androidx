@@ -25,3 +25,9 @@ val Int.em: TextUnit
 
 val Float.em: TextUnit
     get() = TextUnit(this, TextUnitType.Em)
+
+val Int.sp: TextUnit
+    get() = TextUnit(toFloat(), TextUnitType.Sp)
+
+val Float.sp: TextUnit
+    get() = TextUnit(this, TextUnitType.Sp)
