@@ -21,16 +21,20 @@ import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.implementation
 import androidx.core.graphics.ww.Color
 import androidx.core.graphics.ww.implementation
+import androidx.compose.ui.unit.ww.TextUnit
+import androidx.compose.ui.unit.ww.implementation
 
 @Composable
 actual fun TextActual(
     text: String,
     modifier: Modifier,
-    color: Color
+    color: Color,
+    size: TextUnit
 ) {
     JText(
         text,
         modifier = modifier.implementation,
-        color = color.implementation
+        color = color.implementation,
+        fontSize = size.implementation
     )
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.ww.Arrangement
 import androidx.compose.ui.ww.Alignment
 import androidx.compose.foundation.ww.border
 import androidx.compose.material.ww.Text
+import androidx.compose.ui.unit.ww.em
 
 object LayoutSamples {
     @Composable
@@ -26,7 +27,7 @@ object LayoutSamples {
     fun TwoTextsInColumn() {
         Column {
             Text("Alfred Sisley")
-            Text("3 minutes ago", color = Color(0, 0, 200))
+            Text("3 minutes ago", color = Color(0, 0, 200), size = (0.79f).em)
         }
     }
 
@@ -63,5 +64,5 @@ object LayoutSamples {
 
 @Composable
 fun App() {
-    LayoutSamples.Layouts()
+    LayoutSamples.TwoTextsInColumn()
 }

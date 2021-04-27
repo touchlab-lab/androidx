@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.material.ww
 
-import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.Modifier
-import androidx.core.graphics.ww.Color
-import androidx.compose.ui.unit.ww.TextUnit
+package androidx.compose.ui.unit.ww
 
-@Composable
-expect fun TextActual(
-    text: String,
-    modifier: Modifier,
-    color: Color,
-    size: TextUnit
-)
+// TODO: this have to be in a separate package otherwise there's an error for in cross-module usage (for JVM target)
+val Int.dp: Dp
+    get() = Dp(this.toFloat())
+
+val Int.em: TextUnit
+    get() = TextUnit(toFloat(), TextUnitType.Em)
+
+val Float.em: TextUnit
+    get() = TextUnit(this, TextUnitType.Em)

@@ -23,17 +23,25 @@ import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.asStyleBuilderApplier
 import androidx.core.graphics.ww.Color
 import androidx.compose.web.css.color
+import androidx.compose.web.css.fontSize
 import androidx.compose.web.css.Color.RGB
+import androidx.compose.ui.unit.ww.TextUnit
+import androidx.compose.ui.unit.ww.TextUnitType
+import androidx.compose.web.css.em
 
 @Composable
 actual fun TextActual(
     text: String,
     modifier: Modifier,
-    color: Color
+    color: Color,
+    size: TextUnit
 ) {
     Span(
         style = modifier.asStyleBuilderApplier() {
             color(RGB(color.red, color.green, color.blue))
+            when (size.unitType) {
+                TextUnitType.Em -> fontSize(size.value.em)
+            }
         },
         attrs = {
             classes(Styles.textClass)

@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.material.ww
+package androidx.compose.ui.unit.ww
 
-import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.Modifier
-import androidx.core.graphics.ww.Color
+enum class TextUnitType {
+    Unspecified,
+    Em
+}
 
-@Composable
-fun Text(
-    text: String,
-    modifier: Modifier = Modifier.Companion,
-    color: Color = Color.Black
-) {
-    TextActual(text, modifier, color)
+data class TextUnit(val value: Float, val unitType: TextUnitType) {
+    companion object {
+        val Unspecified = TextUnit(Float.NaN, TextUnitType.Unspecified)
+    }
 }

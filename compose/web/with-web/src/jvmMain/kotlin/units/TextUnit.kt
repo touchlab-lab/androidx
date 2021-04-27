@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.material.ww
+package androidx.compose.ui.unit.ww
 
-import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.Modifier
-import androidx.core.graphics.ww.Color
-import androidx.compose.ui.unit.ww.TextUnit
+import androidx.compose.ui.unit.TextUnit as JTextUnit
+import androidx.compose.ui.unit.em
 
-@Composable
-expect fun TextActual(
-    text: String,
-    modifier: Modifier,
-    color: Color,
-    size: TextUnit
-)
+val TextUnit.implementation: JTextUnit
+    get() = when (unitType) {
+        TextUnitType.Em -> (value).em
+        else -> JTextUnit.Unspecified
+    }

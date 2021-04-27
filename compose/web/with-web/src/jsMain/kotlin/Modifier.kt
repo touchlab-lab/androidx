@@ -36,7 +36,7 @@ fun Modifier.asStyleBuilderApplier(
 }
 
 actual fun Modifier.padding(all: Dp): Modifier = castOrCreate().apply {
-    // yes, it's not a typo, what Modifier.padding does is actually adding margin
+    // yes, it's not a typo, what Modifier.padding does is actually adding marginEe
     styleHandlers.add({
         margin(all.value.px)
     })
