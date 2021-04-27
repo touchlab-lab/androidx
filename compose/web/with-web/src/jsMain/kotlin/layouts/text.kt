@@ -28,6 +28,7 @@ import androidx.compose.web.css.Color.RGB
 import androidx.compose.ui.unit.ww.TextUnit
 import androidx.compose.ui.unit.ww.TextUnitType
 import androidx.compose.web.css.em
+import androidx.compose.web.css.px
 
 @Composable
 actual fun TextActual(
@@ -41,6 +42,7 @@ actual fun TextActual(
             color(RGB(color.red, color.green, color.blue))
             when (size.unitType) {
                 TextUnitType.Em -> fontSize(size.value.em)
+                TextUnitType.Sp -> fontSize(size.value.px)
             }
         },
         attrs = {

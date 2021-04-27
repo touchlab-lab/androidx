@@ -17,7 +17,8 @@ package androidx.compose.ui.unit.ww
 
 enum class TextUnitType {
     Unspecified,
-    Em
+    Em,
+    Sp
 }
 
 data class TextUnit(val value: Float, val unitType: TextUnitType) {
