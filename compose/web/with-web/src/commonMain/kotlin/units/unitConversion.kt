@@ -20,6 +20,9 @@ package androidx.compose.ui.unit.ww
 val Int.dp: Dp
     get() = Dp(this.toFloat())
 
+val Float.dp: Dp
+    get() = Dp(this)
+
 val Int.em: TextUnit
     get() = TextUnit(toFloat(), TextUnitType.Em)
 
