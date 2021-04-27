@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package androidx.compose.foundation.ww
+package androidx.compose.foundation.layout.ww
 
 import androidx.compose.ui.unit.ww.Dp
-import androidx.core.graphics.ww.Color
 import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.compose.web.ww.internal.castOrCreate
 import androidx.compose.web.css.px
-import androidx.compose.web.css.LineStyle
-import androidx.compose.web.css.border
-import androidx.compose.web.css.Color.RGB
+import androidx.compose.web.css.width
 
-actual fun Modifier.border(size: Dp, color: Color): Modifier = castOrCreate().apply {
+actual fun Modifier.width(size: Dp): Modifier = castOrCreate().apply {
     add {
-        border(size.value.px, LineStyle.Solid, RGB(color.red, color.green, color.blue))
+        width(size.value.px)
     }
 }

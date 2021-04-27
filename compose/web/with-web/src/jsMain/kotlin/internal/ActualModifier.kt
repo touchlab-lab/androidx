@@ -20,6 +20,10 @@ import androidx.compose.web.css.StyleBuilder
 
 class ActualModifier : Modifier {
     val styleHandlers = mutableListOf<StyleBuilder.() -> Unit>()
+
+    fun add(builder: StyleBuilder.() -> Unit) {
+        styleHandlers.add(builder)
+    }
 }
 
 fun Modifier.castOrCreate(): ActualModifier = (this as? ActualModifier) ?: ActualModifier()

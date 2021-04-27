@@ -19,6 +19,7 @@ import androidx.compose.material.ww.Slider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.material.ww.Button
+import androidx.compose.foundation.layout.ww.width
 
 object LayoutSamples {
     @Composable
@@ -36,7 +37,7 @@ object LayoutSamples {
             Text("3 minutes ago", color = Color(0, 0, 200), size = fontSize.value.em)
             Slider(fontSize.value, onValueChange = { value ->
                 fontSize.value = value
-            })
+            }, Modifier.width(200.dp))
             Button(
                 onClick = {
                     fontSize.value = defaultFontSize
