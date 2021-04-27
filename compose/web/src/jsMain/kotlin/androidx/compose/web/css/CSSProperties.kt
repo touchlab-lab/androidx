@@ -413,6 +413,14 @@ fun StyleBuilder.margin(value: CSSSizeValue) {
     property("margin", value(value.toString()))
 }
 
+fun StyleBuilder.marginLeft(value: CSSSizeValue) {
+    property("margin-left", value(value.toString()))
+}
+
+fun StyleBuilder.marginTop(value: CSSSizeValue) {
+    property("margin-top", value(value.toString()))
+}
+
 fun StyleBuilder.padding(value: CSSSizeValue) {
     // padding hasn't Typed OM yet
     property("padding", value(value.toString()))
