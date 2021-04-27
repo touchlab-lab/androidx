@@ -73,7 +73,7 @@ fun fallingBalls(game: Game) {
 
         if (game.started) {
             Box(
-//                WithModifier
+//                Modifier
 //                .fillMaxWidth()
 //                .fillMaxHeight(0.5f)
 //                .onSizeChanged {
@@ -81,7 +81,7 @@ fun fallingBalls(game: Game) {
 //                }
             ) {
                 game.pieces.forEachIndexed { index, piece ->
-                    //piece(index, piece)
+                    piece(index, piece)
                 }
             }
         }
