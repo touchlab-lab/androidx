@@ -24,7 +24,7 @@ import androidx.compose.foundation.layout.ww.Box
 import androidx.compose.ui.unit.ww.dp
 import androidx.compose.foundation.layout.ww.offset
 import org.jetbrains.ui.ww.background
-//import org.jetbrains.ui.ww.size
+import org.jetbrains.ui.ww.size
 
 @Composable
 fun piece(index: Int, piece: PieceData) {
@@ -33,7 +33,7 @@ fun piece(index: Int, piece: PieceData) {
         Modifier
             .offset((boxSize.value * index * 5 / 3).dp, piece.position.dp)
 //            .shadow(30)
-//            .size(boxSize, boxSize)
+            .size(boxSize, boxSize)
             .background(if (piece.picked) Color.Gray else piece.color)
 //            .clickable{ piece.pick() }
 //            .clip()
