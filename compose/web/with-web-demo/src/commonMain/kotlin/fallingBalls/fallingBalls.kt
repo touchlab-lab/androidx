@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.ww.Row
 import androidx.compose.foundation.layout.ww.Box
 import androidx.compose.material.ww.Button
 import org.jetbrains.ui.ww.Modifier
+import androidx.compose.ui.unit.ww.sp
 
 @Composable
 fun fallingBalls(game: Game) {
@@ -35,19 +36,19 @@ fun fallingBalls(game: Game) {
         Box() {
             Text(
                 "Catch balls!${if (game.finished) " Game over!" else ""}",
-                size = 50,
+                size = 50.sp,
                 color = Color(218, 120, 91)
             )
         }
         Box() {
-            Text("Score ${game.score} Time ${game.elapsed / 1_000_000} Blocks ${game.numBlocks}", fontSize = 35)
+            Text("Score ${game.score} Time ${game.elapsed / 1_000_000} Blocks ${game.numBlocks}", size = 35.sp)
         }
         Row() {
             if (!game.started) {
                 Slider(
                     value = game.numBlocks / 20f,
                     onValueChange = { game.numBlocks = (it * 20f).toInt().coerceAtLeast(1) },
-                    modifier = WithModifier.width(100)
+                    modifier = Modifier.width(100)
                 )
             }
             Button(onClick = {
@@ -56,7 +57,7 @@ fun fallingBalls(game: Game) {
                     game.start()
                 }
             }) {
-                Text(if (game.started) "Stop" else "Start", size = 40)
+                Text(if (game.started) "Stop" else "Start", size = 40.sp)
             }
             if (game.started) {
                 Button(Modifier.offset(10, 0), onClick = {
