@@ -29,6 +29,9 @@ import androidx.compose.foundation.layout.ww.Box
 import androidx.compose.material.ww.Button
 import org.jetbrains.ui.ww.Modifier
 import androidx.compose.ui.unit.ww.sp
+import androidx.compose.ui.unit.ww.dp
+import androidx.compose.foundation.layout.ww.offset
+import androidx.compose.foundation.layout.ww.width
 
 @Composable
 fun fallingBalls(game: Game) {
@@ -48,7 +51,7 @@ fun fallingBalls(game: Game) {
                 Slider(
                     value = game.numBlocks / 20f,
                     onValueChange = { game.numBlocks = (it * 20f).toInt().coerceAtLeast(1) },
-                    modifier = Modifier.width(100)
+                    modifier = Modifier.width(100.dp)
                 )
             }
             Button(onClick = {
@@ -60,10 +63,10 @@ fun fallingBalls(game: Game) {
                 Text(if (game.started) "Stop" else "Start", size = 40.sp)
             }
             if (game.started) {
-                Button(Modifier.offset(10, 0), onClick = {
+                Button(Modifier.offset(10.dp, 0.dp), onClick = {
                     game.togglePause()
                 }) {
-                    Text(if (game.paused) "Resume" else "Pause", size = 40)
+                    Text(if (game.paused) "Resume" else "Pause", size = 40.sp)
                 }
             }
         }
