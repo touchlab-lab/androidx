@@ -28,6 +28,7 @@ import androidx.compose.web.events.WrappedRadioInputEvent
 import androidx.compose.web.events.WrappedTextInputEvent
 import androidx.compose.web.events.WrappedTouchEvent
 import androidx.compose.web.events.WrappedWheelEvent
+import androidx.compose.web.events.GenericWrappedEvent
 
 open class EventsListenerBuilder {
 
@@ -77,6 +78,13 @@ open class EventsListenerBuilder {
         listener: (WrappedRadioInputEvent) -> Unit
     ) {
         listeners.add(RadioInputEventListener(options, listener))
+    }
+
+    fun onRangeInput(
+        options: Options = Options.DEFAULT,
+        listener: (GenericWrappedEvent<*>) -> Unit
+    ) {
+        listeners.add(WrappedEventListener(INPUT, options, listener))
     }
 
     fun onChange(options: Options = Options.DEFAULT, listener: (WrappedEvent) -> Unit) {
