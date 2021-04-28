@@ -18,6 +18,16 @@ package androidx.compose.web.ww.demo
 import androidx.compose.web.renderComposable
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
+import org.jetbrains.compose.demo.falling.views.fallingBalls
+import org.jetbrains.compose.demo.falling.Game
+import androidx.compose.runtime.remember
+import kotlinx.browser.window
+
+class JsGame : Game() {
+    override fun saveTime() {
+        previousTime = window.performance.now().toLong()
+    }
+}
 
 fun main() {
     val root = document.getElementById("root") as HTMLElement
@@ -25,6 +35,7 @@ fun main() {
     renderComposable(
         root = root
     ) {
-        App()
+//        App()
+        fallingBalls(remember { JsGame() })
     }
 }
