@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.ww.offset
 import androidx.compose.foundation.layout.ww.width
 import androidx.compose.foundation.layout.ww.fillMaxWidth
 import androidx.compose.foundation.layout.ww.fillMaxHeight
+import androidx.compose.ui.layout.ww.onSizeChanged
 
 @Composable
 fun fallingBalls(game: Game) {
@@ -78,9 +79,9 @@ fun fallingBalls(game: Game) {
                 Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.5f)
-//                .onSizeChanged {
-//                    game.size = it
-//                }
+                .onSizeChanged {
+                    game.size = it
+                }
             ) {
                 game.pieces.forEachIndexed { index, piece ->
                     piece(index, piece)

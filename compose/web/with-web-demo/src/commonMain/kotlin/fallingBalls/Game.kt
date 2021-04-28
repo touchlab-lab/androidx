@@ -21,7 +21,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.graphics.ww.Color
-import org.jetbrains.compose.ui.ww.Size
+import androidx.compose.ui.unit.ww.IntSize
 import kotlin.random.Random
 
 private fun Color.Companion.random() = Color((0..255).random(), (0..255).random(), (0..255).random())
@@ -30,7 +30,7 @@ abstract class Game {
     internal var previousTime: Long = Long.MAX_VALUE
     private var startTime = 0L
 
-    var size by mutableStateOf(Size(0, 0))
+    var size by mutableStateOf(IntSize(0, 0))
 
     var pieces = mutableStateListOf<PieceData>()
         private set
