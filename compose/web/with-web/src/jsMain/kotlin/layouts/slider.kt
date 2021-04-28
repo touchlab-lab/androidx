@@ -21,14 +21,21 @@ import androidx.compose.web.elements.Input
 import androidx.compose.web.attributes.InputType
 
 @Composable
-actual fun SliderActual(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier) {
+actual fun SliderActual(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    modifier: Modifier
+) {
     Input(
         type = InputType.Range,
         value = value.toString(),
         attrs = {
+            attr("min", valueRange.start.toString())
+            attr("max", valueRange.endInclusive.toString())
             onChange {
                 val value: String = it.asDynamic()._nativeEvent.target.value
-                onValueChange(value.toFloat() / 100)
+                onValueChange(value.toFloat())
             }
         }
     ) {}

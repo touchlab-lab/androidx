@@ -35,9 +35,14 @@ object LayoutSamples {
         Column {
             Text("Alfred Sisley")
             Text("3 minutes ago", color = Color(0, 0, 200), size = fontSize.value.em)
-            Slider(fontSize.value, onValueChange = { value ->
+            Slider(
+                fontSize.value,
+                onValueChange = { value ->
                 fontSize.value = value
-            }, Modifier.width(200.dp))
+                },
+                valueRange = 0.1f .. 1.2f,
+                modifier = Modifier.width(200.dp)
+            )
             Button(
                 onClick = {
                     fontSize.value = defaultFontSize
