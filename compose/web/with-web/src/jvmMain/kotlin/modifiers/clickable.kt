@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.compose.web.ww.internal
+package androidx.compose.foundation.ww
 
 import org.jetbrains.ui.ww.Modifier
-import androidx.compose.web.css.StyleBuilder
-import androidx.compose.web.attributes.AttrsBuilder
+import org.jetbrains.compose.web.ww.internal.castOrCreate
+import androidx.compose.foundation.clickable
 
-class ActualModifier : Modifier {
-    val styleHandlers = mutableListOf<StyleBuilder.() -> Unit>()
-    val attrHandlers = mutableListOf<AttrsBuilder<*>.() -> Unit>()
-
-    fun add(builder: StyleBuilder.() -> Unit) {
-        styleHandlers.add(builder)
-    }
-
-    fun addAttributeBuilder(builder: AttrsBuilder<*>.() -> Unit) {
-        attrHandlers.add(builder)
-    }
+actual fun Modifier.clickable(onClick: () -> Unit): Modifier = castOrCreate().apply {
+    modifier = modifier.clickable(onClick = onClick)
 }
-
-fun Modifier.castOrCreate(): ActualModifier = (this as? ActualModifier) ?: ActualModifier()

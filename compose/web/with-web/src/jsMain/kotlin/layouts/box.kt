@@ -20,11 +20,13 @@ import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.asStyleBuilderApplier
 import androidx.compose.runtime.Composable
 import androidx.compose.web.elements.Div
+import org.jetbrains.ui.ww.asAttributeBuilderApplier
 
 @Composable
 internal actual fun BoxActual(modifier: Modifier, content: @Composable () -> Unit) {
     Div(
-        style = modifier.asStyleBuilderApplier()
+        style = modifier.asStyleBuilderApplier(),
+        attrs = modifier.asAttributeBuilderApplier()
     ) {
         content()
     }

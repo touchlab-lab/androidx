@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.material.ww.Button
 import androidx.compose.foundation.layout.ww.width
+import androidx.compose.foundation.ww.clickable
 
 object LayoutSamples {
     @Composable
@@ -32,9 +33,17 @@ object LayoutSamples {
     fun TwoTextsInColumn() {
         val defaultFontSize = 0.79f
         val fontSize = remember { mutableStateOf(defaultFontSize) }
+        val subtitleColor = remember { mutableStateOf(Color(0, 0, 200)) }
         Column {
             Text("Alfred Sisley")
-            Text("3 minutes ago", color = Color(0, 0, 200), size = fontSize.value.em)
+            Text(
+                "3 minutes ago",
+                color = subtitleColor.value,
+                size = fontSize.value.em,
+                modifier = Modifier.clickable {
+                    subtitleColor.value = Color.Yellow
+                }
+            )
             Slider(
                 fontSize.value,
                 onValueChange = { value ->

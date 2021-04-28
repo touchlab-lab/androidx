@@ -21,6 +21,7 @@ import androidx.compose.web.elements.Span
 import org.jetbrains.compose.web.ui.Styles
 import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.ui.ww.asStyleBuilderApplier
+import org.jetbrains.ui.ww.asAttributeBuilderApplier
 import androidx.core.graphics.ww.Color
 import androidx.compose.web.css.color
 import androidx.compose.web.css.fontSize
@@ -45,7 +46,7 @@ actual fun TextActual(
                 TextUnitType.Sp -> fontSize(size.value.px)
             }
         },
-        attrs = {
+        attrs = modifier.asAttributeBuilderApplier() {
             classes(Styles.textClass)
         }
     ) {
