@@ -19,4 +19,10 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.ui.ww.Modifier
 
 @Composable
-expect fun SliderActual(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier)
+expect fun SliderActual(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    modifier: Modifier,
+)

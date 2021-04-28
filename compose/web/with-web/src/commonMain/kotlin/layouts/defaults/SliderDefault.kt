@@ -22,7 +22,15 @@ import org.jetbrains.ui.ww.Modifier
 fun Slider(
     value: Float,
     onValueChange: (Float) -> Unit = {},
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    steps: Int = 0,
     modifier: Modifier = Modifier.Companion
 ) {
-    SliderActual(value, onValueChange, modifier)
+    SliderActual(
+        value,
+        onValueChange,
+        valueRange,
+        steps,
+        modifier
+    )
 }

@@ -21,6 +21,18 @@ import androidx.compose.material.Slider as JSlider
 import org.jetbrains.ui.ww.implementation
 
 @Composable
-actual fun SliderActual(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier) {
-    JSlider(value, onValueChange = onValueChange, modifier = modifier.implementation)
+actual fun SliderActual(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    modifier: Modifier
+) {
+    JSlider(
+        value,
+        onValueChange = onValueChange,
+        modifier = modifier.implementation,
+        valueRange = valueRange,
+        steps = steps
+    )
 }
