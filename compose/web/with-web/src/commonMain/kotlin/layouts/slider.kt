@@ -23,5 +23,6 @@ expect fun SliderActual(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float>,
-    modifier: Modifier
+    steps: Int,
+    modifier: Modifier,
 )

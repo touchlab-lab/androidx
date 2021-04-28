@@ -41,6 +41,7 @@ object LayoutSamples {
                 fontSize.value = value
                 },
                 valueRange = 0.1f .. 1.2f,
+                steps = 80,
                 modifier = Modifier.width(200.dp)
             )
             Button(

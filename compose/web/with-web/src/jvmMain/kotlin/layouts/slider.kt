@@ -25,12 +25,14 @@ actual fun SliderActual(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
     modifier: Modifier
 ) {
     JSlider(
         value,
         onValueChange = onValueChange,
         modifier = modifier.implementation,
-        valueRange = valueRange
+        valueRange = valueRange,
+        steps = steps
     )
 }
