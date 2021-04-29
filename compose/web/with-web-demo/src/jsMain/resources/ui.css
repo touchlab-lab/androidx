@@ -27,8 +27,3 @@
 button > .compose-web-text {
     position: unset;
 }
-
-.compose-web-row {
-    display: flex;
-    flex-direction: row;
-}

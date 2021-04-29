@@ -19,13 +19,20 @@ import androidx.compose.web.css.justifyContent
 import androidx.compose.web.css.JustifyContent
 import androidx.compose.web.css.alignItems
 import androidx.compose.web.css.AlignItems
+import androidx.compose.web.css.flexDirection
+import androidx.compose.web.css.FlexDirection
+import androidx.compose.web.css.display
+import androidx.compose.web.css.DisplayStyle
 
 import androidx.compose.web.css.StyleSheet
 
 object Styles : StyleSheet()  {
     val textClass = "compose-web-text"
     val columnClass = "compose-web-column"
-    val rowClass = "compose-web-row"
+    val rowClass by style {
+        display(DisplayStyle.Flex)
+        flexDirection(FlexDirection.Row)
+    }
 
     val composeWebArrangementHorizontalStart by style {
         justifyContent(JustifyContent.FlexStart)
