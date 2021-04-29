@@ -21,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.material.ww.Button
 import androidx.compose.foundation.layout.ww.width
 import androidx.compose.foundation.ww.clickable
+import org.jetbrains.compose.common.ui.draw.clip
+import jetbrains.compose.common.shapes.CircleShape
 
 object LayoutSamples {
     @Composable
@@ -92,6 +94,35 @@ object LayoutSamples {
             }
         }
     }
+
+    @Composable
+    fun LayoutsClipped() {
+        val horizontalArrangements = listOf(Arrangement.Start, Arrangement.End)
+        val verticalAlignments = listOf(Alignment.Top, Alignment.CenterVertically, Alignment.Bottom)
+        Column() {
+            horizontalArrangements.forEach { horizontalArrangement ->
+                verticalAlignments.forEach { verticalAlignment ->
+                    Row(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .padding(4.dp)
+                            .border(1.dp, Color(0, 0, 200))
+                            .background(Color.Yellow),
+                        horizontalArrangement = horizontalArrangement,
+                        verticalAlignment = verticalAlignment
+                    ) {
+                        Box(Modifier.size(50.dp).background(Color.Red)) { }
+                        Box(Modifier
+                            .clip(CircleShape)
+                            .size(30.dp)
+                            .background(Color.Blue)
+                        ) { }
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 @Composable
