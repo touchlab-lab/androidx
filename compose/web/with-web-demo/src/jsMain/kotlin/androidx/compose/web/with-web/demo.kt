@@ -39,6 +39,6 @@ fun main() {
         root = root
     ) {
         Style(Styles)
-        App()
+        fallingBalls(remember { JsGame() })
     }
 }
