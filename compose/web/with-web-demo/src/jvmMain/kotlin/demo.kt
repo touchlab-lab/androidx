@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.IntSize
 import org.jetbrains.compose.demo.falling.views.fallingBalls
 import org.jetbrains.compose.demo.falling.Game
 import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.ww.IntSize as CommonIntSize
 
 class JvmGame : Game() {
     override fun saveTime() {
