@@ -128,4 +128,5 @@ object LayoutSamples {
 @Composable
 fun App() {
     LayoutSamples.TwoTextsInColumn()
+//    LayoutSamples.LayoutsClipped()
 }
