@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.ww.offset
 import org.jetbrains.ui.ww.background
 import org.jetbrains.ui.ww.size
 import androidx.compose.foundation.ww.clickable
+import org.jetbrains.compose.common.ui.draw.clip
+import jetbrains.compose.common.shapes.CircleShape
 
 @Composable
 fun piece(index: Int, piece: PieceData) {
@@ -37,6 +39,6 @@ fun piece(index: Int, piece: PieceData) {
             .size(boxSize, boxSize)
             .background(if (piece.picked) Color.Gray else piece.color)
             .clickable{ piece.pick() }
-//            .clip()
+            .clip(CircleShape)
     ) {}
 }
