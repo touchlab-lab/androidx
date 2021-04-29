@@ -39,6 +39,11 @@ fun main() {
         root = root
     ) {
         Style(Styles)
-        fallingBalls(remember { JsGame() })
+        fallingBalls(remember {
+            JsGame()?.apply {
+                width = 600
+                height = 400
+            }
+        })
     }
 }

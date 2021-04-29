@@ -32,6 +32,18 @@ abstract class Game {
 
     var size by mutableStateOf(IntSize(0, 0))
 
+    var width: Int
+        get() = size.width
+        set(newWidth: Int) {
+            size = IntSize(newWidth, height)
+        }
+
+    var height: Int
+        get() = size.height
+        set(newHeight) {
+            size = IntSize(width, newHeight)
+        }
+
     var pieces = mutableStateListOf<PieceData>()
         private set
 
