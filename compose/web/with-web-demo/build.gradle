@@ -50,12 +50,12 @@ kotlin {
                 implementation project(":compose:runtime:runtime")
                 implementation project(":compose:web")
                 implementation project(":compose:web:with-web")
+                implementation(kotlin("stdlib-common"))
             }
         }
 
         jsMain {
             dependencies {
-                implementation(kotlin("stdlib-js"))
             }
         }
 
