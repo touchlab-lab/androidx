@@ -32,23 +32,3 @@ button > .compose-web-text {
     display: flex;
     flex-direction: row;
 }
-
-.compose-web-arrangement-horizontal-end {
-    justify-content: flex-end;
-}
-
-.compose-web-arrangement-horizontal-start {
-    justify-content: flex-start;
-}
-
-.compose-web-alignment-vertical-top {
-    align-items: flex-start;
-}
-
-.compose-web-alignment-vertical-center {
-    align-items: center;
-}
-
-.compose-web-alignment-vertical-bottom {
-    align-items: flex-end;
-}

@@ -18,6 +18,8 @@ package androidx.compose.web.ww.demo
 import androidx.compose.web.renderComposable
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
+import androidx.compose.web.css.Style
+import org.jetbrains.compose.web.ui.Styles
 
 fun main() {
     val root = document.getElementById("root") as HTMLElement
@@ -25,6 +27,7 @@ fun main() {
     renderComposable(
         root = root
     ) {
+        Style(Styles)
         App()
     }
 }

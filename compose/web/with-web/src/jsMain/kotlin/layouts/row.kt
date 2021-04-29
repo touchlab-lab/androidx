@@ -24,14 +24,14 @@ import androidx.compose.ui.ww.Alignment
 import org.jetbrains.compose.web.ui.Styles
 
 private fun Arrangement.Horizontal.asClassName() = when (this) {
-    Arrangement.End -> "compose-web-arrangement-horizontal-end"
-    else -> "compose-web-arrangement-horizontal-start"
+    Arrangement.End -> Styles.composeWebArrangementHorizontalEnd
+    else -> Styles.composeWebArrangementHorizontalStart
 }
 
 private fun Alignment.Vertical.asClassName() = when (this) {
-    Alignment.Top -> "compose-web-alignment-vertical-top"
-    Alignment.CenterVertically -> "compose-web-alignment-vertical-center"
-    else -> "compose-web-alignment-vertical-bottom"
+    Alignment.Top -> Styles.composeWebAlignmentVerticalTop
+    Alignment.CenterVertically -> Styles.composeWebAlignmentVerticalCenter
+    else -> Styles.composeWebAlignmentVerticalBottom
 }
 
 @Composable
