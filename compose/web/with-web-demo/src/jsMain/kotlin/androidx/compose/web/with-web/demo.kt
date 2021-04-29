@@ -22,6 +22,9 @@ import org.jetbrains.compose.demo.falling.views.fallingBalls
 import org.jetbrains.compose.demo.falling.Game
 import androidx.compose.runtime.remember
 import kotlinx.browser.window
+import androidx.compose.web.css.Style
+import org.jetbrains.compose.web.ui.Styles
+
 
 class JsGame : Game() {
     override fun saveTime() {
@@ -35,7 +38,7 @@ fun main() {
     renderComposable(
         root = root
     ) {
-//        App()
-        fallingBalls(remember { JsGame() })
+        Style(Styles)
+        App()
     }
 }

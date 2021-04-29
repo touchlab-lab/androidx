@@ -15,8 +15,35 @@
  */
 package org.jetbrains.compose.web.ui
 
-object Styles {
+import androidx.compose.web.css.justifyContent
+import androidx.compose.web.css.JustifyContent
+import androidx.compose.web.css.alignItems
+import androidx.compose.web.css.AlignItems
+
+import androidx.compose.web.css.StyleSheet
+
+object Styles : StyleSheet()  {
     val textClass = "compose-web-text"
     val columnClass = "compose-web-column"
     val rowClass = "compose-web-row"
+
+    val composeWebArrangementHorizontalStart by style {
+        justifyContent(JustifyContent.FlexStart)
+    }
+
+    val composeWebArrangementHorizontalEnd by style {
+        justifyContent(JustifyContent.FlexEnd)
+    }
+
+    val composeWebAlignmentVerticalTop by style {
+        alignItems(AlignItems.FlexStart)
+    }
+
+    val composeWebAlignmentVerticalCenter by style {
+        alignItems(AlignItems.Center)
+    }
+
+    val composeWebAlignmentVerticalBottom by style {
+        alignItems(AlignItems.FlexEnd)
+    }
 }
