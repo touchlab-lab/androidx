@@ -49,9 +49,9 @@ object LayoutSamples {
             Slider(
                 fontSize.value,
                 onValueChange = { value ->
-                fontSize.value = value
+                    fontSize.value = value
                 },
-                valueRange = 0.1f .. 1.2f,
+                valueRange = 0.1f..1.2f,
                 steps = 80,
                 modifier = Modifier.width(200.dp)
             )
@@ -112,21 +112,20 @@ object LayoutSamples {
                         verticalAlignment = verticalAlignment
                     ) {
                         Box(Modifier.size(50.dp).background(Color.Red)) { }
-                        Box(Modifier
-                            .clip(CircleShape)
-                            .size(30.dp)
-                            .background(Color.Blue)
+                        Box(
+                            Modifier
+                                .clip(CircleShape)
+                                .size(30.dp)
+                                .background(Color.Blue)
                         ) { }
                     }
                 }
             }
         }
     }
-
 }
 
 @Composable
 fun App() {
     LayoutSamples.TwoTextsInColumn()
-//    LayoutSamples.LayoutsClipped()
 }
