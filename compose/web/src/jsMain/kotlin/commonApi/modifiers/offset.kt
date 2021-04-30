@@ -20,11 +20,16 @@ import org.jetbrains.ui.ww.Modifier
 import org.jetbrains.compose.web.ww.internal.castOrCreate
 import androidx.compose.web.css.marginTop
 import androidx.compose.web.css.marginLeft
+import androidx.compose.web.css.top
+import androidx.compose.web.css.left
 import androidx.compose.web.css.px
+import androidx.compose.web.css.position
+import androidx.compose.web.css.Position
 
 actual fun Modifier.offset(x: Dp, y: Dp): Modifier = castOrCreate().apply {
     add {
-        marginLeft(x.value.px)
-        marginTop(y.value.px)
+        left(x.value.px)
+        top(y.value.px)
+        position(Position.Relative)
     }
 }

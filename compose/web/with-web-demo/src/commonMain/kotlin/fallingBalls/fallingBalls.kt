@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.ww.fillMaxHeight
 import androidx.compose.ui.layout.ww.onSizeChanged
 import org.jetbrains.ui.ww.background
 import androidx.compose.foundation.ww.border
+import org.jetbrains.ui.ww.size
 
 @Composable
 fun fallingBalls(game: Game) {
@@ -94,8 +95,10 @@ fun fallingBalls(game: Game) {
         if (game.started) {
             Box(
                 Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.5f)
+//                    .fillMaxWidth()
+//                    .fillMaxHeight(0.5f)
+                    .background(Color(248, 248, 255))
+                    .size(game.width.dp, game.height.dp)
                     .onSizeChanged {
                         game.size = it
                     }
