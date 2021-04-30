@@ -43,7 +43,6 @@ kotlin {
                 }
             }
         }
-
         binaries.executable()
     }
 
@@ -56,14 +55,11 @@ kotlin {
             }
         }
 
-        jsMain {
-            dependencies {
-            }
-        }
-
         jvmMain {
             dependencies {
-                implementation(project(":compose:desktop:desktop"))
+                implementation(project(":compose:ui:ui"))
+                implementation(project(":compose:foundation:foundation-layout"))
+                implementation(project(":compose:material:material"))
             }
         }
 
@@ -76,7 +72,7 @@ kotlin {
 }
 
 androidx {
-    name = "Compose With Web"
+    name = "Compose Web Common"
     publish = Publish.SNAPSHOT_AND_RELEASE
     mavenGroup = LibraryGroups.Compose.WEB
     inceptionYear = "2021"
