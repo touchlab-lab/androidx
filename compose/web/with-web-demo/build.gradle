@@ -49,7 +49,6 @@ kotlin {
             dependencies {
                 implementation project(":compose:runtime:runtime")
                 implementation project(":compose:web")
-                implementation project(":compose:web:with-web")
                 implementation(kotlin("stdlib-common"))
             }
         }
