@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.ww.Row
 import androidx.compose.foundation.layout.ww.Box
 import androidx.compose.material.ww.Button
 import org.jetbrains.ui.ww.Modifier
+import androidx.compose.ui.unit.ww.em
 import androidx.compose.ui.unit.ww.sp
 import androidx.compose.ui.unit.ww.dp
 import androidx.compose.foundation.layout.ww.offset
@@ -35,6 +36,8 @@ import androidx.compose.foundation.layout.ww.width
 import androidx.compose.foundation.layout.ww.fillMaxWidth
 import androidx.compose.foundation.layout.ww.fillMaxHeight
 import androidx.compose.ui.layout.ww.onSizeChanged
+import org.jetbrains.ui.ww.background
+import androidx.compose.foundation.ww.border
 
 @Composable
 fun fallingBalls(game: Game) {
@@ -42,12 +45,15 @@ fun fallingBalls(game: Game) {
         Box() {
             Text(
                 "Catch balls!${if (game.finished) " Game over!" else ""}",
-                size = 50.sp,
+                size = 1.8f.em,
                 color = Color(218, 120, 91)
             )
         }
         Box() {
-            Text("Score ${game.score} Time ${game.elapsed / 1_000_000} Blocks ${game.numBlocks}", size = 35.sp)
+            Text(
+                "Score: ${game.score} Time: ${game.elapsed / 1_000_000} Blocks: ${game.numBlocks}",
+                size = 1.8f.em
+            )
         }
         Row() {
             if (!game.started) {
@@ -57,19 +63,30 @@ fun fallingBalls(game: Game) {
                     modifier = Modifier.width(100.dp)
                 )
             }
-            Button(onClick = {
-                game.started = !game.started
-                if (game.started) {
-                    game.start()
+            Button(
+                Modifier
+                    .border(2.dp, Color(255, 215, 0))
+                    .background(Color.Yellow),
+                onClick = {
+                    game.started = !game.started
+                    if (game.started) {
+                        game.start()
+                    }
                 }
-            }) {
-                Text(if (game.started) "Stop" else "Start", size = 40.sp)
+            ) {
+                Text(if (game.started) "Stop" else "Start", size = 2f.em)
             }
             if (game.started) {
-                Button(Modifier.offset(10.dp, 0.dp), onClick = {
-                    game.togglePause()
-                }) {
-                    Text(if (game.paused) "Resume" else "Pause", size = 40.sp)
+                Button(
+                    Modifier
+                        .offset(10.dp, 0.dp)
+                        .border(2.dp, Color(255, 215, 0))
+                        .background(Color.Yellow),
+                    onClick = {
+                        game.togglePause()
+                    }
+                ) {
+                    Text(if (game.paused) "Resume" else "Pause", size = 2f.em)
                 }
             }
         }
@@ -77,11 +94,11 @@ fun fallingBalls(game: Game) {
         if (game.started) {
             Box(
                 Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.5f)
-                .onSizeChanged {
-                    game.size = it
-                }
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.5f)
+                    .onSizeChanged {
+                        game.size = it
+                    }
             ) {
                 game.pieces.forEachIndexed { index, piece ->
                     piece(index, piece)
