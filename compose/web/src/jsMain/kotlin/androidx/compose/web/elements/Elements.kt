@@ -246,7 +246,7 @@ inline fun Img(
     alt: String = "",
     crossinline attrs: AttrsBuilder<Tag.Img>.() -> Unit = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
-    content: @Composable ElementScope<HTMLImageElement>.() -> Unit
+    content: @Composable ElementScope<HTMLImageElement>.() -> Unit = {}
 ) = TagElement<Tag.Img, HTMLImageElement>(
     tagName = "img",
     applyAttrs = {
@@ -378,6 +378,52 @@ inline fun Code(
     TagElement(
         tagName = "code",
         applyAttrs = attrs,
+        applyStyle = style,
+        content = content
+    )
+}
+
+@Composable
+inline fun Main(
+    crossinline attrs: (AttrsBuilder<Tag.Div>.() -> Unit) = {},
+    crossinline style: (StyleBuilder.() -> Unit) = {},
+    content: @Composable ElementScope<HTMLElement>.() -> Unit = {}
+) {
+    TagElement<Tag.Div, HTMLAnchorElement>(
+        tagName = "main",
+        applyAttrs = attrs,
+        applyStyle = style,
+        content = content
+    )
+}
+
+@Composable
+inline fun Footer(
+    crossinline attrs: (AttrsBuilder<Tag.Div>.() -> Unit) = {},
+    crossinline style: (StyleBuilder.() -> Unit) = {},
+    content: @Composable ElementScope<HTMLElement>.() -> Unit = {}
+) {
+    TagElement<Tag.Div, HTMLAnchorElement>(
+        tagName = "footer",
+        applyAttrs = attrs,
+        applyStyle = style,
+        content = content
+    )
+}
+
+@Composable
+inline fun Label(
+    forId: String,
+    crossinline attrs: (AttrsBuilder<Tag.Div>.() -> Unit) = {},
+    crossinline style: (StyleBuilder.() -> Unit) = {},
+    content: @Composable ElementScope<HTMLElement>.() -> Unit = {}
+) {
+    TagElement<Tag.Div, HTMLAnchorElement>(
+        tagName = "label",
+        applyAttrs = {
+            attr("for", forId)
+            attrs()
+        },
         applyStyle = style,
         content = content
     )

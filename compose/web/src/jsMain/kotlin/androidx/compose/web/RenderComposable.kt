@@ -72,11 +72,11 @@ fun <THTMLElement : HTMLElement> renderComposable(
  * @return the instance of the [Composition]
  */
 @Suppress("UNCHECKED_CAST")
-fun <THTMLElement : HTMLElement> renderComposable(
+fun renderComposable(
     rootElementId: String,
-    content: @Composable DOMScope<THTMLElement>.() -> Unit
+    content: @Composable DOMScope<HTMLElement>.() -> Unit
 ): Composition = renderComposable(
-    root = document.getElementById(rootElementId) as THTMLElement,
+    root = document.getElementById(rootElementId) as HTMLElement,
     content = content
 )
 
