@@ -61,7 +61,10 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(project(":compose:desktop:desktop"))
+                implementation(project(":compose:ui:ui"))
+                implementation(KOTLIN_STDLIB)
+                implementation(KOTLIN_STDLIB_JDK8)
+                implementation(KOTLIN_COROUTINES_CORE)
                 implementation(SKIKO_CURRENT_OS)
             }
         }
