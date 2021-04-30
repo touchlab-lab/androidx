@@ -50,12 +50,13 @@ kotlin {
         commonMain {
             dependencies {
                 implementation project(":compose:runtime:runtime")
+                implementation(kotlin("stdlib-common"))
             }
         }
 
         jsMain {
             dependencies {
-                implementation(kotlin("stdlib-js"))
+                //implementation(kotlin("stdlib-js"))
                 implementation(npm('css-typed-om', '0.4.0'))
             }
         }
@@ -63,6 +64,14 @@ kotlin {
         jsTest {
             dependencies {
                 implementation kotlin("test-js")
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation(project(":compose:ui:ui"))
+                implementation(project(":compose:foundation:foundation-layout"))
+                implementation(project(":compose:material:material"))
             }
         }
     }
@@ -79,7 +88,7 @@ androidx {
 
 
 task buildAll {
-    dependsOn = [build, ":compose:web:integration:build", ":compose:web:with-web:build"]
+    dependsOn = [build, ":compose:web:integration:build"]
 }
 
 tasks.register("publishAll") {
