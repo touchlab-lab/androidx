@@ -1,7 +1,7 @@
 package org.jetbrains.compose.common.ui
 
 import org.jetbrains.compose.common.ui.unit.Dp
-import org.jetbrains.compose.core.common.graphics.Color
+import org.jetbrains.compose.common.core.graphics.Color
 import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.margin
 import androidx.compose.web.css.px

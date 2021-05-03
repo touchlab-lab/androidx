@@ -19,8 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.material.Text as JText
 import org.jetbrains.compose.common.ui.Modifier
 import org.jetbrains.compose.common.ui.implementation
-import org.jetbrains.compose.core.common.graphics.Color
-import org.jetbrains.compose.core.common.graphics.implementation
+import org.jetbrains.compose.common.core.graphics.Color
+import org.jetbrains.compose.common.core.graphics.implementation
 import org.jetbrains.compose.common.ui.unit.TextUnit
 import org.jetbrains.compose.common.ui.unit.implementation
 

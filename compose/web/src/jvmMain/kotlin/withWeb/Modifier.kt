@@ -18,8 +18,8 @@ package org.jetbrains.compose.common.ui
 import org.jetbrains.compose.common.ui.unit.Dp
 import org.jetbrains.compose.common.ui.unit.implementation
 import androidx.compose.foundation.background
-import org.jetbrains.compose.core.common.graphics.Color
-import org.jetbrains.compose.core.common.graphics.implementation
+import org.jetbrains.compose.common.core.graphics.Color
+import org.jetbrains.compose.common.core.graphics.implementation
 import org.jetbrains.compose.common.internal.castOrCreate
 import androidx.compose.foundation.layout.padding
 

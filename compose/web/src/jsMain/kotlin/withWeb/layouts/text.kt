@@ -22,7 +22,7 @@ import org.jetbrains.compose.web.ui.Styles
 import org.jetbrains.compose.common.ui.Modifier
 import org.jetbrains.compose.common.ui.asStyleBuilderApplier
 import org.jetbrains.compose.common.ui.asAttributeBuilderApplier
-import org.jetbrains.compose.core.common.graphics.Color
+import org.jetbrains.compose.common.core.graphics.Color
 import androidx.compose.web.css.color
 import androidx.compose.web.css.fontSize
 import androidx.compose.web.css.Color.RGB

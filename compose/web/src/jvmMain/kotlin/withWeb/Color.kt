@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.compose.core.common.graphics
+package org.jetbrains.compose.common.core.graphics
 
 import androidx.compose.ui.graphics.Color as JColor
 
