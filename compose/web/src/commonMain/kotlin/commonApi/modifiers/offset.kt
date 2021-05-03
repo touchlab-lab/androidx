@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.foundation.layout.ww
+package org.jetbrains.compose.common.foundation.layout
 
-import androidx.compose.ui.unit.ww.Dp
-import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.compose.common.ui.unit.Dp
+import org.jetbrains.compose.common.ui.Modifier
 
 expect fun Modifier.offset(x: Dp, y: Dp): Modifier

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package androidx.compose.foundation.layout.ww
+package org.jetbrains.compose.common.foundation.layout
 
-import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.compose.common.ui.Modifier
 import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.asStyleBuilderApplier
+import org.jetbrains.compose.common.ui.asStyleBuilderApplier
 import androidx.compose.web.elements.Div
 import org.jetbrains.compose.web.ui.Styles
 

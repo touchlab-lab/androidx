@@ -20,12 +20,12 @@ import kotlin.test.assertTrue
 import kotlinx.browser.document
 import androidx.compose.web.renderComposable
 import org.w3c.dom.HTMLElement
-import androidx.compose.foundation.layout.ww.Box
-import org.jetbrains.ui.ww.Modifier
-import org.jetbrains.ui.ww.size
-import org.jetbrains.ui.ww.background
-import androidx.core.graphics.ww.Color
-import androidx.compose.ui.unit.ww.dp
+import org.jetbrains.compose.common.foundation.layout.Box
+import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.ui.size
+import org.jetbrains.compose.common.ui.background
+import org.jetbrains.compose.core.common.graphics.Color
+import org.jetbrains.compose.common.ui.unit.dp
 
 private fun String.asHtmlElement() = document.createElement("div") as HTMLElement
 

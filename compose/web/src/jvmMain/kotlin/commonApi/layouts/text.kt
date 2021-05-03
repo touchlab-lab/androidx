@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.material.ww
+package org.jetbrains.compose.common.material
 
 import androidx.compose.runtime.Composable
 import androidx.compose.material.Text as JText
-import org.jetbrains.ui.ww.Modifier
-import org.jetbrains.ui.ww.implementation
-import androidx.core.graphics.ww.Color
-import androidx.core.graphics.ww.implementation
-import androidx.compose.ui.unit.ww.TextUnit
-import androidx.compose.ui.unit.ww.implementation
+import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.ui.implementation
+import org.jetbrains.compose.core.common.graphics.Color
+import org.jetbrains.compose.core.common.graphics.implementation
+import org.jetbrains.compose.common.ui.unit.TextUnit
+import org.jetbrains.compose.common.ui.unit.implementation
 
 @Composable
 actual fun TextActual(

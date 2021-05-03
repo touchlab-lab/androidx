@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package androidx.compose.ui.unit.ww
+package org.jetbrains.compose.common.ui.unit
 
 // TODO: this have to be in a separate package otherwise there's an error for in cross-module usage (for JVM target)
 val Int.dp: Dp

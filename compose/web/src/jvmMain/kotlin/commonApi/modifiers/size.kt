@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.ui.ww
+package org.jetbrains.compose.common.ui
 
-import androidx.compose.ui.unit.ww.Dp
-import androidx.compose.ui.unit.ww.implementation
+import org.jetbrains.compose.common.ui.unit.Dp
+import org.jetbrains.compose.common.ui.unit.implementation
 import androidx.compose.foundation.layout.size
-import androidx.core.graphics.ww.implementation
-import org.jetbrains.compose.web.ww.internal.castOrCreate
+import org.jetbrains.compose.core.common.graphics.implementation
+import org.jetbrains.compose.common.internal.castOrCreate
 
 actual fun Modifier.size(width: Dp, height: Dp): Modifier = castOrCreate().apply {
     modifier = modifier.size(width.implementation, height.implementation)

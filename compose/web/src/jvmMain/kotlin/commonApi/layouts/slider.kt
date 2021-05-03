@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.material.ww
+package org.jetbrains.compose.common.material
 
 import androidx.compose.runtime.Composable
-import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.compose.common.ui.Modifier
 import androidx.compose.material.Slider as JSlider
-import org.jetbrains.ui.ww.implementation
+import org.jetbrains.compose.common.ui.implementation
 
 @Composable
 actual fun SliderActual(

@@ -29,6 +29,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.ui.unit.ww
+package org.jetbrains.compose.common.ui.unit
 
 data class IntSize(val width: Int, val height: Int)

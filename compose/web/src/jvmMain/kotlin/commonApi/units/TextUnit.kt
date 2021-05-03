@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.ui.unit.ww
+package org.jetbrains.compose.common.ui.unit
 
 import androidx.compose.ui.unit.TextUnit as JTextUnit
 import androidx.compose.ui.unit.em

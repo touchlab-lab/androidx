@@ -1,7 +1,7 @@
-package org.jetbrains.ui.ww
+package org.jetbrains.compose.common.ui
 
-import androidx.compose.ui.unit.ww.Dp
-import androidx.core.graphics.ww.Color
+import org.jetbrains.compose.common.ui.unit.Dp
+import org.jetbrains.compose.core.common.graphics.Color
 
 interface Modifier {
     open class Element : Modifier

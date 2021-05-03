@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package androidx.compose.ui.unit.ww
+package org.jetbrains.compose.common.ui.unit
 
 import androidx.compose.ui.unit.Dp as JDp
 

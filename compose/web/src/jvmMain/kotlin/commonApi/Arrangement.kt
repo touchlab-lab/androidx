@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.foundation.layout.ww
+package org.jetbrains.compose.common.foundation.layout
 
 import androidx.compose.foundation.layout.Arrangement as JArrangement
 

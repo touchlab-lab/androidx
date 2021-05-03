@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.material.ww
+package org.jetbrains.compose.common.material
 
 import androidx.compose.runtime.Composable
 import androidx.compose.web.elements.Text as TextNode
 import androidx.compose.web.elements.Span
 import org.jetbrains.compose.web.ui.Styles
-import org.jetbrains.ui.ww.Modifier
-import org.jetbrains.ui.ww.asStyleBuilderApplier
-import org.jetbrains.ui.ww.asAttributeBuilderApplier
-import androidx.core.graphics.ww.Color
+import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.ui.asStyleBuilderApplier
+import org.jetbrains.compose.common.ui.asAttributeBuilderApplier
+import org.jetbrains.compose.core.common.graphics.Color
 import androidx.compose.web.css.color
 import androidx.compose.web.css.fontSize
 import androidx.compose.web.css.Color.RGB
-import androidx.compose.ui.unit.ww.TextUnit
-import androidx.compose.ui.unit.ww.TextUnitType
+import org.jetbrains.compose.common.ui.unit.TextUnit
+import org.jetbrains.compose.common.ui.unit.TextUnitType
 import androidx.compose.web.css.em
 import androidx.compose.web.css.px
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.foundation.ww
+package org.jetbrains.compose.common.foundation
 
-import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.compose.common.ui.Modifier
 
 expect fun Modifier.clickable(onClick: () -> Unit): Modifier

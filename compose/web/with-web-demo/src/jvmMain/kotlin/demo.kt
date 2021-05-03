@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.web.ww.demo
+package org.jetbrainsc.compose.common.demo
 
 import androidx.compose.desktop.Window
 import androidx.compose.ui.unit.IntSize

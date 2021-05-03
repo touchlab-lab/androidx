@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.compose.common.foundation
 
-package androidx.compose.foundation.ww
-
-import androidx.compose.ui.unit.ww.Dp
-import androidx.core.graphics.ww.Color
-import org.jetbrains.ui.ww.Modifier
-import org.jetbrains.compose.web.ww.internal.castOrCreate
+import org.jetbrains.compose.common.ui.unit.Dp
+import org.jetbrains.compose.core.common.graphics.Color
+import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.internal.castOrCreate
 import androidx.compose.web.css.px
 import androidx.compose.web.css.LineStyle
 import androidx.compose.web.css.border

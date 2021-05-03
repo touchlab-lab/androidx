@@ -35,7 +35,7 @@ kotlin {
     jvm() {
         withJava()
         application {
-            mainClass.value("androidx.compose.web.ww.demo.DemoKt")
+            mainClass.value("org.jetbrainsc.compose.common.demo.DemoKt")
         }
     }
 

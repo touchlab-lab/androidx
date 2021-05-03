@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.compose.foundation.ww
+package org.jetbrains.compose.common.foundation
 
-import org.jetbrains.ui.ww.Modifier
-import org.jetbrains.compose.web.ww.internal.castOrCreate
+import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.internal.castOrCreate
 import androidx.compose.foundation.clickable
 
 actual fun Modifier.clickable(onClick: () -> Unit): Modifier = castOrCreate().apply {

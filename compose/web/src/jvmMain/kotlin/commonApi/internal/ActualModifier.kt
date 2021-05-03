@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.compose.web.ww.internal
+package org.jetbrains.compose.common.internal
 
 import androidx.compose.ui.Modifier as JModifier
-import org.jetbrains.ui.ww.Modifier
+import org.jetbrains.compose.common.ui.Modifier
 
 private class ModifierElement : JModifier.Element
 

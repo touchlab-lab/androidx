@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.compose.common.foundation
 
-package androidx.compose.foundation.ww
-
-import androidx.compose.ui.unit.ww.Dp
-import androidx.core.graphics.ww.Color
-import org.jetbrains.ui.ww.Modifier
-import org.jetbrains.compose.web.ww.internal.castOrCreate
-import androidx.core.graphics.ww.implementation
-import androidx.compose.ui.unit.ww.implementation
+import org.jetbrains.compose.common.ui.unit.Dp
+import org.jetbrains.compose.core.common.graphics.Color
+import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.internal.castOrCreate
+import org.jetbrains.compose.core.common.graphics.implementation
+import org.jetbrains.compose.common.ui.unit.implementation
 import androidx.compose.foundation.border
 
 actual fun Modifier.border(size: Dp, color: Color): Modifier = castOrCreate().apply {
