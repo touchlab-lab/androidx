@@ -15,13 +15,16 @@
  */
 
 import org.jetbrains.skiko.OS
+import org.junit.Ignore
 import org.openqa.selenium.By
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.remote.RemoteWebDriver
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -87,5 +90,40 @@ class SeleniumTests {
 
         val text = driver.findElement(By.id("result"))
         assertEquals(expected = "Hello", actual = text.text)
+    }
+
+    @Test
+    fun `multiple clicks on button update the counter after every click`() {
+        openTestPage("testCase3")
+
+        val wait = WebDriverWait(driver, 1)
+        fun waitTextToBe(t: String) = wait.until(ExpectedConditions.textToBe(By.id("txt"), t))
+
+        val button = driver.findElement(By.id("btn"))
+
+        waitTextToBe("0")
+        repeat(3) {
+            button.click()
+            waitTextToBe((it + 1).toString())
+        }
+    }
+
+    @Test
+    fun `hovering the box updates the text`() {
+        openTestPage("testCase4")
+
+        val wait = WebDriverWait(driver, 1)
+        fun waitTextToBe(t: String) = wait.until(ExpectedConditions.textToBe(By.id("txt"), t))
+
+        val box = driver.findElement(By.id("box"))
+        waitTextToBe("not hovered")
+
+        val actions = Actions(driver)
+
+        actions.moveToElement(box).perform()
+        waitTextToBe("hovered")
+
+        actions.moveByOffset(300, 0).perform()
+        waitTextToBe("not hovered")
     }
 }

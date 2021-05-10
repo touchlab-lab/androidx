@@ -21,6 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.web.css.backgroundColor
+import androidx.compose.web.css.height
+import androidx.compose.web.css.px
+import androidx.compose.web.css.width
+import androidx.compose.web.elements.Button
 import androidx.compose.web.elements.Div
 import androidx.compose.web.elements.Span
 import androidx.compose.web.elements.Text
@@ -50,9 +55,61 @@ private val testCase2 = @Composable {
     )
 }
 
+private val buttonClicksUpdateCounterValue = @Composable {
+    var count by remember { mutableStateOf(0) }
+
+    Span(
+        attrs = { id("txt") }
+    ) {
+        Text(count.toString())
+    }
+
+    Button(
+        attrs = {
+            id("btn")
+            onClick { count += 1 }
+        }
+    ) {
+        Text("Button")
+    }
+}
+
+private val hoverOnDivUpdatesText = @Composable {
+    var hovered by remember { mutableStateOf(false) }
+
+    Span(
+        attrs = {
+            id("txt")
+        }
+    ) {
+        Text(if (hovered) "hovered" else "not hovered")
+    }
+
+    Div(
+        attrs = {
+            id("box")
+            onMouseEnter {
+                println("Mouse enter")
+                hovered = true
+            }
+            onMouseLeave {
+                println("Mouse leave")
+                hovered = false
+            }
+        },
+        style = {
+            width(100.px)
+            height(100.px)
+            backgroundColor("red")
+        }
+    ) {}
+}
+
 private val testCases = mapOf<String, @Composable () -> Unit>(
     "testCase1" to testCase1,
     "testCase2" to testCase2,
+    "testCase3" to buttonClicksUpdateCounterValue,
+    "testCase4" to hoverOnDivUpdatesText
 )
 
 fun launchTestCase(testCaseId: String) {
