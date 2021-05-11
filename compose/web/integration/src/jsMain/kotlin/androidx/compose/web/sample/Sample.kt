@@ -59,6 +59,7 @@ import androidx.compose.web.css.minWidth
 import androidx.compose.web.css.value
 import androidx.compose.web.css.variable
 import androidx.compose.web.renderComposableInBody
+import androidx.compose.web.sample.tests.launchTestCase
 import kotlinx.browser.window
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay

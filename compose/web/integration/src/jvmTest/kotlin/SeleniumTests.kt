@@ -27,7 +27,7 @@ class SeleniumTests : BaseSeleniumTests() {
 
     @Test
     fun `text contains Hello World`() {
-        openTestPage("testCase1")
+        openTestPage("helloWorldText")
         assertEquals(
             expected = "Hello World!",
             actual = driver.findElementByTagName("div").text
@@ -36,7 +36,7 @@ class SeleniumTests : BaseSeleniumTests() {
 
     @Test
     fun `text area input gets printed`() {
-        openTestPage("testCase2")
+        openTestPage("textAreaInputGetsPrinted")
 
         val input = driver.findElement(By.id("input"))
         input.sendKeys("Hello")
@@ -47,7 +47,7 @@ class SeleniumTests : BaseSeleniumTests() {
 
     @Test
     fun `multiple clicks on button update the counter after every click`() {
-        openTestPage("testCase3")
+        openTestPage("buttonClicksUpdateCounterValue")
 
         val wait = WebDriverWait(driver, 1)
         fun waitTextToBe(t: String) = wait.until(ExpectedConditions.textToBe(By.id("txt"), t))
@@ -63,7 +63,7 @@ class SeleniumTests : BaseSeleniumTests() {
 
     @Test
     fun `hovering the box updates the text`() {
-        openTestPage("testCase4")
+        openTestPage("hoverOnDivUpdatesText")
 
         val wait = WebDriverWait(driver, 1)
         fun waitTextToBe(t: String) = wait.until(ExpectedConditions.textToBe(By.id("txt"), t))
