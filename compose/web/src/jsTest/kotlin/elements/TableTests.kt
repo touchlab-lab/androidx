@@ -16,22 +16,44 @@
 
 package elements
 
-import androidx.compose.web.attributes.InputType
-import androidx.compose.web.elements.Button
-import androidx.compose.web.elements.Input
-import androidx.compose.web.elements.TextArea
+import androidx.compose.web.attributes.Scope
+import androidx.compose.web.attributes.colspan
+import androidx.compose.web.attributes.rowspan
+import androidx.compose.web.attributes.scope
+import androidx.compose.web.attributes.span
+import androidx.compose.web.elements.Caption
+import androidx.compose.web.elements.Col
+import androidx.compose.web.elements.Colgroup
+import androidx.compose.web.elements.Table
+import androidx.compose.web.elements.Tbody
+import androidx.compose.web.elements.Td
+import androidx.compose.web.elements.Text
+import androidx.compose.web.elements.Tfoot
+import androidx.compose.web.elements.Th
+import androidx.compose.web.elements.Thead
+import androidx.compose.web.elements.Tr
 import org.w3c.dom.HTMLElement
-import org.w3c.dom.HTMLInputElement
-import org.w3c.dom.HTMLTextAreaElement
-import org.w3c.dom.events.Event
-import org.w3c.dom.events.InputEvent
-import org.w3c.dom.events.MouseEvent
 import runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class TableTests {
+
+    @Test
+    fun colAttributes() = runTest {
+        composition {
+            Col(
+                attrs = {
+                    span(2)
+                }
+            ) { }
+        }
+
+        assertEquals(
+            expected = "2",
+            actual = (root.firstChild!! as HTMLElement).getAttribute("span")
+        )
+    }
 
     @Test
     fun create() = runTest {
@@ -43,38 +65,50 @@ class TableTests {
                 Colgroup {
                     Col { }
                     Col { }
-                    Col(attrs = {
-                        span(2)
-                    })
+                    Col { }
                 }
                 Thead {
                     Tr {
                         Th { }
                         Th { }
-                        Th(attrs = {
-                            colspan(2)
-                        }) {
+                        Th(
+                            attrs = {
+                                colspan(2)
+                            }
+                        ) {
                             Text("First")
                         }
                     }
                     Tr {
                         Th { }
                         Th { }
-                        Th(attrs = { scope(Scope.Col)}) { Text("A") }
-                        Th(attrs = { scope(Scope.Col)}) { Text("B") }
+                        Th(
+                            attrs = {
+                                scope(Scope.Col)
+                            }
+                        ) { Text("A") }
+                        Th(
+                            attrs = {
+                                scope(Scope.Col)
+                            }
+                        ) { Text("B") }
                     }
                 }
                 Tbody {
                     Tr {
-                        Th(attrs = {
-                            scope(Scope.Row)
-                            rowspan(2)
-                        }) {
+                        Th(
+                            attrs = {
+                                scope(Scope.Row)
+                                rowspan(2)
+                            }
+                        ) {
                             Text("Rows")
                         }
-                        Th(attrs = {
-                            scope(Scope.Row)
-                        }) {
+                        Th(
+                            attrs = {
+                                scope(Scope.Row)
+                            }
+                        ) {
                             Text("1")
                         }
                         Td {
@@ -85,9 +119,11 @@ class TableTests {
                         }
                     }
                     Tr {
-                        Th(attrs = {
-                            scope(Scope.Row)
-                        }) {
+                        Th(
+                            attrs = {
+                                scope(Scope.Row)
+                            }
+                        ) {
                             Text("2")
                         }
                         Td {
@@ -98,16 +134,18 @@ class TableTests {
                         }
                     }
                 }
-                TFoot {
+                Tfoot {
                     Tr {
-                        Th(attrs = {
-                            scope(Scope.Row)
-                        }) {
+                        Th(
+                            attrs = {
+                                scope(Scope.Row)
+                            }
+                        ) {
                             Text("Totals")
                         }
                         Th { }
-                        Td { Text("21") }
-                        Td { Text("42") }
+                        Td { Text("40") }
+                        Td { Text("60") }
                     }
                 }
             }
@@ -115,49 +153,51 @@ class TableTests {
 
         assertEquals(
             expected = """
-            <table>
-                <caption>CaptionText</caption>
-                <colgroup>
-                    <col>
-                    <col>
-                    <col span="2">
+            <table style="">
+                <caption style="">CaptionText</caption>
+                <colgroup style="">
+                    <col style="">
+                    <col style="">
+                    <col style="">
                 </colgroup>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th></th>
-                        <th colspan="2">First</th>
+                <thead style="">
+                    <tr style="">
+                        <th style=""></th>
+                        <th style=""></th>
+                        <th colspan="2" style="">First</th>
                     </tr>
-                    <tr>
-                        <th></th>
-                        <th></th>
-                        <th scope="col">A</th>
-                        <th scope="col">B</th>
+                    <tr style="">
+                        <th style=""></th>
+                        <th style=""></th>
+                        <th scope="col" style="">A</th>
+                        <th scope="col" style="">B</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <th scope="row" rowspan="2">Rows</th>
-                        <th scope="row">1</th>
-                        <td>30</td>
-                        <td>40</td>
+                <tbody style="">
+                    <tr style="">
+                        <th scope="row" rowspan="2" style="">Rows</th>
+                        <th scope="row" style="">1</th>
+                        <td style="">30</td>
+                        <td style="">40</td>
                     </tr>
-                    <tr>
-                        <th scope="row">2</th>
-                        <td>10</td>
-                        <td>20</td>
+                    <tr style="">
+                        <th scope="row" style="">2</th>
+                        <td style="">10</td>
+                        <td style="">20</td>
                     </tr>
                 </tbody>
-                <tfoot>
-                    <tr>
-                        <th scope="row">Totals</th>
-                        <th></th>
-                        <td>40</td>
-                        <td>60</td>
+                <tfoot style="">
+                    <tr style="">
+                        <th scope="row" style="">Totals</th>
+                        <th style=""></th>
+                        <td style="">40</td>
+                        <td style="">60</td>
                     </tr>
                 </tfoot>
             </table>
-            """.trimIndent(),
+            """.trimIndent()
+                .replace("\n", "")
+                .replace("\\s{2,}".toRegex(), ""),
             actual = root.innerHTML
         )
     }

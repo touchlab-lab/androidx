@@ -49,6 +49,12 @@ import org.w3c.dom.HTMLParagraphElement
 import org.w3c.dom.HTMLPreElement
 import org.w3c.dom.HTMLSelectElement
 import org.w3c.dom.HTMLSpanElement
+import org.w3c.dom.HTMLTableCaptionElement
+import org.w3c.dom.HTMLTableCellElement
+import org.w3c.dom.HTMLTableColElement
+import org.w3c.dom.HTMLTableElement
+import org.w3c.dom.HTMLTableRowElement
+import org.w3c.dom.HTMLTableSectionElement
 import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.HTMLUListElement
 import org.w3c.dom.Text
@@ -432,7 +438,7 @@ inline fun Label(
 
 @Composable
 inline fun Table(
-    crossinline attrs: (AttrsBuilder<Table>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Table>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableElement>.() -> Unit
 ) {
@@ -446,7 +452,7 @@ inline fun Table(
 
 @Composable
 inline fun Caption(
-    crossinline attrs: (AttrsBuilder<Caption>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Caption>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableCaptionElement>.() -> Unit
 ) {
@@ -460,7 +466,7 @@ inline fun Caption(
 
 @Composable
 inline fun Col(
-    crossinline attrs: (AttrsBuilder<Col>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Col>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableColElement>.() -> Unit
 ) {
@@ -474,7 +480,7 @@ inline fun Col(
 
 @Composable
 inline fun Colgroup(
-    crossinline attrs: (AttrsBuilder<Colgroup>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Colgroup>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableColElement>.() -> Unit
 ) {
@@ -488,7 +494,7 @@ inline fun Colgroup(
 
 @Composable
 inline fun Tr(
-    crossinline attrs: (AttrsBuilder<Tr>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Tr>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableRowElement>.() -> Unit
 ) {
@@ -502,7 +508,7 @@ inline fun Tr(
 
 @Composable
 inline fun Thead(
-    crossinline attrs: (AttrsBuilder<Thead>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Thead>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableSectionElement>.() -> Unit
 ) {
@@ -516,7 +522,7 @@ inline fun Thead(
 
 @Composable
 inline fun Th(
-    crossinline attrs: (AttrsBuilder<Th>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Th>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableCellElement>.() -> Unit
 ) {
@@ -530,7 +536,7 @@ inline fun Th(
 
 @Composable
 inline fun Td(
-    crossinline attrs: (AttrsBuilder<Td>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Td>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableCellElement>.() -> Unit
 ) {
@@ -544,7 +550,7 @@ inline fun Td(
 
 @Composable
 inline fun Tbody(
-    crossinline attrs: (AttrsBuilder<Tbody>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Tbody>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableSectionElement>.() -> Unit
 ) {
@@ -558,7 +564,7 @@ inline fun Tbody(
 
 @Composable
 inline fun Tfoot(
-    crossinline attrs: (AttrsBuilder<Tfoot>.() -> Unit) = {},
+    crossinline attrs: (AttrsBuilder<Tag.Tfoot>.() -> Unit) = {},
     crossinline style: (StyleBuilder.() -> Unit) = {},
     content: @Composable ElementScope<HTMLTableSectionElement>.() -> Unit
 ) {
