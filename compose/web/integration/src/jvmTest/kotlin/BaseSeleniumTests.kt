@@ -24,41 +24,33 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import org.junit.AfterClass
 import org.junit.BeforeClass
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import org.junit.runner.RunWith
+import org.junit.runner.notification.RunNotifier
+import org.junit.runners.Suite
+import org.junit.runners.model.RunnerBuilder
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.remote.RemoteWebDriver
 import java.io.File
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
 open class BaseSeleniumTests {
 
     companion object {
 
-        private const val PORT = 7777
-
-        private lateinit var server: ApplicationEngine
+        const val PORT = 7777
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            val homePath = System.getProperty("COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION")
-
-            server = embeddedServer(Netty, port = PORT) {
-                routing {
-                    static {
-                        staticRootFolder = File(homePath)
-                        files(".")
-                        default("index.html")
-                    }
-                }
-            }.start()
+            ServerHelper.startServer(this)
         }
 
         @AfterClass
         @JvmStatic
         fun afterClass() {
-            server.stop(1000, 1000)
+            ServerHelper.stopServer(this)
         }
     }
 
@@ -84,5 +76,63 @@ open class BaseSeleniumTests {
     fun after() {
         driver.close()
         driver.quit()
+    }
+}
+
+@RunWith(SuiteTestRunnerWithLocalhost::class)
+@Suite.SuiteClasses(
+    value = [
+        SeleniumTests::class,
+        SeleniumTests2::class
+    ]
+)
+class AllSeleniumTestsSuite
+
+private object ServerHelper {
+    private lateinit var server: ApplicationEngine
+
+    private var lock: Any? = null
+
+    /**
+     * @param lock - guarantees that a server is started only once
+     */
+    fun startServer(lock: Any) {
+        if (this.lock != null) return
+        this.lock = lock
+
+        val homePath = System.getProperty("COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION")
+
+        println("--- Starting localhost:${BaseSeleniumTests.PORT} using files in $homePath")
+
+        server = embeddedServer(Netty, port = BaseSeleniumTests.PORT) {
+            routing {
+                static {
+                    staticRootFolder = File(homePath)
+                    files(".")
+                    default("index.html")
+                }
+            }
+        }.start()
+    }
+
+    /**
+     * @param lock - guarantees that a server is stopped only by the same caller that started it
+     */
+    fun stopServer(lock: Any) {
+        if (this.lock != lock) return
+        this.lock = null
+        println("--- Stopping server")
+        server.stop(1000, 1000)
+    }
+}
+
+class SuiteTestRunnerWithLocalhost(
+    klass: Class<*>?,
+    builder: RunnerBuilder?
+) : Suite(klass, builder) {
+    override fun run(notifier: RunNotifier?) {
+        ServerHelper.startServer(this)
+        super.run(notifier)
+        ServerHelper.stopServer(this)
     }
 }
