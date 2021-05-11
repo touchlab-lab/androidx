@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import org.jetbrains.skiko.OS
 import org.junit.Ignore
 import org.openqa.selenium.By
 import org.openqa.selenium.chrome.ChromeDriver
@@ -31,24 +30,10 @@ import kotlin.test.assertEquals
 @Ignore("Ignored temporarily, before we install chromedriver on CI")
 class SeleniumTests {
 
-    private val currentOS: OS by lazy {
-        val os = System.getProperty("os.name")
-        when {
-            os.equals("Mac OS X", ignoreCase = true) -> OS.MacOS
-            os.startsWith("Win", ignoreCase = true) -> OS.Windows
-            os.startsWith("Linux", ignoreCase = true) -> OS.Linux
-            else -> error("Unknown OS name: $os")
-        }
-    }
-
-    private val homePath = if (currentOS.isWindows) {
-        System.getenv("HOMEPATH")
-    } else {
-        System.getenv("HOME")
-    }
+    private val homePath = System.getProperty("COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION")
 
     // TODO: run and use localhost http server instead of using the index.html
-    private val path = "file:///$homePath/compose-web-tmp/dist/index.html"
+    private val path = "file:///$homePath/index.html"
 
     private fun openTestPage(test: String) {
         driver.get("$path?test=$test")

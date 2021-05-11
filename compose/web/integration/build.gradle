@@ -51,6 +51,12 @@ kotlin {
                 implementation(npm('highlight.js', '10.7.2'))
             }
         }
+        jvmTest {
+            dependencies {
+                implementation kotlin("test-junit")
+                implementation("org.seleniumhq.selenium:selenium-java:3.141.59")
+            }
+        }
     }
 }
 
@@ -62,3 +68,10 @@ androidx {
     description = ""
     legacyDisableKotlinStrictApiMode = true
 }
+
+jvmTest {
+    systemProperty "COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION",
+            "${buildDir.toPath().toString()}/developmentExecutable"
+}
+
+jvmTest.dependsOn(jsBrowserDevelopmentWebpack)
