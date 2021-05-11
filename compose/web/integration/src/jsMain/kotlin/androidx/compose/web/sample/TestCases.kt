@@ -32,11 +32,11 @@ import androidx.compose.web.elements.Text
 import androidx.compose.web.elements.TextArea
 import androidx.compose.web.renderComposableInBody
 
-private val testCase1 = @Composable {
+private val helloWorldText = @Composable {
     Div { Text("Hello World!") }
 }
 
-private val testCase2 = @Composable {
+private val textAreaInputGetsPrinted = @Composable {
     var state by remember { mutableStateOf("") }
     Span(
         attrs = {
@@ -106,8 +106,8 @@ private val hoverOnDivUpdatesText = @Composable {
 }
 
 private val testCases = mapOf<String, @Composable () -> Unit>(
-    "testCase1" to testCase1,
-    "testCase2" to testCase2,
+    "testCase1" to helloWorldText,
+    "testCase2" to textAreaInputGetsPrinted,
     "testCase3" to buttonClicksUpdateCounterValue,
     "testCase4" to hoverOnDivUpdatesText
 )

@@ -16,49 +16,17 @@
 
 import org.junit.Ignore
 import org.openqa.selenium.By
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.remote.RemoteWebDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @Ignore("Ignored temporarily, before we install chromedriver on CI")
-class SeleniumTests {
-
-    private val homePath = System.getProperty("COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION")
-
-    // TODO: run and use localhost http server instead of using the index.html
-    private val path = "file:///$homePath/index.html"
-
-    private fun openTestPage(test: String) {
-        driver.get("$path?test=$test")
-    }
-
-    private val options = ChromeOptions().apply {
-        setHeadless(true)
-        addArguments("--no-sandbox")
-    }
-
-    private lateinit var driver: RemoteWebDriver
-
-    @BeforeTest
-    fun before() {
-        driver = ChromeDriver(options)
-    }
-
-    @AfterTest
-    fun after() {
-        driver.close()
-        driver.quit()
-    }
+class SeleniumTests : BaseSeleniumTests() {
 
     @Test
-    fun test() {
+    fun `text contains Hello World`() {
         openTestPage("testCase1")
         assertEquals(
             expected = "Hello World!",
@@ -67,7 +35,7 @@ class SeleniumTests {
     }
 
     @Test
-    fun test2() {
+    fun `text area input gets printed`() {
         openTestPage("testCase2")
 
         val input = driver.findElement(By.id("input"))
