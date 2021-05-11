@@ -24,16 +24,25 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import org.junit.AfterClass
 import org.junit.BeforeClass
+import org.junit.Ignore
+import org.junit.internal.builders.JUnit4Builder
 import org.junit.runner.RunWith
+import org.junit.runner.Runner
 import org.junit.runner.notification.RunNotifier
+import org.junit.runners.BlockJUnit4ClassRunner
 import org.junit.runners.Suite
+import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.RunnerBuilder
+import org.openqa.selenium.By
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.firefox.FirefoxDriver
+import org.openqa.selenium.firefox.FirefoxOptions
 import org.openqa.selenium.remote.RemoteWebDriver
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import java.util.Objects
 
 open class BaseSeleniumTests {
 
@@ -56,26 +65,17 @@ open class BaseSeleniumTests {
 
     private val path = "http://localhost:$PORT"
 
-    internal lateinit var driver: RemoteWebDriver
-
-    private val options = ChromeOptions().apply {
-        setHeadless(true)
-        addArguments("--no-sandbox")
-    }
+    val driver: RemoteWebDriver
+        get() = WebDriverProvider.threadLocalDriver.get()
 
     fun openTestPage(test: String) {
         driver.get("$path?test=$test")
     }
 
-    @BeforeTest
-    fun before() {
-        driver = ChromeDriver(options)
-    }
+    val wait = WebDriverWait(driver, 1)
 
-    @AfterTest
-    fun after() {
-        driver.close()
-        driver.quit()
+    fun waitTextToBe(textId: String, value: String) {
+        wait.until(ExpectedConditions.textToBe(By.id(textId), value))
     }
 }
 
@@ -86,7 +86,41 @@ open class BaseSeleniumTests {
         SeleniumTests2::class
     ]
 )
+@Ignore
 class AllSeleniumTestsSuite
+
+private object WebDriverProvider {
+    val chromeDriver: RemoteWebDriver by lazy {
+        createChromeDriver()
+    }
+
+    val firefoxDriver: RemoteWebDriver by lazy {
+        createFirefoxDriver()
+    }
+
+    val allDrivers: List<RemoteWebDriver> by lazy {
+        listOf(firefoxDriver, chromeDriver)
+    }
+
+    // ThreadLocal might help when we decide to run the tests in parallel
+    val threadLocalDriver = ThreadLocal<RemoteWebDriver>()
+
+    private fun createChromeDriver(): RemoteWebDriver {
+        val options = ChromeOptions().apply {
+            setHeadless(true)
+            addArguments("--no-sandbox")
+        }
+
+        return ChromeDriver(options)
+    }
+
+    private fun createFirefoxDriver(): RemoteWebDriver {
+        val options = FirefoxOptions().apply {
+            setHeadless(true)
+        }
+        return FirefoxDriver(options)
+    }
+}
 
 private object ServerHelper {
     private lateinit var server: ApplicationEngine
@@ -129,10 +163,72 @@ private object ServerHelper {
 class SuiteTestRunnerWithLocalhost(
     klass: Class<*>?,
     builder: RunnerBuilder?
-) : Suite(klass, builder) {
+) : Suite(
+    klass,
+    JUnit4BuilderWithSeleniumDrivers(
+        drivers = WebDriverProvider.allDrivers
+    )
+) {
     override fun run(notifier: RunNotifier?) {
         ServerHelper.startServer(this)
         super.run(notifier)
         ServerHelper.stopServer(this)
+
+        WebDriverProvider.allDrivers.forEach {
+            it.quit()
+        }
+    }
+}
+
+private class JUnit4BuilderWithSeleniumDrivers(
+    val drivers: List<RemoteWebDriver>
+) : JUnit4Builder() {
+    override fun runnerForClass(testClass: Class<*>?): Runner {
+        return ClassTestRunnerWithSeleniumWebDrivers(
+            drivers = drivers,
+            klass = testClass
+        )
+    }
+}
+
+@Suppress("EqualsOrHashCode")
+private class FrameworkMethodWithSeleniumDriver(
+    val driver: RemoteWebDriver,
+    private val method: FrameworkMethod
+) : FrameworkMethod(method.method) {
+
+    override fun getName(): String {
+        return super.getName() + " [${getDriverName(driver)}]"
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(method, getDriverName(driver))
+    }
+
+    private fun getDriverName(driver: RemoteWebDriver): String {
+        return when (driver) {
+            is ChromeDriver -> "chrome"
+            is FirefoxDriver -> "firefox"
+            else -> "other"
+        }
+    }
+}
+
+private class ClassTestRunnerWithSeleniumWebDrivers(
+    val drivers: List<RemoteWebDriver>,
+    klass: Class<*>?
+) : BlockJUnit4ClassRunner(klass) {
+
+    override fun runChild(method: FrameworkMethod?, notifier: RunNotifier?) {
+        WebDriverProvider.threadLocalDriver.set(
+            (method as FrameworkMethodWithSeleniumDriver).driver
+        )
+        super.runChild(method, notifier)
+    }
+
+    override fun getChildren(): MutableList<FrameworkMethod> {
+        return super.getChildren().flatMap { method ->
+            drivers.map { driver -> FrameworkMethodWithSeleniumDriver(driver, method) }
+        }.toMutableList()
     }
 }

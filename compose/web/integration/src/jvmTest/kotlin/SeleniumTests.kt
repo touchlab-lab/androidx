@@ -17,8 +17,6 @@
 import org.junit.Ignore
 import org.openqa.selenium.By
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -41,23 +39,19 @@ class SeleniumTests : BaseSeleniumTests() {
         val input = driver.findElement(By.id("input"))
         input.sendKeys("Hello")
 
-        val text = driver.findElement(By.id("result"))
-        assertEquals(expected = "Hello", actual = text.text)
+        waitTextToBe(textId = "result", value = "Hello")
     }
 
     @Test
     fun `multiple clicks on button update the counter after every click`() {
         openTestPage("buttonClicksUpdateCounterValue")
 
-        val wait = WebDriverWait(driver, 1)
-        fun waitTextToBe(t: String) = wait.until(ExpectedConditions.textToBe(By.id("txt"), t))
-
         val button = driver.findElement(By.id("btn"))
 
-        waitTextToBe("0")
+        waitTextToBe(textId = "txt", value = "0")
         repeat(3) {
             button.click()
-            waitTextToBe((it + 1).toString())
+            waitTextToBe(textId = "txt", value = (it + 1).toString())
         }
     }
 
@@ -65,18 +59,15 @@ class SeleniumTests : BaseSeleniumTests() {
     fun `hovering the box updates the text`() {
         openTestPage("hoverOnDivUpdatesText")
 
-        val wait = WebDriverWait(driver, 1)
-        fun waitTextToBe(t: String) = wait.until(ExpectedConditions.textToBe(By.id("txt"), t))
-
         val box = driver.findElement(By.id("box"))
-        waitTextToBe("not hovered")
+        waitTextToBe(textId = "txt", value = "not hovered")
 
         val actions = Actions(driver)
 
         actions.moveToElement(box).perform()
-        waitTextToBe("hovered")
+        waitTextToBe(textId = "txt", value = "hovered")
 
         actions.moveByOffset(300, 0).perform()
-        waitTextToBe("not hovered")
+        waitTextToBe(textId = "txt", value = "not hovered")
     }
 }
