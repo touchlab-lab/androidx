@@ -35,7 +35,7 @@ open class BaseSeleniumTests {
 
     companion object {
 
-        private const val PORT = 777
+        private const val PORT = 7777
 
         private lateinit var server: ApplicationEngine
 
