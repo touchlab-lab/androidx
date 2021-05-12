@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.interactions.Actions
+import org.junit.Ignore
 
 class InputsTests : BaseIntegrationTests() {
 
@@ -126,6 +127,7 @@ class InputsTests : BaseIntegrationTests() {
     }
 
     @Test
+    @Ignore
     fun `dateTimeLocal input updates the text`() { // WARNING: It's not supported in Firefox
         openTestPage("dateTimeLocalInputChangesText")
 
