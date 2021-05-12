@@ -32,7 +32,12 @@ dependencies {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        jvmTest {
+            testLogging.showStandardStreams = true
+        }
+    }
+
     js(IR) {
         browser()
         binaries.executable()
@@ -59,6 +64,8 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty:1.5.4")
                 implementation("io.ktor:ktor-server-core:1.5.4")
                 implementation("io.ktor:ktor-server-host-common:1.5.4")
+
+                implementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
             }
         }
     }

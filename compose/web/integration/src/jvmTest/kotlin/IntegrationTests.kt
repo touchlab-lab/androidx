@@ -13,15 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.junit.Ignore
 import org.openqa.selenium.By
 import org.openqa.selenium.interactions.Actions
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.chrome.ChromeOptions
+import org.openqa.selenium.remote.RemoteWebDriver
+import org.junit.BeforeClass
+import org.junit.AfterClass
 
-@Ignore("Ignored temporarily, before we install chromedriver on CI")
-class SeleniumTests : BaseSeleniumTests() {
+class IntegrationTests {
+
+    companion object : WithChromeDriver {
+        override val driver: RemoteWebDriver = ChromeDriver(
+            ChromeOptions().apply {
+                setHeadless(true)
+                addArguments("--no-sandbox")
+            }
+        )
+
+        @BeforeClass
+        @JvmStatic
+        fun setup() {
+            ServerLauncher.startServer(this)
+        }
+
+        @AfterClass
+        @JvmStatic
+        fun teardown() {
+            ServerLauncher.stopServer(this)
+        }
+    }
 
     @Test
     fun `text contains Hello World`() {
