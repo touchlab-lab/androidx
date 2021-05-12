@@ -22,6 +22,8 @@ import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.remote.RemoteWebDriver
 import org.junit.BeforeClass
 import org.junit.AfterClass
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 
 class IntegrationTests {
 
@@ -44,6 +46,12 @@ class IntegrationTests {
         fun teardown() {
             ServerLauncher.stopServer(this)
         }
+    }
+
+    private val wait = WebDriverWait(driver, 1)
+
+    private fun waitTextToBe(textId: String, value: String) {
+        wait.until(ExpectedConditions.textToBe(By.id(textId), value))
     }
 
     @Test
