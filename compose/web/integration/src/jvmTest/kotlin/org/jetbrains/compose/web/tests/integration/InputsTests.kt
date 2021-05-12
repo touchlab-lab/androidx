@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.interactions.Actions
-import org.junit.Ignore
 
 class InputsTests : BaseIntegrationTests() {
 
@@ -126,18 +125,17 @@ class InputsTests : BaseIntegrationTests() {
         waitTextToBe(value = "2021-10-12")
     }
 
-    @Test
-    @Ignore
-    fun `dateTimeLocal input updates the text`() { // WARNING: It's not supported in Firefox
-        openTestPage("dateTimeLocalInputChangesText")
-
-        waitTextToBe(value = "")
-
-        val timeInput = driver.findElement(By.id("dateTimeLocal"))
-
-        timeInput.sendKeys("12102021", Keys.TAB, "0925AM")
-        waitTextToBe(value = "2021-10-12T09:25")
-    }
+//    @Test
+//    fun `dateTimeLocal input updates the text`() { // WARNING: It's not supported in Firefox
+//        openTestPage("dateTimeLocalInputChangesText")
+//
+//        waitTextToBe(value = "")
+//
+//        val timeInput = driver.findElement(By.id("dateTimeLocal"))
+//
+//        timeInput.sendKeys("12102021", Keys.TAB, "0925AM")
+//        waitTextToBe(value = "2021-10-12T09:25")
+//    }
 
     @Test
     fun `file input updates the text`() {
