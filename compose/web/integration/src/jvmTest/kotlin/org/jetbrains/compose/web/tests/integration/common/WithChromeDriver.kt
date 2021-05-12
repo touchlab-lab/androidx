@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.compose.web.tests.integration
+package org.jetbrains.compose.web.tests.integration.common
 
 import org.openqa.selenium.remote.RemoteWebDriver
 import org.openqa.selenium.By
@@ -30,6 +30,6 @@ fun WithChromeDriver.openTestPage(test: String) {
     driver.get("$PATH?test=$test")
 }
 
-fun WithChromeDriver.waitTextToBe(textId: String, value: String) {
+fun WithChromeDriver.waitTextToBe(textId: String = "txt", value: String) {
     WebDriverWait(driver, 1).until(ExpectedConditions.textToBe(By.id(textId), value))
 }

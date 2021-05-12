@@ -16,52 +16,27 @@
 
 package androidx.compose.web.sample.tests
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.web.css.backgroundColor
 import androidx.compose.web.css.height
 import androidx.compose.web.css.px
 import androidx.compose.web.css.width
 import androidx.compose.web.elements.Button
 import androidx.compose.web.elements.Div
-import androidx.compose.web.elements.Span
 import androidx.compose.web.elements.Text
-import androidx.compose.web.elements.TextArea
 
 class TestCases1 {
     val helloWorldText by testCase {
         Div { Text("Hello World!") }
     }
 
-    val textAreaInputGetsPrinted by testCase {
-        var state by remember { mutableStateOf("") }
-        Span(
-            attrs = {
-                id("result")
-            }
-        ) {
-            Text(state)
-        }
-
-        TextArea(
-            value = state,
-            attrs = {
-                id("input")
-                onTextInput { state = it.inputValue }
-            }
-        )
-    }
-
     val buttonClicksUpdateCounterValue by testCase {
         var count by remember { mutableStateOf(0) }
 
-        Span(
-            attrs = { id("txt") }
-        ) {
-            Text(count.toString())
-        }
+        TestText(value = count.toString())
 
         Button(
             attrs = {
@@ -76,13 +51,9 @@ class TestCases1 {
     val hoverOnDivUpdatesText by testCase {
         var hovered by remember { mutableStateOf(false) }
 
-        Span(
-            attrs = {
-                id("txt")
-            }
-        ) {
-            Text(if (hovered) "hovered" else "not hovered")
-        }
+        TestText(
+            value = if (hovered) "hovered" else "not hovered"
+        )
 
         Div(
             attrs = {

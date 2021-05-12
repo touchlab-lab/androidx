@@ -35,6 +35,11 @@ kotlin {
     jvm {
         jvmTest {
             testLogging.showStandardStreams = true
+
+            useJUnitPlatform()
+
+            systemProperty "COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION",
+                    "${buildDir.toPath().toString()}/developmentExecutable"
         }
     }
 
@@ -58,7 +63,6 @@ kotlin {
         }
         jvmTest {
             dependencies {
-                implementation kotlin("test-junit")
                 implementation("org.seleniumhq.selenium:selenium-java:3.141.59")
 
                 implementation("io.ktor:ktor-server-netty:1.5.4")
@@ -66,6 +70,7 @@ kotlin {
                 implementation("io.ktor:ktor-server-host-common:1.5.4")
 
                 implementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+                implementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
             }
         }
     }
@@ -78,11 +83,6 @@ androidx {
     inceptionYear = "2021"
     description = ""
     legacyDisableKotlinStrictApiMode = true
-}
-
-jvmTest {
-    systemProperty "COMPOSE_WEB_INTEGRATION_TESTS_DISTRIBUTION",
-            "${buildDir.toPath().toString()}/developmentExecutable"
 }
 
 jvmTest.dependsOn(jsBrowserDevelopmentWebpack)

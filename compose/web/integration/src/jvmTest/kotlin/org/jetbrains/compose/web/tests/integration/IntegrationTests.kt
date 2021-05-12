@@ -13,58 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.jetbrains.compose.web.tests.integration
 
+import org.jetbrains.compose.web.tests.integration.common.BaseIntegrationTests
+import org.jetbrains.compose.web.tests.integration.common.openTestPage
+import org.jetbrains.compose.web.tests.integration.common.waitTextToBe
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.openqa.selenium.By
 import org.openqa.selenium.interactions.Actions
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.remote.RemoteWebDriver
-import org.junit.BeforeClass
-import org.junit.AfterClass
 
-class IntegrationTests {
-
-    companion object : WithChromeDriver {
-        override val driver: RemoteWebDriver = ChromeDriver(
-            ChromeOptions().apply {
-                setHeadless(true)
-                addArguments("--no-sandbox")
-            }
-        )
-
-        @BeforeClass
-        @JvmStatic
-        fun setup() {
-            ServerLauncher.startServer(this)
-        }
-
-        @AfterClass
-        @JvmStatic
-        fun teardown() {
-            ServerLauncher.stopServer(this)
-        }
-    }
+class IntegrationTests : BaseIntegrationTests() {
 
     @Test
     fun `text contains Hello World`() {
         openTestPage("helloWorldText")
         assertEquals(
-            expected = "Hello World!",
-            actual = driver.findElementByTagName("div").text
+            "Hello World!",
+            driver.findElementByTagName("div").text
         )
-    }
-
-    @Test
-    fun `text area input gets printed`() {
-        openTestPage("textAreaInputGetsPrinted")
-
-        val input = driver.findElement(By.id("input"))
-        input.sendKeys("Hello")
-
-        waitTextToBe(textId = "result", value = "Hello")
     }
 
     @Test

@@ -87,6 +87,13 @@ open class EventsListenerBuilder {
         listeners.add(WrappedEventListener(INPUT, options, listener))
     }
 
+    fun onGenericInput(
+        options: Options = Options.DEFAULT,
+        listener: (GenericWrappedEvent<*>) -> Unit
+    ) {
+        listeners.add(WrappedEventListener(INPUT, options, listener))
+    }
+
     fun onChange(options: Options = Options.DEFAULT, listener: (WrappedEvent) -> Unit) {
         listeners.add(WrappedEventListener(CHANGE, options, listener))
     }
