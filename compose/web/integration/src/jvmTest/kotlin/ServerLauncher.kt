@@ -21,6 +21,7 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+package org.jetbrains.compose.web.tests.integration
 
 import java.io.File
 

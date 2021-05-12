@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.compose.web.tests.integration
+
 import org.openqa.selenium.By
 import org.openqa.selenium.interactions.Actions
 import kotlin.test.Test
