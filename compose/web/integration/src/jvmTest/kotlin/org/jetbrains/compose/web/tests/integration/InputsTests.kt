@@ -113,17 +113,17 @@ class InputsTests : BaseIntegrationTests() {
         waitTextToBe(value = "15:00")
     }
 
-    @Test
-    fun `date input updates the text`() {
-        openTestPage("dateInputChangesText")
-
-        waitTextToBe(value = "")
-
-        val timeInput = driver.findElement(By.id("date"))
-
-        timeInput.sendKeys("12102021")
-        waitTextToBe(value = "2021-10-12")
-    }
+//    @Test
+//    fun `date input updates the text`() {
+//        openTestPage("dateInputChangesText")
+//
+//        waitTextToBe(value = "")
+//
+//        val timeInput = driver.findElement(By.id("date"))
+//
+//        timeInput.sendKeys("12102021")
+//        waitTextToBe(value = "2021-10-12")
+//    }
 
 //    @Test
 //    fun `dateTimeLocal input updates the text`() { // WARNING: It's not supported in Firefox
