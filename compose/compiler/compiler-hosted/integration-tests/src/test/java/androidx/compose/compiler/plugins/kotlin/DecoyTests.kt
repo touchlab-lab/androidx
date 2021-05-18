@@ -20,6 +20,40 @@ import org.intellij.lang.annotations.Language
 import org.junit.Test
 
 class DecoyTests : ComposeIrTransformTest() {
+
+    @Test
+    fun testWhileWithKey() = verifyDecoys(
+        source = """
+            @NonRestartableComposable @Composable
+            fun Example(x: Int) {
+                while (x > 0) {
+                    key(x) {
+                        A()
+                    }
+                }
+            }
+        """.trimIndent(),
+        """
+            @Decoy(targetName = "Example%composable", signature = "", "Example%composable", "4127392143323184578", "0")
+            fun Example(x: Int) {
+              return illegalDecoyCallException("Example")
+            }
+            @NonRestartableComposable
+            @Composable
+            @DecoyImplementation(name = "Example%composable", id = 1540031808018075376L)
+            fun Example%composable(x: Int, %composer: Composer?, %changed: Int) {
+              var %composer = %composer
+              %composer.startReplaceableGroup(<>, "C(Example%composable):Test.kt")
+              while (x > 0) {
+                %composer.startMovableGroup(<>, x, "<A()>")
+                A%composable(%composer, 0)
+                %composer.endMovableGroup()
+              }
+              %composer.endReplaceableGroup()
+            }
+        """.trimIndent()
+    )
+
     @Test
     fun testDecoysForTopLevelComposable() =
         verifyDecoys(
@@ -1151,6 +1185,7 @@ class DecoyTests : ComposeIrTransformTest() {
             import androidx.compose.runtime.Composable
             import androidx.compose.runtime.NonRestartableComposable
             import androidx.compose.runtime.Stable
+            import androidx.compose.runtime.key
 
             $source
             """.trimIndent(),

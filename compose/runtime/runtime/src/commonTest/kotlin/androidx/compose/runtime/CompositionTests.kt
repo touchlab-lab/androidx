@@ -1996,7 +1996,6 @@ class CompositionTests {
     }
 
     @Test // b/152753046
-    @kotlinx.test.IgnoreJsTarget
     fun testSwappingGroups() = compositionTest {
         val items = mutableListOf(0, 1, 2, 3, 4)
         var scope: RecomposeScope? = null
