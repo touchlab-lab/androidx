@@ -66,6 +66,7 @@ import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.explicitParameters
 import org.jetbrains.kotlin.ir.util.fileOrNull
@@ -344,6 +345,7 @@ class ComposerParamTransformer(
         isInline: Boolean = this.isInline,
         modality: Modality = descriptor.modality
     ): IrSimpleFunction {
+//        return this.deepCopyWithSymbols(initialParent = this.parent) as IrSimpleFunction
         // TODO(lmr): use deepCopy instead?
         val descriptor = descriptor
 
@@ -610,7 +612,7 @@ class ComposerParamTransformer(
         for (element in inlinedFunctions) {
             if (element.argument.function != this)
                 continue
-            if (!element.parameter.descriptor.type.hasComposableAnnotation())
+            if (!element.parameter.type.hasComposableAnnotation())
                 return true
         }
         return false

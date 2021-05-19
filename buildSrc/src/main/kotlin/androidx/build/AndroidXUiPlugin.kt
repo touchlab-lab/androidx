@@ -93,7 +93,7 @@ class AndroidXUiPlugin : Plugin<Project> {
 
                     project.tasks.withType(KotlinJvmCompile::class.java)
                         .configureEach { compile ->
-                            compile.kotlinOptions.useIR = true
+                            //compile.kotlinOptions.useIR = true
                             configure(compile)
                         }
 
