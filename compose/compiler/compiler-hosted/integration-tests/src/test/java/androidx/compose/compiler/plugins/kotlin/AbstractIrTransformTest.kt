@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.js.messageCollectorLogger
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
@@ -545,8 +546,9 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
             val analyzer = AnalyzerWithCompilerReport(environment.configuration)
             val deps = jsResolveLibraries(
                 dependencyFiles,
+                emptyList(),
                 messageCollectorLogger(
-                    environment.configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY]!!
+                    environment.configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY]!! as MessageCollector
                 )
             )
 

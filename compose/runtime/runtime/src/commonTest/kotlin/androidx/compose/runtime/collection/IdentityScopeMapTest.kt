@@ -16,6 +16,7 @@
 
 package androidx.compose.runtime.collection
 
+import kotlinx.test.IgnoreJsTarget
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -133,6 +134,7 @@ class IdentityScopeMapTest {
     }
 
     @Test
+    @IgnoreJsTarget
     fun canUseIn() {
         val valueC = "C"
         map.add(valueList[0], scopeList[0])

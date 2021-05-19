@@ -610,7 +610,7 @@ class ComposerParamTransformer(
         for (element in inlinedFunctions) {
             if (element.argument.function != this)
                 continue
-            if (!element.parameter.descriptor.type.hasComposableAnnotation())
+            if (!element.parameter.type.hasComposableAnnotation())
                 return true
         }
         return false

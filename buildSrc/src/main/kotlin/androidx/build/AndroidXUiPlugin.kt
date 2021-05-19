@@ -91,7 +91,7 @@ class AndroidXUiPlugin : Plugin<Project> {
                     }
 
                     project.tasks.withType(KotlinJvmCompile::class.java)
-                        .configureEach(compile)
+                        .configureEach(configure)
 
                     project.tasks.withType(KotlinJsCompile::class.java)
                         .configureEach(configure)

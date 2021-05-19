@@ -43,9 +43,11 @@ class DecoyTests : ComposeIrTransformTest() {
             @DecoyImplementation(name = "Example%composable", id = 1540031808018075376L)
             fun Example%composable(x: Int, %composer: Composer?, %changed: Int) {
               var %composer = %composer
-              %composer.startReplaceableGroup(<>, "C(Example%composable):Test.kt")
+              %composer.startReplaceableGroup(<>)
+              sourceInformation(%composer, "C(Example%composable):Test.kt")
               while (x > 0) {
-                %composer.startMovableGroup(<>, x, "<A()>")
+                %composer.startMovableGroup(<>, x)
+                sourceInformation(%composer, "<A()>")
                 A%composable(%composer, 0)
                 %composer.endMovableGroup()
               }
@@ -71,7 +73,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "myFunction%composable", id = 6724225025824466888L)
                 fun myFunction%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(myFunction%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(myFunction%composable):Test.kt")
                   %composer.endReplaceableGroup()
                 }
             """.trimIndent()
@@ -99,7 +102,8 @@ class DecoyTests : ComposeIrTransformTest() {
                   @DecoyImplementation(name = "myFunction%composable", id = 6724225025824466888L)
                   fun myFunction%composable(%composer: Composer?, %changed: Int) {
                     var %composer = %composer
-                    %composer.startReplaceableGroup(<>, "C(myFunction%composable):Test.kt")
+                    %composer.startReplaceableGroup(<>)
+                    sourceInformation(%composer, "C(myFunction%composable):Test.kt")
                     %composer.endReplaceableGroup()
                   }
                 }
@@ -123,7 +127,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "%get-someProperty%%composable", id = -4577413779453222054L)
                 fun %get-someProperty%%composable(%composer: Composer?, %changed: Int): String {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(%get-someProperty%%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(%get-someProperty%%composable):Test.kt")
                   val tmp0 = ""
                   %composer.endReplaceableGroup()
                   return tmp0
@@ -150,7 +155,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "myFunction%composable", id = 6724225025824466888L)
                 fun myFunction%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(myFunction%composable)<A()>:Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(myFunction%composable)<A()>:Test.kt")
                   A%composable(%composer, 0)
                   %composer.endReplaceableGroup()
                 }
@@ -182,7 +188,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "%get-someProperty%%composable", id = -4577413779453222054L)
                 fun %get-someProperty%%composable(%composer: Composer?, %changed: Int): String {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(%get-someProperty%%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(%get-someProperty%%composable):Test.kt")
                   val tmp0 = ""
                   %composer.endReplaceableGroup()
                   return tmp0
@@ -192,7 +199,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "myFunction%composable", id = 6724225025824466888L)
                 fun myFunction%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(myFunction%composable)<somePr...>:Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(myFunction%composable)<somePr...>:Test.kt")
                   println(%get-someProperty%%composable(%composer, 0))
                   %composer.endReplaceableGroup()
                 }
@@ -220,7 +228,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "myFunction%composable", id = 30396251832882702L)
                 fun <T> myFunction%composable(param: Boolean, value: T, %composer: Composer?, %changed: Int): T? {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(myFunction%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(myFunction%composable):Test.kt")
                   if (param) {
                     val tmp0_return = value
                     %composer.endReplaceableGroup()
@@ -261,7 +270,8 @@ class DecoyTests : ComposeIrTransformTest() {
                   @DecoyImplementation(name = "myFunction%composable", id = -7842536290152739736L)
                   fun myFunction%composable(param: Boolean, value: T, %composer: Composer?, %changed: Int): T? {
                     var %composer = %composer
-                    %composer.startReplaceableGroup(<>, "C(myFunction%composable):Test.kt")
+                    %composer.startReplaceableGroup(<>)
+                    sourceInformation(%composer, "C(myFunction%composable):Test.kt")
                     if (param) {
                       val tmp0_return = value
                       %composer.endReplaceableGroup()
@@ -298,7 +308,8 @@ class DecoyTests : ComposeIrTransformTest() {
                   @DecoyImplementation(name = "%get-myProperty%%composable", id = 2813712154409589600L)
                   fun %get-myProperty%%composable(%composer: Composer?, %changed: Int): T? {
                     var %composer = %composer
-                    %composer.startReplaceableGroup(<>, "C(%get-myProperty%%composable):Test.kt")
+                    %composer.startReplaceableGroup(<>)
+                    sourceInformation(%composer, "C(%get-myProperty%%composable):Test.kt")
                     val tmp0 = null
                     %composer.endReplaceableGroup()
                     return tmp0
@@ -380,7 +391,8 @@ class DecoyTests : ComposeIrTransformTest() {
                   @DecoyImplementation(name = "a%composable", id = -4432112437378250461L)
                   override fun a%composable(%composer: Composer?, %changed: Int): Int {
                     var %composer = %composer
-                    %composer.startReplaceableGroup(<>, "C(a%composable):Test.kt")
+                    %composer.startReplaceableGroup(<>)
+                    sourceInformation(%composer, "C(a%composable):Test.kt")
                     val tmp0 = 0
                     %composer.endReplaceableGroup()
                     return tmp0
@@ -431,7 +443,8 @@ class DecoyTests : ComposeIrTransformTest() {
                   @DecoyImplementation(name = "a%composable", id = -4432112437378250461L)
                   override fun a%composable(%composer: Composer?, %changed: Int): Int {
                     var %composer = %composer
-                    %composer.startReplaceableGroup(<>, "C(a%composable):Test.kt")
+                    %composer.startReplaceableGroup(<>)
+                    sourceInformation(%composer, "C(a%composable):Test.kt")
                     val tmp0 = 0
                     %composer.endReplaceableGroup()
                     return tmp0
@@ -441,7 +454,8 @@ class DecoyTests : ComposeIrTransformTest() {
                   @DecoyImplementation(name = "b%composable", id = 4789657038926421504L)
                   fun b%composable(%composer: Composer?, %changed: Int) {
                     var %composer = %composer
-                    %composer.startReplaceableGroup(<>, "C(b%composable)<a()>:Test.kt")
+                    %composer.startReplaceableGroup(<>)
+                    sourceInformation(%composer, "C(b%composable)<a()>:Test.kt")
                     a%composable(%composer, 0b1110 and %changed)
                     %composer.endReplaceableGroup()
                   }
@@ -481,7 +495,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = 7403804501910746229L)
                 fun a%composable(value: IntroFace, %composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(a%composable)<a<Int>...>:Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(a%composable)<a<Int>...>:Test.kt")
                   value.a%composable(%composer, 0b1110 and %changed)
                   %composer.endReplaceableGroup()
                 }
@@ -511,7 +526,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = -4432112437378250461L)
                 fun a%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer = %composer.startRestartGroup(<>, "C(a%composable)<rememb...>:Test.kt")
+                  %composer = %composer.startRestartGroup(<>)
+                  sourceInformation(%composer, "C(a%composable)<rememb...>:Test.kt")
                   if (%changed !== 0 || !%composer.skipping) {
                     remember%composable(%composer.composition, {
                     }, %composer, 0)
@@ -562,7 +578,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = -4432112437378250461L)
                 fun a%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(a%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(a%composable):Test.kt")
                   %composer.endReplaceableGroup()
                 }
                 @Composable
@@ -570,7 +587,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = 6611953703272633265L)
                 fun a%composable(param: Int, %composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(a%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(a%composable):Test.kt")
                   %composer.endReplaceableGroup()
                 }
                 @Composable
@@ -578,7 +596,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "test%composable", id = 6620506149988718649L)
                 fun test%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(test%composable)<a()>,<a(para...>:Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(test%composable)<a()>,<a(para...>:Test.kt")
                   a%composable(%composer, 0)
                   a%composable(0, %composer, 0b0110)
                   %composer.endReplaceableGroup()
@@ -606,7 +625,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = -3955326755550631944L)
                 fun a%composable(f: Function2<Composer, Int, Unit>, %composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(a%composable)<f()>:Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(a%composable)<f()>:Test.kt")
                   f(%composer, 0b1110 and %changed)
                   %composer.endReplaceableGroup()
                 }
@@ -628,8 +648,9 @@ class DecoyTests : ComposeIrTransformTest() {
                   return illegalDecoyCallException("a")
                 }
                 internal object ComposableSingletons%TestKt {
-                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false, "C:Test.kt") { %composer: Composer?, %changed: Int ->
+                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false) { %composer: Composer?, %changed: Int ->
                     var %composer = %composer
+                    sourceInformation(%composer, "C:Test.kt")
                     if (%changed and 0b1011 xor 0b0010 !== 0 || !%composer.skipping) {
                       Unit
                     } else {
@@ -641,7 +662,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = -4432112437378250461L)
                 fun a%composable(%composer: Composer?, %changed: Int): Function2<Composer, Int, Unit> {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(a%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(a%composable):Test.kt")
                   val tmp0 = ComposableSingletons%TestKt.lambda-1
                   %composer.endReplaceableGroup()
                   return tmp0
@@ -674,8 +696,9 @@ class DecoyTests : ComposeIrTransformTest() {
                   return illegalDecoyCallException("b")
                 }
                 internal object ComposableSingletons%TestKt {
-                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false, "C:Test.kt") { %composer: Composer?, %changed: Int ->
+                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false) { %composer: Composer?, %changed: Int ->
                     var %composer = %composer
+                    sourceInformation(%composer, "C:Test.kt")
                     if (%changed and 0b1011 xor 0b0010 !== 0 || !%composer.skipping) {
                       Unit
                     } else {
@@ -688,14 +711,16 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "a%composable", id = -3637875817732186957L)
                 fun Function2<Composer, Int, Unit>.a%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(a%composable):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(a%composable):Test.kt")
                   %composer.endReplaceableGroup()
                 }
                 @Composable
                 @DecoyImplementation(name = "b%composable", id = 4789657038926421504L)
                 fun b%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer = %composer.startRestartGroup(<>, "C(b%composable)<a()>:Test.kt")
+                  %composer = %composer.startRestartGroup(<>)
+                  sourceInformation(%composer, "C(b%composable)<a()>:Test.kt")
                   if (%changed !== 0 || !%composer.skipping) {
                     val something = ComposableSingletons%TestKt.lambda-1
                     something.a%composable(%composer, 0)
@@ -724,8 +749,9 @@ class DecoyTests : ComposeIrTransformTest() {
                   return EmptyComposable
                 }
                 internal object ComposableSingletons%TestKt {
-                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false, "C:") { %composer: Composer?, %changed: Int ->
+                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false) { %composer: Composer?, %changed: Int ->
                     var %composer = %composer
+                    sourceInformation(%composer, "C:Test.kt")
                     if (%changed and 0b1011 xor 0b0010 !== 0 || !%composer.skipping) {
                       Unit
                     } else {
@@ -758,7 +784,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "onCommit%composable", id = 3418784457683034909L)
                 fun onCommit%composable(inputs: Array<out Any?>, %composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer = %composer.startRestartGroup(<>, "C(onCommit%composable)<onComm...>:Test.kt")
+                  %composer = %composer.startRestartGroup(<>)
+                  sourceInformation(%composer, "C(onCommit%composable)<onComm...>:Test.kt")
                   val %dirty = %changed
                   %composer.startReplaceableGroup(inputs.size)
                   val tmp0_iterator = inputs.iterator()
@@ -811,7 +838,8 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "emit%composable", id = -789693119272983178L)
                 fun <T> emit%composable(f: Function2<Composer, Int, T>, %composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(emit%composable)<f()>:Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(emit%composable)<f()>:Test.kt")
                   f(%composer, 0b1110 and %changed)
                   %composer.endReplaceableGroup()
                 }
@@ -819,11 +847,13 @@ class DecoyTests : ComposeIrTransformTest() {
                 @DecoyImplementation(name = "Something%composable", id = 6101469802196086059L)
                 fun Something%composable(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer = %composer.startRestartGroup(<>, "C(Something%composable)<emit>:Test.kt")
+                  %composer = %composer.startRestartGroup(<>)
+                  sourceInformation(%composer, "C(Something%composable)<emit>:Test.kt")
                   if (%changed !== 0 || !%composer.skipping) {
                     emit%composable({ %composer: Composer?, %changed: Int ->
                       var %composer = %composer
-                      %composer.startReplaceableGroup(<>, "C<Someth...>:Test.kt")
+                      %composer.startReplaceableGroup(<>)
+                      sourceInformation(%composer, "C<Someth...>:Test.kt")
                       if (%changed and 0b1011 xor 0b0010 !== 0 || !%composer.skipping) {
                         Something%composable(%composer, 0)
                       } else {
@@ -875,8 +905,9 @@ class DecoyTests : ComposeIrTransformTest() {
                   Test(0, ComposableSingletons%TestKt.lambda-1)
                 }
                 internal object ComposableSingletons%TestKt {
-                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false, "C:Test.kt") { %composer: Composer?, %changed: Int ->
+                  val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false) { %composer: Composer?, %changed: Int ->
                     var %composer = %composer
+                    sourceInformation(%composer, "C:Test.kt")
                     if (%changed and 0b1011 xor 0b0010 !== 0 || !%composer.skipping) {
                       Unit
                     } else {
@@ -958,7 +989,8 @@ class DecoyTests : ComposeIrTransformTest() {
             fun Something%composable(i: Int, %composer: Composer?, %changed: Int, %default: Int) {
               var i = i
               var %composer = %composer
-              %composer = %composer.startRestartGroup(<>, "C(Something%composable):Test.kt")
+              %composer = %composer.startRestartGroup(<>)
+              sourceInformation(%composer, "C(Something%composable):Test.kt")
               if (%changed and 0b0001 !== 0 || !%composer.skipping) {
                 if (%default and 0b0001 !== 0) {
                   i = 5
@@ -974,7 +1006,8 @@ class DecoyTests : ComposeIrTransformTest() {
             @DecoyImplementation(name = "callSomething%composable", id = -9102957534442699635L)
             fun callSomething%composable(%composer: Composer?, %changed: Int) {
               var %composer = %composer
-              %composer = %composer.startRestartGroup(<>, "C(callSomething%composable)<Someth...>,<Someth...>:Test.kt")
+              %composer = %composer.startRestartGroup(<>)
+              sourceInformation(%composer, "C(callSomething%composable)<Someth...>,<Someth...>:Test.kt")
               if (%changed !== 0 || !%composer.skipping) {
                 Something%composable(0, %composer, 0, 0b0001)
                 Something%composable(100, %composer, 0b0110, 0)
@@ -1002,8 +1035,9 @@ class DecoyTests : ComposeIrTransformTest() {
               return illegalDecoyCallException("Something")
             }
             internal object ComposableSingletons%TestKt {
-              val lambda-1: Function3<Int, Composer, Int, Unit> = composableLambdaInstance(<>, false, "C:Test.kt") { it: Int, %composer: Composer?, %changed: Int ->
+              val lambda-1: Function3<Int, Composer, Int, Unit> = composableLambdaInstance(<>, false) { it: Int, %composer: Composer?, %changed: Int ->
                 var %composer = %composer
+                sourceInformation(%composer, "C:Test.kt")
                 if (%changed and 0b01010001 xor 0b00010000 !== 0 || !%composer.skipping) {
                   Unit
                 } else {
@@ -1016,7 +1050,8 @@ class DecoyTests : ComposeIrTransformTest() {
             fun Something%composable(f: Function3<Int, Composer, Int, Unit>?, %composer: Composer?, %changed: Int, %default: Int) {
               var f = f
               var %composer = %composer
-              %composer = %composer.startRestartGroup(<>, "C(Something%composable)<f(0)>:Test.kt")
+              %composer = %composer.startRestartGroup(<>)
+              sourceInformation(%composer, "C(Something%composable)<f(0)>:Test.kt")
               val %dirty = %changed
               if (%changed and 0b1110 === 0) {
                 %dirty = %dirty or if (%default and 0b0001 === 0 && %composer.changed(f)) 0b0100 else 0b0010
@@ -1074,7 +1109,8 @@ class DecoyTests : ComposeIrTransformTest() {
               @DecoyImplementation(name = "test%composable", id = 6620506149988718649L)
               override fun test%composable(%composer: Composer?, %changed: Int) {
                 var %composer = %composer
-                %composer.startReplaceableGroup(<>, "C(test%composable):Test.kt")
+                %composer.startReplaceableGroup(<>)
+                sourceInformation(%composer, "C(test%composable):Test.kt")
                 %composer.endReplaceableGroup()
               }
             }
@@ -1094,7 +1130,8 @@ class DecoyTests : ComposeIrTransformTest() {
               @Composable
               fun test(%composer: Composer?, %changed: Int) {
                 var %composer = %composer
-                %composer.startReplaceableGroup(<>, "C(test):Test.kt")
+                %composer.startReplaceableGroup(<>)
+                sourceInformation(%composer, "C(test):Test.kt")
                 %composer.endReplaceableGroup()
               }
             }
@@ -1120,12 +1157,14 @@ class DecoyTests : ComposeIrTransformTest() {
             @DecoyImplementation(name = "test%composable", id = 6620506149988718649L)
             fun test%composable(%composer: Composer?, %changed: Int) {
               var %composer = %composer
-              %composer = %composer.startRestartGroup(<>, "C(test%composable)<inner(...>:Test.kt")
+              %composer = %composer.startRestartGroup(<>)
+              sourceInformation(%composer, "C(test%composable)<inner(...>:Test.kt")
               if (%changed !== 0 || !%composer.skipping) {
                 @Composable
                 fun inner(%composer: Composer?, %changed: Int) {
                   var %composer = %composer
-                  %composer.startReplaceableGroup(<>, "C(inner):Test.kt")
+                  %composer.startReplaceableGroup(<>)
+                  sourceInformation(%composer, "C(inner):Test.kt")
                   %composer.endReplaceableGroup()
                 }
                 inner(%composer, 0)
@@ -1156,7 +1195,8 @@ class DecoyTests : ComposeIrTransformTest() {
             @DecoyImplementation(name = "SimpleBox%composable", id = 9130371992496279898L)
             fun SimpleBox%composable(modifier: Modifier, %composer: Composer?, %changed: Int) {
               var %composer = %composer
-              %composer = %composer.startRestartGroup(<>, "C(SimpleBox%composable):Test.kt")
+              %composer = %composer.startRestartGroup(<>)
+              sourceInformation(%composer, "C(SimpleBox%composable):Test.kt")
               val %dirty = %changed
               if (%changed and 0b1110 === 0) {
                 %dirty = %dirty or if (%composer.changed(modifier)) 0b0100 else 0b0010
@@ -1171,6 +1211,50 @@ class DecoyTests : ComposeIrTransformTest() {
               }
             }
         """.trimIndent()
+    )
+
+    @Test
+    fun testCallingAWrapperComposableJS(): Unit = verifyDecoys(
+        """
+            @Composable
+            fun Test() {
+              W {
+                A()
+              }
+            }
+        """,
+        """
+            @Decoy(targetName = "Test%composable", signature = "", "Test%composable", "8019329703648006073", "0")
+            fun Test() {
+              return illegalDecoyCallException("Test")
+            }
+            internal object ComposableSingletons%TestKt {
+              val lambda-1: Function2<Composer, Int, Unit> = composableLambdaInstance(<>, false) { %composer: Composer?, %changed: Int ->
+                var %composer = %composer
+                sourceInformation(%composer, "C<A()>:Test.kt")
+                if (%changed and 0b1011 xor 0b0010 !== 0 || !%composer.skipping) {
+                  A%composable(%composer, 0)
+                } else {
+                  %composer.skipToGroupEnd()
+                }
+              }::invoke
+            }
+            @Composable
+            @DecoyImplementation(name = "Test%composable", id = 117512589682537508L)
+            fun Test%composable(%composer: Composer?, %changed: Int) {
+              var %composer = %composer
+              %composer = %composer.startRestartGroup(<>)
+              sourceInformation(%composer, "C(Test%composable)<W>:Test.kt")
+              if (%changed !== 0 || !%composer.skipping) {
+                W%composable(ComposableSingletons%TestKt.lambda-1, %composer, 0)
+              } else {
+                %composer.skipToGroupEnd()
+              }
+              %composer.endRestartGroup()?.updateScope { %composer: Composer?, %force: Int ->
+                Test%composable(%composer, %changed or 0b0001)
+              }
+            }
+        """
     )
 
     override val decoysEnabled: Boolean get() = true
@@ -1202,6 +1286,7 @@ class DecoyTests : ComposeIrTransformTest() {
             
              @Composable fun A() {}
              fun used(x: Any?) {}
+             @Composable fun W(content: @Composable () -> Unit) { content() }
             """.trimIndent(),
             dumpTree = dumpTree,
             compilation = JsCompilation(verifySignatures = true),
