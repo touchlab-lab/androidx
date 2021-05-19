@@ -106,7 +106,7 @@ package android.support.wearable.watchface.accessibility {
     method public static android.support.wearable.complications.ComplicationText makeTimeAsComplicationText(android.content.Context);
   }
 
-  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public final class ContentDescriptionLabel implements android.os.Parcelable {
+  @RequiresApi(android.os.Build.VERSION_CODES.KITKAT) @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public final class ContentDescriptionLabel implements android.os.Parcelable {
     ctor public ContentDescriptionLabel(android.graphics.Rect, android.support.wearable.complications.ComplicationTextTemplate);
     ctor public ContentDescriptionLabel(android.graphics.Rect, android.support.wearable.complications.ComplicationText);
     ctor public ContentDescriptionLabel(android.content.Context, android.graphics.Rect, android.support.wearable.complications.ComplicationData);
@@ -136,6 +136,22 @@ package androidx.wear.watchface.control.data {
     field public static final android.os.Parcelable.Creator<androidx.wear.watchface.control.data.ComplicationRenderParams!>! CREATOR;
   }
 
+  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) public class CrashInfoParcel implements android.os.Parcelable {
+    ctor public CrashInfoParcel(Throwable);
+    method public int describeContents();
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final android.os.Parcelable.Creator<androidx.wear.watchface.control.data.CrashInfoParcel!>! CREATOR;
+    field public final android.app.ApplicationErrorReport.CrashInfo crashInfo;
+  }
+
+  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) @androidx.versionedparcelable.VersionedParcelize public class DefaultProviderPoliciesParams implements android.os.Parcelable androidx.versionedparcelable.VersionedParcelable {
+    ctor public DefaultProviderPoliciesParams(android.content.ComponentName);
+    method public int describeContents();
+    method public android.content.ComponentName getWatchFaceName();
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final android.os.Parcelable.Creator<androidx.wear.watchface.control.data.DefaultProviderPoliciesParams!>! CREATOR;
+  }
+
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) @androidx.versionedparcelable.VersionedParcelize public class HeadlessWatchFaceInstanceParams implements android.os.Parcelable androidx.versionedparcelable.VersionedParcelable {
     ctor public HeadlessWatchFaceInstanceParams(android.content.ComponentName, androidx.wear.watchface.data.DeviceConfig, int, int);
     method public int describeContents();
@@ -145,6 +161,17 @@ package androidx.wear.watchface.control.data {
     method public int getWidth();
     method public void writeToParcel(android.os.Parcel, int);
     field public static final android.os.Parcelable.Creator<androidx.wear.watchface.control.data.HeadlessWatchFaceInstanceParams!>! CREATOR;
+  }
+
+  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) @androidx.versionedparcelable.VersionedParcelize public final class IdTypeAndDefaultProviderPolicyWireFormat implements android.os.Parcelable androidx.versionedparcelable.VersionedParcelable {
+    ctor public IdTypeAndDefaultProviderPolicyWireFormat(int, java.util.List<android.content.ComponentName!>?, int, @android.support.wearable.complications.ComplicationData.ComplicationType int);
+    method public int describeContents();
+    method @android.support.wearable.complications.ComplicationData.ComplicationType public int getDefaultProviderType();
+    method public java.util.List<android.content.ComponentName!>? getDefaultProvidersToTry();
+    method public int getFallbackSystemProvider();
+    method public int getId();
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final android.os.Parcelable.Creator<androidx.wear.watchface.control.data.IdTypeAndDefaultProviderPolicyWireFormat!>! CREATOR;
   }
 
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) @androidx.versionedparcelable.VersionedParcelize(allowSerialization=true) public class WallpaperInteractiveWatchFaceInstanceParams implements android.os.Parcelable androidx.versionedparcelable.VersionedParcelable {
@@ -300,7 +327,7 @@ package androidx.wear.watchface.style.data {
   }
 
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) @androidx.versionedparcelable.VersionedParcelize public class ComplicationOverlayWireFormat implements android.os.Parcelable androidx.versionedparcelable.VersionedParcelable {
-    ctor public ComplicationOverlayWireFormat(int, Boolean?, java.util.Map<androidx.wear.complications.data.ComplicationType!,android.graphics.RectF!>?, Integer?);
+    ctor public ComplicationOverlayWireFormat(int, Boolean?, java.util.Map<java.lang.Integer!,android.graphics.RectF!>?, Integer?);
     method public int describeContents();
     method public Integer? getAccessibilityTraversalIndex();
     method public void writeToParcel(android.os.Parcel, int);
@@ -311,7 +338,7 @@ package androidx.wear.watchface.style.data {
     field public static final long NULL_ACCESSIBILITY_TRAVERSAL_INDEX = 4294967296L; // 0x100000000L
     field @androidx.versionedparcelable.ParcelField(1) public int mComplicationId;
     field @androidx.versionedparcelable.ParcelField(2) public int mEnabled;
-    field @androidx.versionedparcelable.ParcelField(3) public java.util.Map<androidx.wear.complications.data.ComplicationType!,android.graphics.RectF!>? mPerComplicationTypeBounds;
+    field @androidx.versionedparcelable.ParcelField(3) public java.util.Map<java.lang.Integer!,android.graphics.RectF!>? mPerComplicationTypeBounds;
   }
 
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX) @androidx.versionedparcelable.VersionedParcelize public class ComplicationsOptionWireFormat extends androidx.wear.watchface.style.data.OptionWireFormat {

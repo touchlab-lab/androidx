@@ -23,7 +23,13 @@ plugins {
 }
 
 dependencies {
-    api(MOCKITO_CORE, libs.exclude_bytebuddy)
+    api(MOCKITO_CORE, excludes.bytebuddy)
 
     implementation(KOTLIN_STDLIB)
+}
+
+android {
+    lintOptions {
+        disable "InvalidPackage" // Lint is unhappy about java.lang.instrument package
+    }
 }

@@ -58,9 +58,6 @@ import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.declarations.IrVariable
-import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunction
-import org.jetbrains.kotlin.ir.descriptors.WrappedFunctionDescriptorWithContainerSource
-import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrBlock
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
@@ -159,6 +156,7 @@ import org.jetbrains.kotlin.resolve.BindingTrace
  */
 open class LiveLiteralTransformer(
     private val liveLiteralsEnabled: Boolean,
+    private val usePerFileEnabledFlag: Boolean,
     private val keyVisitor: DurableKeyVisitor,
     context: IrPluginContext,
     symbolRemapper: DeepCopySymbolRemapper,
@@ -175,6 +173,8 @@ open class LiveLiteralTransformer(
         getInternalFunction("liveLiteral")
     private val derivedStateOf =
         getTopLevelFunction(ComposeFqNames.fqNameFor("derivedStateOf"))
+    private val isLiveLiteralsEnabled =
+        getInternalProperty("isLiveLiteralsEnabled")
     private val liveLiteralInfoAnnotation =
         getInternalClass("LiveLiteralInfo")
     private val liveLiteralFileInfoAnnotation =
@@ -323,7 +323,7 @@ open class LiveLiteralTransformer(
             val thisParam = fn.dispatchReceiverParameter!!
             fn.annotations += irLiveLiteralInfoAnnotation(key, literalValue.startOffset)
             fn.body = DeclarationIrBuilder(context, fn.symbol).irBlockBody {
-                // if (!enabled) return defaultValueField
+                // if (!isLiveLiteralsEnabled) return defaultValueField
                 // val a = stateField
                 // val b = if (a == null) {
                 //     val c = liveLiteralState("key", defaultValueField)
@@ -331,10 +331,14 @@ open class LiveLiteralTransformer(
                 //     c
                 // } else a
                 // return b.value
-                +irIf(
-                    condition = irNot(
+                val condition = if (usePerFileEnabledFlag)
+                    irNot(
                         irGet(builtIns.booleanType, irGet(thisParam), liveLiteralsEnabledSymbol!!)
-                    ),
+                    )
+                else
+                    irNot(irCall(isLiveLiteralsEnabled))
+                +irIf(
+                    condition = condition,
                     body = irReturn(
                         irGet(
                             literalType,
@@ -495,37 +499,39 @@ open class LiveLiteralTransformer(
                     }
                 }
 
-                val enabledProp = it.addProperty {
-                    name = Name.identifier("enabled")
-                    visibility = DescriptorVisibilities.PRIVATE
-                }.also { p ->
-                    p.backingField = context.irFactory.buildField {
+                if (usePerFileEnabledFlag) {
+                    val enabledProp = it.addProperty {
                         name = Name.identifier("enabled")
-                        isStatic = true
-                        type = builtIns.booleanType
                         visibility = DescriptorVisibilities.PRIVATE
-                    }.also { f ->
-                        f.correspondingPropertySymbol = p.symbol
-                        f.parent = it
-                        f.initializer = IrExpressionBodyImpl(
-                            SYNTHETIC_OFFSET,
-                            SYNTHETIC_OFFSET,
-                            irConst(false)
-                        )
-                    }
-                    p.addGetter {
-                        returnType = builtIns.booleanType
-                        visibility = DescriptorVisibilities.PRIVATE
-                        origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
-                    }.also { fn ->
-                        val thisParam = it.thisReceiver!!.copyTo(fn)
-                        fn.dispatchReceiverParameter = thisParam
-                        fn.body = DeclarationIrBuilder(context, fn.symbol).irBlockBody {
-                            +irReturn(irGetField(irGet(thisParam), p.backingField!!))
+                    }.also { p ->
+                        p.backingField = context.irFactory.buildField {
+                            name = Name.identifier("enabled")
+                            isStatic = true
+                            type = builtIns.booleanType
+                            visibility = DescriptorVisibilities.PRIVATE
+                        }.also { f ->
+                            f.correspondingPropertySymbol = p.symbol
+                            f.parent = it
+                            f.initializer = IrExpressionBodyImpl(
+                                SYNTHETIC_OFFSET,
+                                SYNTHETIC_OFFSET,
+                                irConst(false)
+                            )
+                        }
+                        p.addGetter {
+                            returnType = builtIns.booleanType
+                            visibility = DescriptorVisibilities.PRIVATE
+                            origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
+                        }.also { fn ->
+                            val thisParam = it.thisReceiver!!.copyTo(fn)
+                            fn.dispatchReceiverParameter = thisParam
+                            fn.body = DeclarationIrBuilder(context, fn.symbol).irBlockBody {
+                                +irReturn(irGetField(irGet(thisParam), p.backingField!!))
+                            }
                         }
                     }
+                    nextEnabledSymbol = enabledProp.getter?.symbol
                 }
-                nextEnabledSymbol = enabledProp.getter?.symbol
             }
             try {
                 liveLiteralsClass = nextClass
@@ -875,18 +881,12 @@ open class LiveLiteralTransformer(
         }
 
     fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFunction = with(builder) {
-        val withContainerSource = originalDeclaration is IrLazyFunction || containerSource != null
-        val wrappedDescriptor = if (withContainerSource)
-            WrappedFunctionDescriptorWithContainerSource()
-        else WrappedSimpleFunctionDescriptor()
         createFunction(
             startOffset, endOffset, origin,
-            IrSimpleFunctionSymbolImpl(wrappedDescriptor),
+            IrSimpleFunctionSymbolImpl(),
             name, visibility, modality, returnType,
             isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect,
             isFakeOverride, containerSource,
-        ).also {
-            wrappedDescriptor.bind(it)
-        }
+        )
     }
 }

@@ -4,44 +4,37 @@ Compose Material Icons
 
 # Package androidx.compose.material.icons
 
-This is the entry point for using Material Icons in Compose, designed to provide icons that match those described at [fonts.google.com/icons](https://fonts.google.com/icons).
+This is the entry point for using Material Icons in Compose, designed to provide icons that match those described at <a href="https://fonts.google.com/icons" class="external" target="_blank">fonts.google.com/icons</a>.
 
-## Icons
+![Icons image](https://developer.android.com/images/reference/androidx/compose/material/icons/iconography.png)
 
-Material Icons are available in five styles. The icons are based on the core Material Design principles and metrics.
+In this page, you'll find documentation for types, properties, and functions available in the `androidx.compose.material.icons` package.
 
-[material.io/design/iconography/system-icons](https://material.io/design/iconography/system-icons.html)
+The most commonly used set of Material icons are provided by `androidx.compose.material:material-icons-core` - this library is also provided as an API dependency by `androidx.compose.material:material`.
 
-![Iconography image](https://lh3.googleusercontent.com/64GWPJbpSJKB2hejLK02GLHjflv2B8cCr7SJUQI7cHXO0Qakc28U-ZRw7IRL3WadD8Stugb1HB4GgpqEkRydsEaR9AC4SqrTeRlCDlo=w1064-v0)
+A separate library, `androidx.compose.material:material-icons-extended`, contains the full set of Material icons. Due to the very large size of this library, make sure to use R8/Proguard to strip unused icons if you are including this library as a direct dependency. Alternatively you can make a local copy (by copy and pasting) the icon(s) you wish to keep, or using Android Studio's 'Import vector asset' feature.
 
-* [Icons]
+## Overview
 
-### Filled
+### System icons
 
-Filled icons (previously the only available style, also known as the baseline style) are the default icon style.
+<a href="https://material.io/design/iconography/system-icons.html" class="external" target="_blank">System icons</a> symbolize common actions, files, devices, and directories.
 
-* [Icons.Filled]
+|      | **APIs** | **Description** |
+| ---- | -------- | --------------- |
+| **Icons** | [Icons] | Icons |
+| **Default** | [Icons.Default] | Default icons |
+| **Filled** | [Icons.Filled] | Filled icons |
+| **Outlined** | [Icons.Outlined] | Outlined icons |
+| **Rounded** | [Icons.Rounded] | Rounded icons |
+| **Two tone** | [Icons.TwoTone] | Two tone icons |
+| **Sharp** | [Icons.Sharp] | Sharp icons |
 
-### Outlined
+### Related components
 
-Outlined icons make use of a thin stroke and empty space inside for a lighter appearance.
+|      | **APIs** | **Description** |
+| ---- | -------- | --------------- |
+| **Icon** | [androidx.compose.material.Icon] | Icon |
+| **Icon button** | [androidx.compose.material.IconButton] | Icon button |
+| **Icon toggle button** | [androidx.compose.material.IconToggleButton] | Icon toggle button |
 
-* [Icons.Outlined]
-
-### Rounded
-
-Rounded icons use a corner radius that pairs well with brands that use heavier typography, curved logos, or circular elements to express their style.
-
-* [Icons.Rounded]
-
-### Two tone
-
-Two tone icons display corners with straight edges, for a crisp style that remains legible even at smaller scales.
-
-* [Icons.TwoTone]
-
-### Sharp
-
-Sharp icons display corners with straight edges, for a crisp style that remains legible even at smaller scales.
-
-* [Icons.Sharp]

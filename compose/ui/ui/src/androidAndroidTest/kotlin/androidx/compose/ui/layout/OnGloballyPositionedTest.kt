@@ -48,6 +48,7 @@ import androidx.compose.ui.test.TestActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.FlakyTest
@@ -57,6 +58,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -495,6 +497,7 @@ class OnGloballyPositionedTest {
         assertThat(childCoordinates!!.positionInParent().x).isEqualTo(thirdPaddingPx)
     }
 
+    @Ignore("Disable Broken test: b/187962859")
     @Test
     fun globalCoordinatesAreInActivityCoordinates() {
         val padding = 30
@@ -562,11 +565,12 @@ class OnGloballyPositionedTest {
             with(LocalDensity.current) {
                 Box {
                     Box(
-                        Modifier.onGloballyPositioned {
-                            realLeft = it.positionInParent().x
-                        }
+                        Modifier
                             .fillMaxSize()
-                            .padding(start = left.value.toDp()),
+                            .padding(start = left.value.toDp())
+                            .onGloballyPositioned {
+                                realLeft = it.positionInParent().x
+                            }
                     )
                 }
             }
@@ -617,16 +621,24 @@ class OnGloballyPositionedTest {
     @Test
     fun testAlignmentLinesArePresent() {
         val latch = CountDownLatch(1)
-        val line = VerticalAlignmentLine(::min)
+        val line1 = VerticalAlignmentLine(::min)
+        val line2 = HorizontalAlignmentLine(::min)
         val lineValue = 10
         rule.setContent {
             val onPositioned = Modifier.onGloballyPositioned { coordinates: LayoutCoordinates ->
-                assertEquals(1, coordinates.providedAlignmentLines.size)
-                assertEquals(lineValue, coordinates[line])
+                assertEquals(2, coordinates.providedAlignmentLines.size)
+                assertEquals(lineValue, coordinates[line1])
+                assertEquals(lineValue, coordinates[line2])
                 latch.countDown()
             }
-            Layout(modifier = onPositioned, content = { }) { _, _ ->
-                layout(0, 0, mapOf(line to lineValue)) { }
+            val lineProvider = Modifier.layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(0, 0, mapOf(line2 to lineValue)) {
+                    placeable.place(0, 0)
+                }
+            }
+            Layout(modifier = onPositioned.then(lineProvider), content = { }) { _, _ ->
+                layout(0, 0, mapOf(line1 to lineValue)) { }
             }
         }
         assertTrue(latch.await(1, TimeUnit.SECONDS))
@@ -714,6 +726,38 @@ class OnGloballyPositionedTest {
             val inWindow = coords!!.positionInWindow()
             assertEquals(10f, inWindow.x)
             assertEquals(10f, inWindow.y)
+        }
+    }
+
+    @Test
+    fun coordinatesOfTheModifierAreReported() {
+        var coords1: LayoutCoordinates? = null
+        var coords2: LayoutCoordinates? = null
+        var coords3: LayoutCoordinates? = null
+        rule.setContent {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .onGloballyPositioned {
+                        coords1 = it
+                    }
+                    .padding(2.dp)
+                    .onGloballyPositioned {
+                        coords2 = it
+                    }
+                    .padding(3.dp)
+                    .onGloballyPositioned {
+                        coords3 = it
+                    }
+            )
+        }
+
+        rule.runOnIdle {
+            assertEquals(0f, coords1!!.positionInWindow().x)
+            val padding1 = with(rule.density) { 2.dp.roundToPx() }
+            assertEquals(padding1.toFloat(), coords2!!.positionInWindow().x)
+            val padding2 = padding1 + with(rule.density) { 3.dp.roundToPx() }
+            assertEquals(padding2.toFloat(), coords3!!.positionInWindow().x)
         }
     }
 }

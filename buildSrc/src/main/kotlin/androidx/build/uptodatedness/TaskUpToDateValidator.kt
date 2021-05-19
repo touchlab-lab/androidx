@@ -16,6 +16,7 @@
 
 package androidx.build.uptodatedness
 
+import androidx.build.VERIFY_UP_TO_DATE
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -33,11 +34,11 @@ import java.util.Date
  */
 
 const val DISALLOW_TASK_EXECUTION_FLAG_NAME = "disallowExecution"
-const val RECORD_FLAG_NAME = "verifyUpToDate"
+const val RECORD_FLAG_NAME = VERIFY_UP_TO_DATE
 
 // Temporary set of exempt tasks that are known to still be out-of-date after running once
-// Entries in this set may be task names (like assembleDebug) or task paths
-// (like :core:core:assembleDebug)
+// Entries in this set may be task names (like assembleRelease) or task paths
+// (like :core:core:assembleRelease)
 // Entries in this set do still get rerun because they might produce files that are needed by
 // subsequent tasks
 val ALLOW_RERUNNING_TASKS = setOf(
@@ -81,8 +82,6 @@ val ALLOW_RERUNNING_TASKS = setOf(
     "generatePomFileForMetadataPublication",
     "generatePomFileForSafeargsJavaPluginMarkerMavenPublication",
     "generatePomFileForSafeargsKotlinPluginMarkerMavenPublication",
-    "jacocoPublicDebug",
-    "jacocoTipOfTreeDebug",
     "partiallyDejetifyArchive",
     "publishBenchmarkPluginMarkerMavenPublicationToMavenRepository",
     "publishAndroidDebugPublicationToMavenRepository",
@@ -117,6 +116,7 @@ val ALLOW_RERUNNING_TASKS = setOf(
     ":camera:integration-tests:camera-testapp-core:packageDebug",
     ":camera:integration-tests:camera-testapp-extensions:mergeLibDexDebug",
     ":camera:integration-tests:camera-testapp-extensions:packageDebug",
+    ":camera:integration-tests:camera-testapp-extensions:GenerateTestConfigurationdebugAndroidTest",
     ":camera:integration-tests:camera-testapp-uiwidgets:mergeLibDexDebug",
     ":camera:integration-tests:camera-testapp-uiwidgets:packageDebug",
     ":camera:integration-tests:camera-testapp-core:GenerateTestConfigurationdebug",
@@ -125,6 +125,24 @@ val ALLOW_RERUNNING_TASKS = setOf(
     ":camera:integration-tests:camera-testapp-view:GenerateTestConfigurationdebugAndroidTest",
     ":camera:integration-tests:camera-testapp-view:mergeLibDexDebug",
     ":camera:integration-tests:camera-testapp-view:packageDebug",
+    ":benchmark:benchmark-macro:generateReleaseProtos",
+    ":benchmark:benchmark-macro:generateDebugProtos",
+    ":benchmark:benchmark-macro:compileReleaseKotlin",
+    ":benchmark:benchmark-macro:compileDebugKotlin",
+    ":benchmark:benchmark-macro:compileReleaseJavaWithJavac",
+    ":benchmark:benchmark-macro:compileDebugJavaWithJavac",
+    ":benchmark:benchmark-macro:extractReleaseAnnotations",
+    ":benchmark:benchmark-macro:extractDebugAnnotations",
+    ":benchmark:benchmark-macro:generateApi",
+    ":benchmark:benchmark-macro:runErrorProne",
+    ":benchmark:benchmark-macro:lintAnalyzeDebug",
+    ":benchmark:benchmark-macro:lintDebug",
+    "configureCMakeDebug",
+    "buildCMakeDebug",
+    "configureCMakeRelWithDebInfo",
+    "buildCMakeRelWithDebInfo",
+    ":appsearch:appsearch-local-storage:buildCMakeDebug[icing]",
+    ":appsearch:appsearch-local-storage:buildCMakeRelWithDebInfo[icing]"
 )
 
 // Additional tasks that are expected to be temporarily out-of-date after running once
@@ -134,7 +152,6 @@ val DONT_TRY_RERUNNING_TASKS = setOf(
     "listTaskOutputs",
     "validateProperties",
     "tasks",
-    "zipEcFiles",
     // More information about the fact that these dokka tasks rerun can be found at b/167569304
     "dokkaKotlinDocs",
     "zipDokkaDocs",
@@ -145,6 +162,7 @@ val DONT_TRY_RERUNNING_TASKS = setOf(
 
     // We should be able to remove these entries when b/160392650 is fixed
     "lint",
+    "lintAnalyzeDebug",
     "lintDebug",
     "lintVitalRelease",
 )
@@ -234,6 +252,13 @@ class TaskUpToDateValidator {
             return File(project.buildDir, "TaskUpToDateValidator/inputs")
         }
 
+        fun getPreviousTaskExecutionCompletionTimestamp(task: Task): Date {
+            // we're already saving the inputs of the task into a file,
+            // so we can check the timestamp of that file to know when the task last reran
+            val inputsFile = getTaskInputListPath(task)
+            return Date(inputsFile.lastModified())
+        }
+
         fun checkForChangingSetOfInputs(task: Task): String {
             val previousInputsFile = getTaskInputListPath(task)
             val previousInputs = previousInputsFile.readLines()
@@ -282,8 +307,9 @@ class TaskUpToDateValidator {
                 if (lastModifiedFile != null) {
                     task.path + " declares " + inputFiles.size + " input files. The " +
                         "last modified input file is\n" + lastModifiedFile + "\nmodified at " +
-                        lastModifiedWhen + " (this build started at about " +
-                        getBuildStartTime(task.project) + "). " +
+                        lastModifiedWhen + " (the previous execution of this task completed at " +
+                        getPreviousTaskExecutionCompletionTimestamp(task) + " and this build " +
+                        "started at about " + getBuildStartTime(task.project) + "). " +
                         tryToExplainFileModification(lastModifiedFile, taskGraph)
                 } else {
                     task.path + " declares " + inputFiles.size + " input files.\n"
@@ -291,7 +317,7 @@ class TaskUpToDateValidator {
             }
 
             val reproductionMessage = "\nTo reproduce this error you can try running " +
-                "`./gradlew ${task.path} -PverifyUpToDate`\n"
+                "`./gradlew ${task.path} -P$RECORD_FLAG_NAME`\n"
             val readLogsMessage = "\nYou can check why Gradle executed ${task.path} by " +
                 "passing the '--info' flag to Gradle and then searching stdout for output " +
                 "generated immediately before the task began to execute.\n" +

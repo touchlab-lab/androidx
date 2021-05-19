@@ -17,13 +17,11 @@
 package androidx.car.app.sample.showcase.common.templates;
 
 import static androidx.car.app.CarToast.LENGTH_LONG;
-import static androidx.car.app.CarToast.LENGTH_SHORT;
 
 import android.graphics.Color;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.annotation.OptIn;
 import androidx.car.app.CarContext;
 import androidx.car.app.CarToast;
 import androidx.car.app.Screen;
@@ -41,12 +39,10 @@ import androidx.car.app.model.signin.ProviderSignInMethod;
 import androidx.car.app.model.signin.SignInTemplate;
 import androidx.car.app.sample.showcase.common.R;
 import androidx.car.app.sample.showcase.common.common.Utils;
+import androidx.car.app.versioning.CarAppApiLevels;
 import androidx.core.graphics.drawable.IconCompat;
 
-import java.util.UUID;
-
 /** A screen that demonstrates the sign-in template. */
-@OptIn(markerClass = androidx.car.app.annotations.ExperimentalCarApi.class)
 public class SignInTemplateDemoScreen extends Screen {
     private enum State {
         USERNAME,
@@ -65,23 +61,23 @@ public class SignInTemplateDemoScreen extends Screen {
     private String mErrorMessage;
 
     private final CharSequence mAdditionalText = Utils.clickable("Please review our terms of "
-            + "service", 18, 16,
+                    + "service", 18, 16,
             () -> getScreenManager().push(new LongMessageTemplateDemoScreen(getCarContext())));
 
     private final Action mProviderSignInAction = new Action.Builder()
             .setTitle("Google Sign-In")
-            .setOnClickListener(() -> {
+            .setOnClickListener(ParkedOnlyOnClickListener.create(() -> {
                 mState = State.PROVIDER;
                 invalidate();
-            })
+            }))
             .build();
 
     private final Action mPinSignInAction = new Action.Builder()
             .setTitle("Use PIN")
-            .setOnClickListener(() -> {
+            .setOnClickListener(ParkedOnlyOnClickListener.create(() -> {
                 mState = State.PIN;
                 invalidate();
-            })
+            }))
             .build();
 
     public SignInTemplateDemoScreen(@NonNull CarContext carContext) {
@@ -103,11 +99,15 @@ public class SignInTemplateDemoScreen extends Screen {
         carContext.getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
-
-
     @NonNull
     @Override
     public Template onGetTemplate() {
+        if (getCarContext().getCarAppApiLevel() < CarAppApiLevels.LEVEL_2) {
+            return new MessageTemplate.Builder("Your host doesn't support Sign In template")
+                    .setTitle("Incompatible host")
+                    .setHeaderAction(Action.BACK)
+                    .build();
+        }
         switch (mState) {
             case USERNAME:
                 return getUsernameSignInTemplate();
@@ -200,7 +200,7 @@ public class SignInTemplateDemoScreen extends Screen {
     }
 
     private Template getPinSignInTemplate() {
-        PinSignInMethod pinSignInMethod = new PinSignInMethod.Builder(UUID.randomUUID()
+        PinSignInMethod pinSignInMethod = new PinSignInMethod.Builder("123456789abc"
                 .toString().toUpperCase())
                 .build();
 
@@ -226,12 +226,7 @@ public class SignInTemplateDemoScreen extends Screen {
                                 .setTint(noTint)
                                 .build())
                         .setOnClickListener(ParkedOnlyOnClickListener.create(
-                                () -> CarToast.makeText(
-                                        getCarContext(),
-                                        "Sign-in with Google starts here",
-                                        LENGTH_SHORT)
-                                        .show()))
-                        .build()
+                                this::performSignInWithGoogleFlow)).build()
         ).build();
 
         return new SignInTemplate.Builder(providerSignInMethod)
@@ -240,6 +235,31 @@ public class SignInTemplateDemoScreen extends Screen {
                 .setHeaderAction(Action.BACK)
                 .setAdditionalText(mAdditionalText)
                 .build();
+    }
+
+    private void performSignInWithGoogleFlow() {
+        // This is here for demonstration purposes, if the APK is not signed with a signature
+        // that has been registered for sign in with Google flow, the sign in will fail at runtime.
+
+//        Bundle extras = new Bundle(1);
+//        extras.putBinder(BINDER_KEY, new SignInWithGoogleActivity.OnSignInComplete() {
+//            @Override
+//            public void onSignInComplete(@Nullable GoogleSignInAccount account) {
+//                if (account == null) {
+//                    CarToast.makeText(getCarContext(), "Error signing in", LENGTH_LONG).show();
+//                    return;
+//                }
+//
+//                // Use the account
+//                CarToast.makeText(getCarContext(),
+//                        account.getGivenName() + " signed in", LENGTH_LONG).show();
+//            }
+//        });
+//        getCarContext().startActivity(
+//                new Intent()
+//                        .setClass(getCarContext(), SignInWithGoogleActivity.class)
+//                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                        .putExtras(extras));
     }
 
     private MessageTemplate getSignInCompletedMessageTemplate() {
@@ -255,4 +275,5 @@ public class SignInTemplateDemoScreen extends Screen {
                         .build())
                 .build();
     }
+
 }

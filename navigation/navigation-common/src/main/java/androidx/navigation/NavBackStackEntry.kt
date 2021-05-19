@@ -45,21 +45,23 @@ import java.util.UUID
 public class NavBackStackEntry private constructor(
     private val context: Context?,
     /**
-     * Gets the destination associated with this entry
+     * The destination associated with this entry
      * @return The destination that is currently visible to users
      */
     public val destination: NavDestination,
     /**
-     * Gets the arguments used for this entry
+     * The arguments used for this entry
      * @return The arguments used when this entry was created
      */
     @set:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public var arguments: Bundle? = null,
     navControllerLifecycleOwner: LifecycleOwner? = null,
     private val viewModelStoreProvider: NavViewModelStoreProvider? = null,
-    // Internal unique name for this navBackStackEntry;
-    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public val id: UUID = UUID.randomUUID(),
+    /**
+     * The unique ID that serves as the identity of this entry
+     * @return the unique ID of this entry
+     */
+    public val id: String = UUID.randomUUID().toString(),
     private val savedState: Bundle? = null
 ) : LifecycleOwner,
     ViewModelStoreOwner,
@@ -81,7 +83,7 @@ public class NavBackStackEntry private constructor(
             arguments: Bundle? = null,
             navControllerLifecycleOwner: LifecycleOwner? = null,
             viewModelStoreProvider: NavViewModelStoreProvider? = null,
-            id: UUID = UUID.randomUUID(),
+            id: String = UUID.randomUUID().toString(),
             savedState: Bundle? = null
         ): NavBackStackEntry = NavBackStackEntry(
             context, destination, arguments,
@@ -97,9 +99,7 @@ public class NavBackStackEntry private constructor(
     }
 
     /**
-     * Gets the [SavedStateHandle] for this entry.
-     *
-     * @return the SavedStateHandle for this entry
+     * The [SavedStateHandle] for this entry.
      */
     public val savedStateHandle: SavedStateHandle by lazy {
         check(lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED)) {

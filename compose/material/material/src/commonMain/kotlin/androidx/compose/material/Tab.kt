@@ -54,6 +54,12 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.max
 
 /**
+ * <a href="https://material.io/components/tabs" class="external" target="_blank">Material Design tab</a>.
+ *
+ * Tabs organize content across different screens, data sets, and other interactions.
+ *
+ * ![Tab image](https://developer.android.com/images/reference/androidx/compose/material/tab.png)
+ *
  * A Tab represents a single page of content using a text label and/or icon. It represents its
  * selected state by tinting the text label and/or image with [selectedContentColor].
  *
@@ -112,6 +118,12 @@ fun Tab(
 }
 
 /**
+ * <a href="https://material.io/components/tabs" class="external" target="_blank">Material Design tab</a>.
+ *
+ * Tabs organize content across different screens, data sets, and other interactions.
+ *
+ * ![Tab image](https://developer.android.com/images/reference/androidx/compose/material/tab.png)
+ *
  * A LeadingIconTab represents a single page of content using a text label and an icon in
  * front of the label.
  * It represents its selected state by tinting the text label and icon with [selectedContentColor].
@@ -152,7 +164,7 @@ fun LeadingIconTab(
     // The color of the Ripple should always the be selected color, as we want to show the color
     // before the item is considered selected, and hence before the new contentColor is
     // provided by TabTransition.
-    val ripple = rememberRipple(bounded = false, color = selectedContentColor)
+    val ripple = rememberRipple(bounded = true, color = selectedContentColor)
 
     TabTransition(selectedContentColor, unselectedContentColor, selected) {
         Row(
@@ -180,6 +192,12 @@ fun LeadingIconTab(
 }
 
 /**
+ * <a href="https://material.io/components/tabs" class="external" target="_blank">Material Design tab</a>.
+ *
+ * Tabs organize content across different screens, data sets, and other interactions.
+ *
+ * ![Tab image](https://developer.android.com/images/reference/androidx/compose/material/tab.png)
+ *
  * Generic [Tab] overload that is not opinionated about content / color. See the other overload
  * for a Tab that has specific slots for text and / or an icon, as well as providing the correct
  * colors for selected / unselected states.
@@ -216,7 +234,7 @@ fun Tab(
     // The color of the Ripple should always the selected color, as we want to show the color
     // before the item is considered selected, and hence before the new contentColor is
     // provided by TabTransition.
-    val ripple = rememberRipple(bounded = false, color = selectedContentColor)
+    val ripple = rememberRipple(bounded = true, color = selectedContentColor)
 
     TabTransition(selectedContentColor, unselectedContentColor, selected) {
         Column(

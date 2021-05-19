@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package androidx.annotation.experimental.lint
 
 import com.android.tools.lint.checks.infrastructure.TestFile
@@ -22,11 +24,12 @@ import com.android.tools.lint.checks.infrastructure.TestFiles.java
 import com.android.tools.lint.checks.infrastructure.TestFiles.kotlin
 import com.android.tools.lint.checks.infrastructure.TestLintResult
 import com.android.tools.lint.checks.infrastructure.TestLintTask.lint
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-@Suppress("UnstableApiUsage")
+@Ignore("b/187526328")
 @RunWith(JUnit4::class)
 class RequiresOptInDetectorTest {
 
@@ -283,20 +286,6 @@ src/sample/optin/UseJavaPackageFromKt.kt:64: Error: This declaration is opt-in a
         check(*input).expect(expected)
     }
 
-    /**
-     * Loads a [TestFile] from Java source code included in the JAR resources.
-     */
-    private fun javaSample(className: String): TestFile {
-        return java(javaClass.getResource("/java/${className.replace('.','/')}.java").readText())
-    }
-
-    /**
-     * Loads a [TestFile] from Kotlin source code included in the JAR resources.
-     */
-    private fun ktSample(className: String): TestFile {
-        return kotlin(javaClass.getResource("/java/${className.replace('.','/')}.kt").readText())
-    }
-
     /* ktlint-disable max-line-length */
     companion object {
         /**
@@ -421,4 +410,26 @@ src/sample/optin/UseJavaPackageFromKt.kt:64: Error: This declaration is opt-in a
         )
     }
     /* ktlint-enable max-line-length */
+}
+
+/**
+ * Loads a [TestFile] from Java source code included in the JAR resources.
+ */
+fun javaSample(className: String): TestFile {
+    return java(
+        RequiresOptInDetectorTest::class.java.getResource(
+            "/java/${className.replace('.','/')}.java"
+        ).readText()
+    )
+}
+
+/**
+ * Loads a [TestFile] from Kotlin source code included in the JAR resources.
+ */
+fun ktSample(className: String): TestFile {
+    return kotlin(
+        RequiresOptInDetectorTest::class.java.getResource(
+            "/java/${className.replace('.','/')}.kt"
+        ).readText()
+    )
 }

@@ -53,7 +53,9 @@ import androidx.camera.core.ExperimentalUseCaseGroup;
 import androidx.camera.core.Logger;
 import androidx.camera.core.SurfaceRequest;
 import androidx.camera.core.UseCase;
+import androidx.camera.core.ViewPort;
 import androidx.camera.core.impl.CameraInfoInternal;
+import androidx.camera.core.impl.CameraInternal;
 import androidx.camera.core.impl.CaptureConfig;
 import androidx.camera.core.impl.Config;
 import androidx.camera.core.impl.ConfigProvider;
@@ -108,7 +110,11 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     private static final String TAG = "VideoCapture";
     private static final Defaults DEFAULT_CONFIG = new Defaults();
 
-    private DeferrableSurface mDeferrableSurface;
+    @SuppressWarnings("WeakerAccess") /* synthetic accessor */
+    DeferrableSurface mDeferrableSurface;
+    @SuppressWarnings("WeakerAccess") /* synthetic accessor */
+    @NonNull
+    SessionConfig.Builder mSessionConfigBuilder = new SessionConfig.Builder();
     private SurfaceRequest mSurfaceRequest;
 
     /**
@@ -141,15 +147,38 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     }
 
     /**
+     * Returns the desired rotation of the output video.
+     *
+     * <p>The rotation can be set by calling {@link VideoCapture#setTargetRotation(int)}. If not
+     * set, the target rotation defaults to the value of {@link Display#getRotation()} of the
+     * default display at the time the use case is created. The use case is fully created once it
+     * has been attached to a camera.
+     *
+     * @return The rotation of the intended target.
+     */
+    @RotationValue
+    public int getTargetRotation() {
+        return getTargetRotationInternal();
+    }
+
+    /**
      * Sets the desired rotation of the output video.
      *
-     * <p>In most cases this should be set to the current rotation returned by {@link
-     * Display#getRotation()}.
+     * <p>This is one of four valid values: {@link Surface#ROTATION_0},
+     * {@link Surface#ROTATION_90}, {@link Surface#ROTATION_180}, {@link Surface#ROTATION_270}.
+     * Rotation values are relative to the "natural" rotation, {@link Surface#ROTATION_0}.
+     *
+     * <p>If not set, the target rotation will default to the value of
+     * {@link Display#getRotation()} of the default display at the time the use case is
+     * created. The use case is fully created once it has been attached to a camera.
      *
      * @param rotation Desired rotation of the output video.
      */
+    @OptIn(markerClass = ExperimentalUseCaseGroup.class)
     public void setTargetRotation(@RotationValue int rotation) {
-        setTargetRotationInternal(rotation);
+        if (setTargetRotationInternal(rotation)) {
+            sendTransformationInfoIfReady(getAttachedSurfaceResolution());
+        }
     }
 
     @Override
@@ -171,11 +200,26 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         String cameraId = getCameraId();
         VideoCaptureConfig<T> config = (VideoCaptureConfig<T>) getCurrentConfig();
 
-        SessionConfig.Builder sessionConfigBuilder = createPipeline(cameraId, config,
-                suggestedResolution);
-        updateSessionConfig(sessionConfigBuilder.build());
+        mSessionConfigBuilder = createPipeline(cameraId, config, suggestedResolution);
+        updateSessionConfig(mSessionConfigBuilder.build());
+        // VideoCapture has to be active to apply SessionConfig's template type.
+        notifyActive();
 
         return suggestedResolution;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     *
+     * @hide
+     */
+    @Override
+    @OptIn(markerClass = ExperimentalUseCaseGroup.class)
+    @RestrictTo(Scope.LIBRARY_GROUP)
+    public void setViewPortCropRect(@NonNull Rect viewPortCropRect) {
+        super.setViewPortCropRect(viewPortCropRect);
+        sendTransformationInfoIfReady(getAttachedSurfaceResolution());
     }
 
     /**
@@ -187,7 +231,6 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     @Override
     public void onDetached() {
         clearPipeline();
-
         getOutput().getStreamState().removeObserver(mStreamStateObserver);
     }
 
@@ -245,6 +288,34 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         return Builder.fromConfig(config);
     }
 
+    @ExperimentalUseCaseGroup
+    private void sendTransformationInfoIfReady(@Nullable Size resolution) {
+        CameraInternal cameraInternal = getCamera();
+        SurfaceRequest surfaceRequest = mSurfaceRequest;
+        Rect cropRect = getCropRect(resolution);
+        if (cameraInternal != null && surfaceRequest != null && cropRect != null) {
+            surfaceRequest.updateTransformationInfo(SurfaceRequest.TransformationInfo.of(cropRect,
+                    getRelativeRotation(cameraInternal), getTargetRotationInternal()));
+        }
+    }
+
+    /**
+     * Gets the crop rect for {@link VideoCapture}.
+     *
+     * <p>Fall back to the full {@link Surface} rect if {@link ViewPort} crop rect is not
+     * available. Returns null if no valid crop rect. This could happen if the
+     * {@link VideoCapture} is not attached to a camera.
+     */
+    @Nullable
+    private Rect getCropRect(@Nullable Size surfaceResolution) {
+        if (getViewPortCropRect() != null) {
+            return getViewPortCropRect();
+        } else if (surfaceResolution != null) {
+            return new Rect(0, 0, surfaceResolution.getWidth(), surfaceResolution.getHeight());
+        }
+        return null;
+    }
+
     @UiThread
     @OptIn(markerClass = ExperimentalUseCaseGroup.class)
     @NonNull
@@ -255,14 +326,16 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
 
         mSurfaceRequest = new SurfaceRequest(resolution, getCamera(), false);
         config.getVideoOutput().onSurfaceRequested(mSurfaceRequest);
-        Rect cropRect = getViewPortCropRect() != null ? getViewPortCropRect() : new Rect(0, 0,
-                resolution.getWidth(), resolution.getHeight());
-        mSurfaceRequest.updateTransformationInfo(SurfaceRequest.TransformationInfo.of(cropRect,
-                getRelativeRotation(getCamera()), getTargetRotationInternal()));
+        sendTransformationInfoIfReady(resolution);
         mDeferrableSurface = mSurfaceRequest.getDeferrableSurface();
 
         SessionConfig.Builder sessionConfigBuilder = SessionConfig.Builder.createFrom(config);
-        sessionConfigBuilder.addSurface(mDeferrableSurface);
+        if (fetchObservableValue(getOutput().getStreamState(), StreamState.INACTIVE)
+                == StreamState.ACTIVE) {
+            sessionConfigBuilder.addSurface(mDeferrableSurface);
+        } else {
+            sessionConfigBuilder.addNonRepeatingSurface(mDeferrableSurface);
+        }
         sessionConfigBuilder.addErrorListener(
                 (sessionConfig, error) -> resetPipeline(cameraId, config, resolution));
 
@@ -296,9 +369,8 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         //  to this use case so we don't need to do this check.
         if (isCurrentCamera(cameraId)) {
             // Only reset the pipeline when the bound camera is the same.
-            SessionConfig.Builder sessionConfigBuilder = createPipeline(cameraId, config,
-                    resolution);
-            updateSessionConfig(sessionConfigBuilder.build());
+            mSessionConfigBuilder = createPipeline(cameraId, config, resolution);
+            updateSessionConfig(mSessionConfigBuilder.build());
             notifyReset();
         }
     }
@@ -344,11 +416,18 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         @Override
         public void onNewData(@Nullable StreamState streamState) {
             Logger.d(TAG, "Receive streamState = " + streamState);
-            if (streamState == StreamState.ACTIVE) {
-                notifyActive();
-            } else {
-                notifyInactive();
+            if (getCamera() == null) {
+                // VideoCapture is unbound.
+                return;
             }
+            mSessionConfigBuilder.clearSurfaces();
+            if (streamState == StreamState.ACTIVE) {
+                mSessionConfigBuilder.addSurface(mDeferrableSurface);
+            } else {
+                mSessionConfigBuilder.addNonRepeatingSurface(mDeferrableSurface);
+            }
+            updateSessionConfig(mSessionConfigBuilder.build());
+            notifyUpdated();
         }
 
         @Override
@@ -740,7 +819,7 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         }
 
         /** @hide */
-        @RestrictTo(Scope.LIBRARY)
+        @RestrictTo(Scope.LIBRARY_GROUP)
         @Override
         @NonNull
         public Builder<T> setCameraSelector(@NonNull CameraSelector cameraSelector) {

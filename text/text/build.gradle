@@ -36,16 +36,16 @@ dependencies {
     testImplementation(ANDROIDX_TEST_RUNNER)
     testImplementation(JUNIT)
 
-    androidTestImplementation("androidx.core:core:1.5.0-alpha01")
+    androidTestImplementation("androidx.core:core:1.5.0-rc02")
     androidTestImplementation(project(":compose:ui:ui-test-font"))
     androidTestImplementation(ANDROIDX_TEST_RULES)
     androidTestImplementation(ANDROIDX_TEST_RUNNER)
     androidTestImplementation(ANDROIDX_TEST_EXT_JUNIT)
-    androidTestImplementation(DEXMAKER_MOCKITO, libs.exclude_bytebuddy) // DexMaker has it"s own MockMaker
+    androidTestImplementation(DEXMAKER_MOCKITO, excludes.bytebuddy) // DexMaker has it"s own MockMaker
     androidTestImplementation(ESPRESSO_CORE)
     androidTestImplementation(JUNIT)
     androidTestImplementation(TRUTH)
-    androidTestImplementation(MOCKITO_CORE, libs.exclude_bytebuddy) // DexMaker has it"s own MockMaker
+    androidTestImplementation(MOCKITO_CORE, excludes.bytebuddy) // DexMaker has it"s own MockMaker
     androidTestImplementation(MOCKITO_KOTLIN, {
         exclude group: "org.mockito" // to keep control on the mockito version
     })

@@ -32,7 +32,6 @@ import android.support.wearable.watchface.WatchFaceStyle
 import android.util.Base64
 import android.view.Gravity
 import android.view.Surface.FRAME_RATE_COMPATIBILITY_DEFAULT
-import android.view.ViewConfiguration
 import androidx.annotation.ColorInt
 import androidx.annotation.IntDef
 import androidx.annotation.IntRange
@@ -120,16 +119,11 @@ private fun writePrefs(context: Context, fileName: String, style: UserStyle) {
  *
  * @param watchFaceType The type of watch face, whether it's digital or analog. Used to determine
  * the default time for editor preview screenshots.
- * @param currentUserStyleRepository The [CurrentUserStyleRepository] for this WatchFace.
  * @param renderer The [Renderer] for this WatchFace.
- * @param complicationsManager The [ComplicationsManager] for this WatchFace.
  */
-public class WatchFace @JvmOverloads constructor(
+public class WatchFace(
     @WatchFaceType public var watchFaceType: Int,
-    public val currentUserStyleRepository: CurrentUserStyleRepository,
-    public val renderer: Renderer,
-    public var complicationsManager: ComplicationsManager =
-        ComplicationsManager(emptyList(), currentUserStyleRepository)
+    public val renderer: Renderer
 ) {
     internal var tapListener: TapListener? = null
 
@@ -386,7 +380,9 @@ public class WatchFace @JvmOverloads constructor(
 public class WatchFaceImpl(
     watchface: WatchFace,
     private val watchFaceHostApi: WatchFaceHostApi,
-    private val watchState: WatchState
+    private val watchState: WatchState,
+    internal val currentUserStyleRepository: CurrentUserStyleRepository,
+    internal var complicationsManager: ComplicationsManager
 ) {
     internal companion object {
         internal const val NO_DEFAULT_PROVIDER = SystemProviders.NO_PROVIDER
@@ -426,9 +422,7 @@ public class WatchFaceImpl(
 
     private val systemTimeProvider = watchface.systemTimeProvider
     private val legacyWatchFaceStyle = watchface.legacyWatchFaceStyle
-    internal val userStyleRepository = watchface.currentUserStyleRepository
     internal val renderer = watchface.renderer
-    internal val complicationsManager = watchface.complicationsManager
     private val tapListener = watchface.tapListener
 
     private data class MockTime(var speed: Double, var minTime: Long, var maxTime: Long)
@@ -436,9 +430,9 @@ public class WatchFaceImpl(
     private var mockTime = MockTime(1.0, 0, Long.MAX_VALUE)
 
     private var lastTappedComplicationId: Int? = null
-    private var registeredReceivers = false
+    internal var broadcastsReceiver: BroadcastsReceiver? = null
 
-    // True if NotificationManager.INTERRUPTION_FILTER_NONE.
+    // True if 'Do Not Disturb' mode is on.
     private var muteMode = false
     private var nextDrawTimeMillis: Long = 0
 
@@ -447,8 +441,6 @@ public class WatchFaceImpl(
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     public val calendar: Calendar = Calendar.getInstance()
 
-    private val pendingSingleTap: CancellableUniqueTask =
-        CancellableUniqueTask(watchFaceHostApi.getHandler())
     private val pendingUpdateTime: CancellableUniqueTask =
         CancellableUniqueTask(watchFaceHostApi.getHandler())
 
@@ -468,7 +460,7 @@ public class WatchFaceImpl(
         legacyWatchFaceStyle.tapEventsAccepted
     )
 
-    private val broadcastEventObserver = object : BroadcastReceivers.BroadcastEventObserver {
+    private val broadcastEventObserver = object : BroadcastsReceiver.BroadcastEventObserver {
         override fun onActionTimeTick() {
             if (!watchState.isAmbient.value) {
                 renderer.invalidate()
@@ -543,7 +535,11 @@ public class WatchFaceImpl(
     }
 
     private val interruptionFilterObserver = Observer<Int> {
-        val inMuteMode = it == NotificationManager.INTERRUPTION_FILTER_NONE
+        // We are in mute mode in any of the following modes. The specific mode depends on the
+        // device's implementation of "Do Not Disturb".
+        val inMuteMode = it == NotificationManager.INTERRUPTION_FILTER_NONE ||
+            it == NotificationManager.INTERRUPTION_FILTER_PRIORITY ||
+            it == NotificationManager.INTERRUPTION_FILTER_ALARMS
         if (muteMode != inMuteMode) {
             muteMode = inMuteMode
             watchFaceHostApi.invalidate()
@@ -585,19 +581,19 @@ public class WatchFaceImpl(
         // persistence, otherwise we need to do our own.
         val storedUserStyle = watchFaceHostApi.getInitialUserStyle()
         if (storedUserStyle != null) {
-            userStyleRepository.userStyle =
-                UserStyle(UserStyleData(storedUserStyle), userStyleRepository.schema)
+            currentUserStyleRepository.userStyle =
+                UserStyle(UserStyleData(storedUserStyle), currentUserStyleRepository.schema)
         } else {
             // The system doesn't support preference persistence we need to do it ourselves.
             val preferencesFile =
                 "watchface_prefs_${watchFaceHostApi.getContext().javaClass.name}.txt"
 
-            userStyleRepository.userStyle = UserStyle(
+            currentUserStyleRepository.userStyle = UserStyle(
                 UserStyleData(readPrefs(watchFaceHostApi.getContext(), preferencesFile)),
-                userStyleRepository.schema
+                currentUserStyleRepository.schema
             )
 
-            userStyleRepository.addUserStyleChangeListener(
+            currentUserStyleRepository.addUserStyleChangeListener(
                 object : CurrentUserStyleRepository.UserStyleChangeListener {
                     @SuppressLint("SyntheticAccessor")
                     override fun onUserStyleChanged(userStyle: UserStyle) {
@@ -623,18 +619,20 @@ public class WatchFaceImpl(
             object : Complication.InvalidateListener {
                 @SuppressWarnings("SyntheticAccessor")
                 override fun onInvalidate() {
-                    // Ensure we render a frame if the Complication needs rendering, e.g. because it
-                    // loaded an image. However if we're animating there's no need to trigger an
-                    // extra invalidation.
-                    if (renderer.shouldAnimate() && computeDelayTillNextFrame(
-                            nextDrawTimeMillis,
-                            systemTimeProvider.getSystemTimeMillis()
-                        ) < MIN_PERCEPTABLE_DELAY_MILLIS
-                    ) {
-                        return
-                    }
-                    if (initFinished) {
-                        watchFaceHostApi.invalidate()
+                    // This could be called on any thread.
+                    watchFaceHostApi.getHandler().runOnHandlerWithTracing("onInvalidate") {
+                        // Ensure we render a frame if the Complication needs rendering, e.g.
+                        // because it loaded an image. However if we're animating there's no need
+                        // to trigger an extra invalidation.
+                        if (initFinished && (
+                            !renderer.shouldAnimate() || computeDelayTillNextFrame(
+                                    nextDrawTimeMillis,
+                                    systemTimeProvider.getSystemTimeMillis()
+                                ) > MIN_PERCEPTABLE_DELAY_MILLIS
+                            )
+                        ) {
+                            watchFaceHostApi.invalidate()
+                        }
                     }
                 }
             }
@@ -658,12 +656,12 @@ public class WatchFaceImpl(
 
     internal inner class WFEditorDelegate : WatchFace.EditorDelegate {
         override val userStyleSchema: UserStyleSchema
-            get() = userStyleRepository.schema
+            get() = currentUserStyleRepository.schema
 
         override var userStyle: UserStyle
-            get() = userStyleRepository.userStyle
+            get() = currentUserStyleRepository.userStyle
             set(value) {
-                userStyleRepository.userStyle = value
+                currentUserStyleRepository.userStyle = value
                 watchFaceHostApi.onUserStyleChanged()
             }
 
@@ -734,12 +732,11 @@ public class WatchFaceImpl(
     internal fun onSetStyleInternal(style: UserStyle) {
         // No need to echo the userStyle back.
         inOnSetStyle = true
-        userStyleRepository.userStyle = style
+        currentUserStyleRepository.userStyle = style
         inOnSetStyle = false
     }
 
     internal fun onDestroy() {
-        pendingSingleTap.cancel()
         pendingUpdateTime.cancel()
         renderer.onDestroy()
         watchState.isAmbient.removeObserver(ambientObserver)
@@ -754,23 +751,26 @@ public class WatchFaceImpl(
         unregisterReceivers()
     }
 
+    @UiThread
     private fun registerReceivers() {
-        if (registeredReceivers) {
-            return
+        require(watchFaceHostApi.getHandler().looper.isCurrentThread) {
+            "registerReceivers must be called the UiThread"
         }
-        registeredReceivers = true
-        BroadcastReceivers.addBroadcastEventObserver(
-            watchFaceHostApi.getContext(),
-            broadcastEventObserver
-        )
+
+        // There's no point registering BroadcastsReceiver for headless instances.
+        if (broadcastsReceiver == null && !watchState.isHeadless) {
+            broadcastsReceiver =
+                BroadcastsReceiver(watchFaceHostApi.getContext(), broadcastEventObserver)
+        }
     }
 
+    @UiThread
     private fun unregisterReceivers() {
-        if (!registeredReceivers) {
-            return
+        require(watchFaceHostApi.getHandler().looper.isCurrentThread) {
+            "unregisterReceivers must be called the UiThread"
         }
-        registeredReceivers = false
-        BroadcastReceivers.removeBroadcastEventObserver(broadcastEventObserver)
+        broadcastsReceiver?.onDestroy()
+        broadcastsReceiver = null
     }
 
     private fun scheduleDraw() {
@@ -912,7 +912,8 @@ public class WatchFaceImpl(
     ) {
         val tappedComplication = complicationsManager.getComplicationAt(x, y)
         if (tappedComplication == null) {
-            clearGesture()
+            // The event does not belong to any of the complications, pass to the listener.
+            lastTappedComplicationId = null
             tapListener?.onTap(tapType, x, y)
             return
         }
@@ -922,43 +923,21 @@ public class WatchFaceImpl(
                 if (tappedComplication.id != lastTappedComplicationId &&
                     lastTappedComplicationId != null
                 ) {
-                    clearGesture()
+                    // The UP event belongs to a different complication then the DOWN event,
+                    // do not consider this a tap on either of them.
+                    lastTappedComplicationId = null
                     return
                 }
-                if (!pendingSingleTap.isPending()) {
-                    // Give the user immediate visual feedback, the UI feels sluggish if we defer
-                    // this.
-                    complicationsManager.displayPressedAnimation(tappedComplication.id)
-
-                    lastTappedComplicationId = tappedComplication.id
-
-                    // This could either be a single or a double tap, post a task to process the
-                    // single tap which will get canceled if a double tap gets there first
-                    pendingSingleTap.postDelayedUnique(
-                        ViewConfiguration.getDoubleTapTimeout().toLong()
-                    ) {
-                        complicationsManager.onComplicationSingleTapped(tappedComplication.id)
-                        watchFaceHostApi.invalidate()
-                        clearGesture()
-                    }
-                }
+                complicationsManager.displayPressedAnimation(tappedComplication.id)
+                complicationsManager.onComplicationSingleTapped(tappedComplication.id)
+                watchFaceHostApi.invalidate()
+                lastTappedComplicationId = null
             }
             TapType.DOWN -> {
-                // Make sure the user isn't doing a swipe.
-                if (tappedComplication.id != lastTappedComplicationId &&
-                    lastTappedComplicationId != null
-                ) {
-                    clearGesture()
-                }
                 lastTappedComplicationId = tappedComplication.id
             }
-            else -> clearGesture()
+            else -> lastTappedComplicationId = null
         }
-    }
-
-    private fun clearGesture() {
-        lastTappedComplicationId = null
-        pendingSingleTap.cancel()
     }
 
     @UiThread
@@ -971,11 +950,12 @@ public class WatchFaceImpl(
         writer.println("mockTime.speed=${mockTime.speed}")
         writer.println("nextDrawTimeMillis=$nextDrawTimeMillis")
         writer.println("muteMode=$muteMode")
-        writer.println("pendingSingleTap=${pendingSingleTap.isPending()}")
         writer.println("pendingUpdateTime=${pendingUpdateTime.isPending()}")
         writer.println("lastTappedComplicationId=$lastTappedComplicationId")
-        writer.println("currentUserStyleRepository.userStyle=${userStyleRepository.userStyle}")
-        writer.println("currentUserStyleRepository.schema=${userStyleRepository.schema}")
+        writer.println(
+            "currentUserStyleRepository.userStyle=${currentUserStyleRepository.userStyle}"
+        )
+        writer.println("currentUserStyleRepository.schema=${currentUserStyleRepository.schema}")
         watchState.dump(writer)
         complicationsManager.dump(writer)
         renderer.dump(writer)

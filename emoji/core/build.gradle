@@ -31,9 +31,9 @@ dependencies {
     androidTestImplementation(ANDROIDX_TEST_CORE)
     androidTestImplementation(ANDROIDX_TEST_RUNNER)
     androidTestImplementation(ANDROIDX_TEST_RULES)
-    androidTestImplementation(ESPRESSO_CORE, libs.exclude_for_espresso)
-    androidTestImplementation(MOCKITO_CORE, libs.exclude_bytebuddy) // DexMaker has it"s own MockMaker
-    androidTestImplementation(DEXMAKER_MOCKITO, libs.exclude_bytebuddy) // DexMaker has it"s own MockMaker
+    androidTestImplementation(ESPRESSO_CORE, excludes.espresso)
+    androidTestImplementation(MOCKITO_CORE, excludes.bytebuddy) // DexMaker has it"s own MockMaker
+    androidTestImplementation(DEXMAKER_MOCKITO, excludes.bytebuddy) // DexMaker has it"s own MockMaker
     androidTestImplementation(project(":internal-testutils-runtime"))
 }
 
@@ -68,11 +68,11 @@ androidx {
 
     license {
         name = "SIL Open Font License, Version 1.1"
-        url = "http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web"
+        url = "https://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web"
     }
 
     license {
         name = "Unicode, Inc. License"
-        url = "http://www.unicode.org/copyright.html#License"
+        url = "https://www.unicode.org/license.html"
     }
 }

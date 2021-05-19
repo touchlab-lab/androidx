@@ -145,7 +145,7 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
 
     /**
      * The parent node in the LayoutNode hierarchy. This is `null` when the [LayoutNode]
-     * is not attached attached to a hierarchy or is the root of the hierarchy.
+     * is not attached to a hierarchy or is the root of the hierarchy.
      */
     internal var parent: LayoutNode? = null
         get() {
@@ -183,6 +183,11 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
      * A cache of modifiers to be used when setting and reusing previous modifiers.
      */
     private var wrapperCache = mutableVectorOf<DelegatingLayoutNodeWrapper<*>>()
+
+    /**
+     * [requestRemeasure] calls will be ignored while this flag is true.
+     */
+    private var ignoreRemeasureRequests = false
 
     /**
      * Inserts a child [LayoutNode] at a particular index. If this LayoutNode [owner] is not `null`
@@ -344,7 +349,7 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
             parent.invalidateLayer()
             parent.requestRemeasure()
         }
-        alignmentLinesQueryOwner = null
+        alignmentLines.reset()
         alignmentUsageByParent = UsageByParent.NotUsed
         onDetach?.invoke(owner)
         forEachDelegate { it.detach() }
@@ -489,15 +494,9 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
     override val height: Int get() = outerMeasurablePlaceable.height
 
     /**
-     * The alignment lines of this layout, inherited + intrinsic
+     * State corresponding to the alignment lines of this layout, inherited + intrinsic
      */
-    internal var alignmentLines: LayoutNodeAlignmentLines? = null
-        private set
-
-    /**
-     * The alignment lines provided by this layout at the last measurement
-     */
-    internal var providedAlignmentLines: Map<AlignmentLine, Int> = emptyMap()
+    internal var alignmentLines = LayoutNodeAlignmentLines(this)
 
     internal val mDrawScope: LayoutNodeDrawScope = sharedDrawScope
 
@@ -526,36 +525,6 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
      * Remembers how the node was measured by the parent.
      */
     internal var measuredByParent: UsageByParent = UsageByParent.NotUsed
-
-    /**
-     * `true` while doing [calculateAlignmentLines]
-     */
-    private var isCalculatingAlignmentLines = false
-
-    /**
-     * `true` when the parent reads our alignment lines
-     */
-    private var alignmentLinesRead = false
-
-    private var alignmentLinesCalculatedDuringLastLayout = false
-
-    /**
-     * `true` when an ancestor relies on our alignment lines
-     */
-    internal val alignmentLinesRequired
-        get() = alignmentLinesQueryOwner != null && alignmentLinesQueryOwner!!.alignmentLinesRead
-
-    /**
-     * Used by the parent to identify if the child has been queried for alignment lines since
-     * last measurement.
-     */
-    private var alignmentLinesQueriedSinceLastLayout = false
-
-    /**
-     * The closest layout node above in the hierarchy which asked for alignment lines.
-     */
-    internal var alignmentLinesQueryOwner: LayoutNode? = null
-        private set
 
     internal var alignmentUsageByParent = UsageByParent.NotUsed
 
@@ -643,19 +612,15 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
             // when possible.
             val outerWrapper = modifier.foldOut(innerLayoutNodeWrapper) { mod, toWrap ->
                 var wrapper = toWrap
-                if (mod is OnGloballyPositionedModifier) {
-                    val onPositionedCallbacks = onPositionedCallbacks
-                        ?: mutableVectorOf<OnGloballyPositionedModifier>().also {
-                            onPositionedCallbacks = it
-                        }
-                    onPositionedCallbacks += mod
-                }
                 if (mod is RemeasurementModifier) {
                     mod.onRemeasurementAvailable(this)
                 }
 
                 val delegate = reuseLayoutNodeWrapper(mod, toWrap)
                 if (delegate != null) {
+                    if (delegate is OnGloballyPositionedModifierWrapper) {
+                        getOrCreateOnPositionedCallbacks() += delegate
+                    }
                     wrapper = delegate
                 } else {
                     // The order in which the following blocks occur matters. For example, the
@@ -697,6 +662,11 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
                     }
                     if (mod is OnRemeasuredModifier) {
                         wrapper = RemeasureModifierWrapper(wrapper, mod).assignChained(toWrap)
+                    }
+                    if (mod is OnGloballyPositionedModifier) {
+                        wrapper =
+                            OnGloballyPositionedModifierWrapper(wrapper, mod).assignChained(toWrap)
+                        getOrCreateOnPositionedCallbacks() += wrapper
                     }
                 }
                 wrapper
@@ -766,7 +736,12 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
     /**
      * List of all OnPositioned callbacks in the modifier chain.
      */
-    private var onPositionedCallbacks: MutableVector<OnGloballyPositionedModifier>? = null
+    private var onPositionedCallbacks: MutableVector<OnGloballyPositionedModifierWrapper>? = null
+
+    private fun getOrCreateOnPositionedCallbacks() = onPositionedCallbacks
+        ?: mutableVectorOf<OnGloballyPositionedModifierWrapper>().also {
+            onPositionedCallbacks = it
+        }
 
     /**
      * Flag used by [OnPositionedDispatcher] to identify LayoutNodes that have already
@@ -819,9 +794,9 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
      */
     private fun hasNewPositioningCallback(): Boolean {
         val onPositionedCallbacks = onPositionedCallbacks
-        return onPositionedCallbacks != null && modifier.foldOut(false) { mod, hasNewCallback ->
-            hasNewCallback ||
-                (mod is OnGloballyPositionedModifier && mod !in onPositionedCallbacks)
+        return modifier.foldOut(false) { mod, hasNewCallback ->
+            hasNewCallback || mod is OnGloballyPositionedModifier &&
+                (onPositionedCallbacks?.firstOrNull { mod == it.modifier } == null)
         }
     }
 
@@ -874,7 +849,9 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
         layoutChildren()
     }
 
-    private fun layoutChildren() {
+    internal fun layoutChildren() {
+        alignmentLines.recalculateQueryOwner()
+
         if (layoutState == NeedsRelayout) {
             onBeforeLayoutChildren()
         }
@@ -889,16 +866,9 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
                 _children.forEach { child ->
                     // and reset the place order for all the children before placing them
                     child.placeOrder = NotPlacedPlaceOrder
-                    if (alignmentLinesRequired && child.layoutState == Ready &&
-                        !child.alignmentLinesCalculatedDuringLastLayout
-                    ) {
-                        child.layoutState = NeedsRelayout
-                    }
-                    if (!child.alignmentLinesRequired) {
-                        child.alignmentLinesQueryOwner = alignmentLinesQueryOwner
-                    }
-                    child.alignmentLinesQueriedSinceLastLayout = false
+                    child.alignmentLines.usedDuringParentLayout = false
                 }
+
                 innerLayoutNodeWrapper.measureResult.placeChildren()
                 _children.forEach { child ->
                     // we set `placeOrder` to NotPlacedPlaceOrder for all the children, then
@@ -910,20 +880,18 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
                         // which is not placed anymore.
                         invalidateLayer()
                     }
-                    child.alignmentLinesRead = child.alignmentLinesQueriedSinceLastLayout
+                    child.alignmentLines.previousUsedDuringParentLayout =
+                        child.alignmentLines.usedDuringParentLayout
                 }
             }
 
-            alignmentLinesCalculatedDuringLastLayout = false
-            if (alignmentLinesRequired) {
-                alignmentLinesCalculatedDuringLastLayout = true
-                val alignments = alignmentLines ?: LayoutNodeAlignmentLines(this).also {
-                    alignmentLines = it
-                }
-                alignments.recalculate()
-            }
             layoutState = Ready
         }
+
+        if (alignmentLines.usedDuringParentLayout) {
+            alignmentLines.previousUsedDuringParentLayout = true
+        }
+        if (alignmentLines.dirty && alignmentLines.required) alignmentLines.recalculate()
     }
 
     private fun markSubtreeAsPlaced() {
@@ -980,63 +948,61 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
     }
 
     internal fun onAlignmentsChanged() {
-        val parent = parent
-        if (parent != null) {
-            if (alignmentUsageByParent == UsageByParent.InMeasureBlock &&
-                parent.layoutState != LayingOut
-            ) {
-                parent.requestRemeasure()
-            } else if (alignmentUsageByParent == UsageByParent.InLayoutBlock) {
-                parent.requestRelayout()
-            }
+        if (alignmentLines.dirty) return
+        alignmentLines.dirty = true
+
+        val parent = parent ?: return
+        if (alignmentLines.usedDuringParentMeasurement) {
+            parent.requestRemeasure()
+        } else if (alignmentLines.previousUsedDuringParentLayout) {
+            parent.requestRelayout()
         }
+        if (alignmentLines.usedByModifierMeasurement) {
+            requestRemeasure()
+        }
+        if (alignmentLines.usedByModifierLayout) {
+            parent.requestRelayout()
+        }
+        parent.onAlignmentsChanged()
     }
 
     internal fun calculateAlignmentLines(): Map<AlignmentLine, Int> {
-        isCalculatingAlignmentLines = true
-        alignmentLinesRead = true
-        alignmentLinesQueryOwner = this
-        alignmentLinesQueriedSinceLastLayout = true
-        val newUsageByParent = when (parent?.layoutState) {
-            Measuring -> UsageByParent.InMeasureBlock
-            LayingOut -> UsageByParent.InLayoutBlock
-            else -> UsageByParent.NotUsed
+        if (!outerMeasurablePlaceable.duringAlignmentLinesQuery) {
+            alignmentLinesQueriedByModifier()
         }
-        val newUsageHasLowerPriority = newUsageByParent == UsageByParent.InLayoutBlock &&
-            alignmentUsageByParent == UsageByParent.InMeasureBlock
-        if (!newUsageHasLowerPriority) {
-            alignmentUsageByParent = newUsageByParent
+        layoutChildren()
+        return alignmentLines.getLastCalculation()
+    }
+
+    private fun alignmentLinesQueriedByModifier() {
+        if (layoutState == Measuring) {
+            alignmentLines.usedByModifierMeasurement = true
+            // We quickly transition to NeedsRelayout as we need the alignment lines now.
+            // Later we will see that we also laid out as part of measurement and will skip layout.
+            if (alignmentLines.dirty) layoutState = NeedsRelayout
+        } else {
+            // Note this can also happen for onGloballyPositioned queries.
+            alignmentLines.usedByModifierLayout = true
         }
-        if (layoutState == NeedsRelayout || !alignmentLinesCalculatedDuringLastLayout) {
-            // layoutChildren() is a state transformation from NeedsRelayout to Ready.
-            // when we are already in NeedsRelayout we need to end up with Ready, but if we are
-            // currently measuring or need remeasure this extra layoutChildren is just a side effect
-            // and we will need to restore the current state.
-            val endState = if (layoutState == Measuring || layoutState == NeedsRemeasure) {
-                layoutState
-            } else {
-                Ready
-            }
-            if (!alignmentLinesCalculatedDuringLastLayout) {
-                layoutState = NeedsRelayout
-            }
-            layoutChildren()
-            layoutState = endState
-        }
-        isCalculatingAlignmentLines = false
-        return alignmentLines?.getLastCalculation() ?: emptyMap()
     }
 
     internal fun handleMeasureResult(measureResult: MeasureResult) {
         innerLayoutNodeWrapper.measureResult = measureResult
-        providedAlignmentLines = measureResult.alignmentLines
     }
 
     /**
      * Used to request a new measurement + layout pass from the owner.
      */
     internal fun requestRemeasure() {
-        owner?.onRequestMeasure(this)
+        if (!ignoreRemeasureRequests) {
+            owner?.onRequestMeasure(this)
+        }
+    }
+
+    internal inline fun ignoreRemeasureRequests(block: () -> Unit) {
+        ignoreRemeasureRequests = true
+        block()
+        ignoreRemeasureRequests = false
     }
 
     /**
@@ -1061,7 +1027,9 @@ internal class LayoutNode : Measurable, Remeasurement, OwnerScope, LayoutInfo, C
         if (!isPlaced) {
             return // it hasn't been placed, so don't make a call
         }
-        onPositionedCallbacks?.forEach { it.onGloballyPositioned(coordinates) }
+        onPositionedCallbacks?.forEach {
+            it.modifier.onGloballyPositioned(it)
+        }
     }
 
     /**

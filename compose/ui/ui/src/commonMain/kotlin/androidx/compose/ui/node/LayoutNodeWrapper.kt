@@ -26,7 +26,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.GraphicsLayerScope
-import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.ReusableGraphicsLayerScope
 import androidx.compose.ui.input.nestedscroll.NestedScrollDelegatingWrapper
@@ -89,8 +88,39 @@ internal abstract class LayoutNodeWrapper(
                 if (old == null || value.width != old.width || value.height != old.height) {
                     onMeasureResultChanged(value.width, value.height)
                 }
+                // We do not simply compare against old.alignmentLines in case this is a
+                // MutableStateMap and the same instance might be passed.
+                if ((!oldAlignmentLines.isNullOrEmpty() || value.alignmentLines.isNotEmpty()) &&
+                    value.alignmentLines != oldAlignmentLines
+                ) {
+                    if (wrapped?.layoutNode == layoutNode) {
+                        layoutNode.parent?.onAlignmentsChanged()
+                        // We might need to request remeasure or relayout for the parent in
+                        // case they ask for the lines so we are the query owner, without
+                        // marking dirty our alignment lines (because only the modifier's changed).
+                        if (layoutNode.alignmentLines.usedDuringParentMeasurement) {
+                            layoutNode.parent?.requestRemeasure()
+                        } else if (layoutNode.alignmentLines.usedDuringParentLayout) {
+                            layoutNode.parent?.requestRelayout()
+                        }
+                    } else {
+                        // It means we are an InnerPlaceable.
+                        layoutNode.onAlignmentsChanged()
+                    }
+                    layoutNode.alignmentLines.dirty = true
+
+                    val oldLines = oldAlignmentLines
+                        ?: (mutableMapOf<AlignmentLine, Int>().also { oldAlignmentLines = it })
+                    oldLines.clear()
+                    oldLines.putAll(value.alignmentLines)
+                }
             }
         }
+
+    private var oldAlignmentLines: MutableMap<AlignmentLine, Int>? = null
+
+    override val providedAlignmentLines: Set<AlignmentLine>
+        get() = _measureResult?.alignmentLines?.keys ?: emptySet()
 
     /**
      * Called when the width or height of [measureResult] change. The object instance pointed to
@@ -141,11 +171,6 @@ internal abstract class LayoutNodeWrapper(
 
     private val snapshotObserver get() = layoutNode.requireOwner().snapshotObserver
 
-    // TODO (njawad): This cache matrix is not thread safe
-    private var _matrixCache: Matrix? = null
-    private val matrixCache: Matrix
-        get() = _matrixCache ?: Matrix().also { _matrixCache = it }
-
     /**
      * Whether a pointer that is relative to the [LayoutNodeWrapper] is in the bounds of this
      * LayoutNodeWrapper.
@@ -195,6 +220,11 @@ internal abstract class LayoutNodeWrapper(
                 layer.move(position)
             } else {
                 wrappedBy?.invalidateLayer()
+            }
+            if (wrapped?.layoutNode != layoutNode) {
+                layoutNode.onAlignmentsChanged()
+            } else {
+                layoutNode.parent?.onAlignmentsChanged()
             }
             layoutNode.owner?.onLayoutChange(layoutNode)
         }
@@ -257,6 +287,9 @@ internal abstract class LayoutNodeWrapper(
                 it.destroy()
                 layoutNode.innerLayerWrapperIsDirty = true
                 invalidateParentLayer()
+                if (isAttached) {
+                    layoutNode.owner?.onLayoutChange(layoutNode)
+                }
             }
             layer = null
         }
@@ -291,6 +324,7 @@ internal abstract class LayoutNodeWrapper(
         } else {
             require(layerBlock == null)
         }
+        layoutNode.owner?.onLayoutChange(layoutNode)
     }
 
     private val invalidateParentLayer: () -> Unit = {
@@ -439,9 +473,7 @@ internal abstract class LayoutNodeWrapper(
         val targetPosition = if (layer == null) {
             position
         } else {
-            val matrix = matrixCache
-            layer.getMatrix(matrix)
-            matrix.map(position)
+            layer.mapOffset(position, inverse = false)
         }
         return targetPosition + this.position
     }
@@ -456,10 +488,7 @@ internal abstract class LayoutNodeWrapper(
         return if (layer == null) {
             relativeToWrapperPosition
         } else {
-            val inverse = matrixCache
-            layer.getMatrix(inverse)
-            inverse.invert()
-            inverse.map(relativeToWrapperPosition)
+            layer.mapOffset(relativeToWrapperPosition, inverse = true)
         }
     }
 
@@ -521,9 +550,7 @@ internal abstract class LayoutNodeWrapper(
                     return
                 }
             }
-            val matrix = matrixCache
-            layer.getMatrix(matrix)
-            matrix.map(bounds)
+            layer.mapBounds(bounds, inverse = false)
         }
 
         val x = position.x
@@ -550,10 +577,7 @@ internal abstract class LayoutNodeWrapper(
 
         val layer = layer
         if (layer != null) {
-            val matrix = matrixCache
-            layer.getMatrix(matrix)
-            matrix.invert()
-            matrix.map(bounds)
+            layer.mapBounds(bounds, inverse = true)
             if (isClipping && clipBounds) {
                 bounds.intersect(0f, 0f, size.width.toFloat(), size.height.toFloat())
                 if (bounds.isEmpty) {

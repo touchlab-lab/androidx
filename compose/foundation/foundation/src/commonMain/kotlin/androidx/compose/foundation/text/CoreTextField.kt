@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.isFocused
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -473,8 +472,8 @@ internal fun CoreTextField(
                 )
                 .then(cursorModifier)
                 .then(drawModifier)
-                .then(onPositionedModifier)
                 .textFieldMinSize(textStyle)
+                .then(onPositionedModifier)
 
             SimpleLayout(coreTextFieldModifier) {
                 Layout({ }) { _, constraints ->

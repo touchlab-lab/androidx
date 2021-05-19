@@ -28,7 +28,6 @@ import androidx.annotation.Nullable;
 import androidx.car.app.Screen;
 import androidx.car.app.SurfaceCallback;
 import androidx.car.app.annotations.CarProtocol;
-import androidx.car.app.annotations.ExperimentalCarApi;
 import androidx.car.app.model.Action;
 import androidx.car.app.model.ActionStrip;
 import androidx.car.app.model.CarText;
@@ -59,9 +58,9 @@ import java.util.Objects;
  *
  * <ul>
  *   <li>The previous template is in a loading state (see {@link Builder#setLoading}, or
- *   <li>The template title has not changed, and the number of rows and the string contents
- *       (title, texts, not counting spans) of each row between the previous and new
- *       {@link ItemList}s have not changed.
+ *   <li>The template title has not changed, and the number of rows and the title (not
+ *       counting spans) of each row between the previous and new {@link ItemList}s have not
+ *       changed.
  * </ul>
  *
  * <p>In order to use this template your car app <b>MUST</b> declare that it uses the {@code
@@ -214,7 +213,6 @@ public final class PlaceListNavigationTemplate implements Template {
          * @throws NullPointerException if {@code title} is null
          * @see CarText
          */
-        @ExperimentalCarApi
         @NonNull
         public Builder setTitle(@NonNull CarText title) {
             mTitle = requireNonNull(title);

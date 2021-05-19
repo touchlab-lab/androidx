@@ -193,24 +193,6 @@ public class CarContextTest {
     }
 
     @Test
-    public void startCarApp_nullIntent_throws() {
-        assertThrows(NullPointerException.class, () -> CarContext.startCarApp(null, null));
-        assertThrows(
-                NullPointerException.class,
-                () -> CarContext.startCarApp(mIntentFromNotification, null));
-        assertThrows(NullPointerException.class, () -> CarContext.startCarApp(null, new Intent()));
-    }
-
-    @Test
-    public void startCarApp_callsTheBinder() throws RemoteException {
-        Intent startCarAppIntent = new Intent("foo");
-
-        CarContext.startCarApp(mIntentFromNotification, startCarAppIntent);
-
-        verify(mMockStartCarApp).startCarApp(startCarAppIntent);
-    }
-
-    @Test
     public void finishCarApp() throws RemoteException {
         mCarContext.finishCarApp();
 
@@ -435,7 +417,7 @@ public class CarContextTest {
         OnRequestPermissionsCallback callback = mock(OnRequestPermissionsCallback.class);
 
         mLifecycleOwner.mRegistry.setCurrentState(State.CREATED);
-        mCarContext.requestPermissions(Runnable::run, permissions, callback);
+        mCarContext.requestPermissions(permissions, Runnable::run, callback);
 
         ShadowApplication sa = shadowOf((Application) ApplicationProvider.getApplicationContext());
         Intent startActivityIntent = sa.getNextStartedActivity();
