@@ -91,7 +91,9 @@ internal class TestAsyncWatchFaceService(
         currentUserStyleRepository
     ).await()
 
-    override fun getHandler() = handler
+    override fun getUiThreadHandlerImpl() = handler
+
+    override fun getBackgroundThreadHandlerImpl() = handler
 
     override fun getMutableWatchState() = watchState
 
@@ -207,12 +209,11 @@ public class AsyncWatchFaceInitTest {
         )
 
         val engineWrapper = service.onCreateEngine() as WatchFaceService.EngineWrapper
-        engineWrapper.onSurfaceChanged(surfaceHolder, 0, 100, 100)
 
         runPostedTasksFor(0)
 
         lateinit var pendingException: Exception
-        engineWrapper.coroutineScope.launch {
+        engineWrapper.backgroundThreadCoroutineScope.launch {
             try {
                 // This should fail because the direct boot instance is being constructed.
                 engineWrapper.createInteractiveInstance(initParams, "test")
@@ -232,38 +233,9 @@ public class AsyncWatchFaceInitTest {
         lateinit var pendingCurrentUserStyleRepository: CurrentUserStyleRepository
         lateinit var pendingSurfaceHolder: SurfaceHolder
         lateinit var pendingWatchState: WatchState
-        val service = TestAsyncWatchFaceService(
-            handler,
-            object : TestAsyncWatchFaceService.AsyncWatchFaceFactory() {
-                override fun createUserStyleSchema() = UserStyleSchema(emptyList())
-
-                override fun createComplicationsManager(
-                    currentUserStyleRepository: CurrentUserStyleRepository
-                ) = ComplicationsManager(emptyList(), currentUserStyleRepository)
-
-                override fun createWatchFaceAsync(
-                    surfaceHolder: SurfaceHolder,
-                    watchState: WatchState,
-                    complicationsManager: ComplicationsManager,
-                    currentUserStyleRepository: CurrentUserStyleRepository
-                ): Deferred<WatchFace> {
-                    pendingSurfaceHolder = surfaceHolder
-                    pendingWatchState = watchState
-                    pendingCurrentUserStyleRepository = currentUserStyleRepository
-                    return completableDirectBootWatchFace
-                }
-            },
-            MutableWatchState(),
-            initParams
-        )
-
-        val engineWrapper = service.onCreateEngine() as WatchFaceService.EngineWrapper
-        engineWrapper.onSurfaceChanged(surfaceHolder, 0, 100, 100)
-        runPostedTasksFor(0)
-
-        var pendingInteractiveWatchFaceWcs: IInteractiveWatchFace? = null
 
         // There shouldn't be an existing instance, so we expect null.
+        var pendingInteractiveWatchFaceWcs: IInteractiveWatchFace? = null
         assertNull(
             InteractiveInstanceManager
                 .getExistingInstanceOrSetPendingWallpaperInteractiveWatchFaceInstance(
@@ -289,6 +261,32 @@ public class AsyncWatchFaceInitTest {
                 )
         )
 
+        val service = TestAsyncWatchFaceService(
+            handler,
+            object : TestAsyncWatchFaceService.AsyncWatchFaceFactory() {
+                override fun createUserStyleSchema() = UserStyleSchema(emptyList())
+
+                override fun createComplicationsManager(
+                    currentUserStyleRepository: CurrentUserStyleRepository
+                ) = ComplicationsManager(emptyList(), currentUserStyleRepository)
+
+                override fun createWatchFaceAsync(
+                    surfaceHolder: SurfaceHolder,
+                    watchState: WatchState,
+                    complicationsManager: ComplicationsManager,
+                    currentUserStyleRepository: CurrentUserStyleRepository
+                ): Deferred<WatchFace> {
+                    pendingSurfaceHolder = surfaceHolder
+                    pendingWatchState = watchState
+                    pendingCurrentUserStyleRepository = currentUserStyleRepository
+                    return completableDirectBootWatchFace
+                }
+            },
+            MutableWatchState(),
+            initParams
+        )
+
+        service.onCreateEngine() as WatchFaceService.EngineWrapper
         runPostedTasksFor(0)
 
         // Complete the direct boot watch face which should trigger the callback which sets

@@ -20,8 +20,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.wear.tiles.ResourcesRequestData;
+import androidx.wear.tiles.StateBuilders.State;
 import androidx.wear.tiles.TileRequestData;
-import androidx.wear.tiles.builders.StateBuilders.State;
 import androidx.wear.tiles.proto.RequestProto;
 import androidx.wear.tiles.protobuf.ExtensionRegistryLite;
 import androidx.wear.tiles.protobuf.InvalidProtocolBufferException;
@@ -36,7 +36,8 @@ public class RequestReaders {
     /** Reader for Tile request parameters. */
     public static class TileRequest {
         private final RequestProto.TileRequest mProto;
-        @SuppressWarnings("UnusedVariable")
+
+        @SuppressWarnings("unused")
         private final int mTileId;
 
         private TileRequest(RequestProto.TileRequest proto, int tileId) {
@@ -75,7 +76,8 @@ public class RequestReaders {
     /** Reader for resource request parameters. */
     public static class ResourcesRequest {
         private final RequestProto.ResourcesRequest mProto;
-        @SuppressWarnings("UnusedVariable")
+
+        @SuppressWarnings("unused")
         private final int mTileId;
 
         private ResourcesRequest(@NonNull RequestProto.ResourcesRequest proto, int tileId) {

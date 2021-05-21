@@ -25,10 +25,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
@@ -114,6 +116,7 @@ import androidx.wear.tiles.proto.ModifiersProto.Padding;
 import androidx.wear.tiles.proto.ModifiersProto.SpanModifiers;
 import androidx.wear.tiles.proto.StateProto.State;
 import androidx.wear.tiles.renderer.R;
+import androidx.wear.tiles.renderer.internal.ResourceResolvers.ResourceAccessException;
 import androidx.wear.tiles.renderer.internal.WearArcLayout.ArcLayoutWidget;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -134,15 +137,16 @@ public final class TileRendererInternal {
 
     private static final String TAG = "TileRendererInternal";
 
-    private static final int HALIGN_DEFAULT_GRAVITY = Gravity.CENTER_HORIZONTAL;
-    private static final int VALIGN_DEFAULT_GRAVITY = Gravity.CENTER_VERTICAL;
+    private static final int HORIZONTAL_ALIGN_DEFAULT_GRAVITY = Gravity.CENTER_HORIZONTAL;
+    private static final int VERTICAL_ALIGN_DEFAULT_GRAVITY = Gravity.CENTER_VERTICAL;
     private static final int TEXT_ALIGN_DEFAULT = Gravity.CENTER_HORIZONTAL;
     private static final ScaleType IMAGE_DEFAULT_SCALE_TYPE = ScaleType.FIT_CENTER;
 
     @WearArcLayout.LayoutParams.VerticalAlignment
-    private static final int ARC_VALIGN_DEFAULT = WearArcLayout.LayoutParams.VALIGN_CENTER;
+    private static final int ARC_VERTICAL_ALIGN_DEFAULT =
+            WearArcLayout.LayoutParams.VERTICAL_ALIGN_CENTER;
 
-    private static final int SPAN_VALIGN_DEFAULT = ImageSpan.ALIGN_BOTTOM;
+    private static final int SPAN_VERTICAL_ALIGN_DEFAULT = ImageSpan.ALIGN_BOTTOM;
 
     // This is pretty badly named; TruncateAt specifies where to place the ellipsis (or whether to
     // marquee). Disabling truncation with null actually disables the _ellipsis_, but text will
@@ -365,55 +369,55 @@ public final class TileRendererInternal {
 
     private static int horizontalAlignmentToGravity(HorizontalAlignmentProp alignment) {
         switch (alignment.getValue()) {
-            case HALIGN_START:
+            case HORIZONTAL_ALIGN_START:
                 return Gravity.START;
-            case HALIGN_CENTER:
+            case HORIZONTAL_ALIGN_CENTER:
                 return Gravity.CENTER_HORIZONTAL;
-            case HALIGN_END:
+            case HORIZONTAL_ALIGN_END:
                 return Gravity.END;
-            case HALIGN_LEFT:
+            case HORIZONTAL_ALIGN_LEFT:
                 return Gravity.LEFT;
-            case HALIGN_RIGHT:
+            case HORIZONTAL_ALIGN_RIGHT:
                 return Gravity.RIGHT;
             case UNRECOGNIZED:
-            case HALIGN_UNDEFINED:
-                return HALIGN_DEFAULT_GRAVITY;
+            case HORIZONTAL_ALIGN_UNDEFINED:
+                return HORIZONTAL_ALIGN_DEFAULT_GRAVITY;
         }
 
-        return HALIGN_DEFAULT_GRAVITY;
+        return HORIZONTAL_ALIGN_DEFAULT_GRAVITY;
     }
 
     private static int verticalAlignmentToGravity(VerticalAlignmentProp alignment) {
         switch (alignment.getValue()) {
-            case VALIGN_TOP:
+            case VERTICAL_ALIGN_TOP:
                 return Gravity.TOP;
-            case VALIGN_CENTER:
+            case VERTICAL_ALIGN_CENTER:
                 return Gravity.CENTER_VERTICAL;
-            case VALIGN_BOTTOM:
+            case VERTICAL_ALIGN_BOTTOM:
                 return Gravity.BOTTOM;
             case UNRECOGNIZED:
-            case VALIGN_UNDEFINED:
-                return VALIGN_DEFAULT_GRAVITY;
+            case VERTICAL_ALIGN_UNDEFINED:
+                return VERTICAL_ALIGN_DEFAULT_GRAVITY;
         }
 
-        return VALIGN_DEFAULT_GRAVITY;
+        return VERTICAL_ALIGN_DEFAULT_GRAVITY;
     }
 
     @WearArcLayout.LayoutParams.VerticalAlignment
     private static int verticalAlignmentToArcVAlign(VerticalAlignmentProp alignment) {
         switch (alignment.getValue()) {
-            case VALIGN_TOP:
-                return WearArcLayout.LayoutParams.VALIGN_OUTER;
-            case VALIGN_CENTER:
-                return WearArcLayout.LayoutParams.VALIGN_CENTER;
-            case VALIGN_BOTTOM:
-                return WearArcLayout.LayoutParams.VALIGN_INNER;
+            case VERTICAL_ALIGN_TOP:
+                return WearArcLayout.LayoutParams.VERTICAL_ALIGN_OUTER;
+            case VERTICAL_ALIGN_CENTER:
+                return WearArcLayout.LayoutParams.VERTICAL_ALIGN_CENTER;
+            case VERTICAL_ALIGN_BOTTOM:
+                return WearArcLayout.LayoutParams.VERTICAL_ALIGN_INNER;
             case UNRECOGNIZED:
-            case VALIGN_UNDEFINED:
-                return ARC_VALIGN_DEFAULT;
+            case VERTICAL_ALIGN_UNDEFINED:
+                return ARC_VERTICAL_ALIGN_DEFAULT;
         }
 
-        return ARC_VALIGN_DEFAULT;
+        return ARC_VERTICAL_ALIGN_DEFAULT;
     }
 
     private static ScaleType contentScaleModeToScaleType(ContentScaleMode contentScaleMode) {
@@ -435,16 +439,16 @@ public final class TileRendererInternal {
     private static int spanVerticalAlignmentToImgSpanAlignment(
             SpanVerticalAlignmentProp alignment) {
         switch (alignment.getValue()) {
-            case SPAN_VALIGN_TEXT_BASELINE:
+            case SPAN_VERTICAL_ALIGN_TEXT_BASELINE:
                 return ImageSpan.ALIGN_BASELINE;
-            case SPAN_VALIGN_BOTTOM:
+            case SPAN_VERTICAL_ALIGN_BOTTOM:
                 return ImageSpan.ALIGN_BOTTOM;
-            case SPAN_VALIGN_UNDEFINED:
+            case SPAN_VERTICAL_ALIGN_UNDEFINED:
             case UNRECOGNIZED:
-                return SPAN_VALIGN_DEFAULT;
+                return SPAN_VERTICAL_ALIGN_DEFAULT;
         }
 
-        return SPAN_VALIGN_DEFAULT;
+        return SPAN_VERTICAL_ALIGN_DEFAULT;
     }
 
     /**
@@ -933,6 +937,34 @@ public final class TileRendererInternal {
         // sets the gravity of the foreground Drawable). Go and apply gravity to the child.
         applyGravityToFrameLayoutChildren(frame, gravity);
 
+        // HACK: FrameLayout has a bug in it. If we add one WRAP_CONTENT child, and one MATCH_PARENT
+        // child, the expected behaviour is that the FrameLayout sizes itself to fit the
+        // WRAP_CONTENT child (e.g. a TextView), then the MATCH_PARENT child is forced to the
+        // same size as the outer FrameLayout (and hence, the size of the TextView, after
+        // accounting for padding etc). Because of a bug though, this doesn't happen; instead,
+        // the MATCH_PARENT child will just keep its intrinsic size. This is because FrameLayout
+        // only forces MATCH_PARENT children to a given size if there are _more than one_ of them
+        // (see the bottom of FrameLayout#onMeasure).
+        //
+        // To work around this (without copying the whole of FrameLayout just to change a "1" to
+        // "0"), we add a Space element in if there is one MATCH_PARENT child. This has a tiny
+        // cost to the measure pass, and negligible cost to layout/draw (since it doesn't take
+        // part in those passes).
+        int numMatchParentChildren = 0;
+        for (int i = 0; i < frame.getChildCount(); i++) {
+            LayoutParams lp = frame.getChildAt(i).getLayoutParams();
+            if (lp.width == LayoutParams.MATCH_PARENT || lp.height == LayoutParams.MATCH_PARENT) {
+                numMatchParentChildren++;
+            }
+        }
+
+        if (numMatchParentChildren == 1) {
+            Space hackSpace = new Space(mAppContext);
+            LayoutParams hackSpaceLp =
+                    new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            frame.addView(hackSpace, hackSpaceLp);
+        }
+
         return wrappedView;
     }
 
@@ -1149,7 +1181,7 @@ public final class TileRendererInternal {
             return null;
         }
 
-        ImageView imageView = new ImageView(mAppContext);
+        ImageViewWithoutIntrinsicSizes imageView = new ImageViewWithoutIntrinsicSizes(mAppContext);
 
         if (image.hasContentScaleMode()) {
             imageView.setScaleType(
@@ -1189,10 +1221,42 @@ public final class TileRendererInternal {
             // If the future is done, immediately draw.
             setImageDrawable(imageView, drawableFuture, protoResId);
         } else {
+            // Is there a placeholder to use in the meantime?
+            try {
+                if (mResourceResolvers.hasPlaceholderDrawable(protoResId)) {
+                    imageView.setImageDrawable(
+                            mResourceResolvers.getPlaceholderDrawableOrThrow(protoResId));
+                }
+            } catch (ResourceAccessException ex) {
+                Log.e(TAG, "Exception loading placeholder for resource " + protoResId, ex);
+            }
+
             // Otherwise, handle the result on the UI thread.
             drawableFuture.addListener(
                     () -> setImageDrawable(imageView, drawableFuture, protoResId),
                     ContextCompat.getMainExecutor(mAppContext));
+        }
+
+        boolean canImageBeTinted = false;
+
+        try {
+            canImageBeTinted = mResourceResolvers.canImageBeTinted(protoResId);
+        } catch (IllegalArgumentException ex) {
+            // This implies that the image doesn't exist, but in that case, the above statement
+            // should have thrown.
+            Log.wtf(TAG, "Exception tinting image " + protoResId, ex);
+        }
+
+        if (image.hasFilter()) {
+            if (image.getFilter().hasTint() && canImageBeTinted) {
+                // Only allow tinting for Android images.
+                ColorStateList tint = ColorStateList.valueOf(image.getFilter().getTint().getArgb());
+                imageView.setImageTintList(tint);
+
+                // SRC_IN throws away the colours in the drawable that we're tinting. Effectively,
+                // the drawable being tinted is only a mask to apply the colour to.
+                imageView.setImageTintMode(Mode.SRC_IN);
+            }
         }
 
         return wrappedView;
@@ -1354,10 +1418,24 @@ public final class TileRendererInternal {
             }
         } else {
             // If the future is not done, add an empty drawable to builder as a placeholder.
-            Drawable emptyDrawable = new ColorDrawable(Color.TRANSPARENT);
+            @Nullable Drawable placeholderDrawable = null;
+
+            try {
+                if (mResourceResolvers.hasPlaceholderDrawable(protoResId)) {
+                    placeholderDrawable =
+                            mResourceResolvers.getPlaceholderDrawableOrThrow(protoResId);
+                }
+            } catch (ResourceAccessException ex) {
+                Log.e(TAG, "Could not get placeholder for image " + protoResId, ex);
+            }
+
+            if (placeholderDrawable == null) {
+                placeholderDrawable = new ColorDrawable(Color.TRANSPARENT);
+            }
+
             int startInclusive = builder.length();
-            FixedImageSpan emptyDrawableSpan =
-                    appendSpanDrawable(builder, emptyDrawable, protoImage);
+            FixedImageSpan placeholderDrawableSpan =
+                    appendSpanDrawable(builder, placeholderDrawable, protoImage);
             int endExclusive = builder.length();
 
             // When the future is done, replace the empty drawable with the received one.
@@ -1366,7 +1444,7 @@ public final class TileRendererInternal {
                         // Remove the placeholder. This should be safe, even with other modifiers
                         // applied. This just removes the single drawable span, and should leave
                         // other spans in place.
-                        builder.removeSpan(emptyDrawableSpan);
+                        builder.removeSpan(placeholderDrawableSpan);
                         // Add the new drawable to the same range.
                         setSpanDrawable(
                                 builder, drawableFuture, startInclusive, endExclusive, protoImage);

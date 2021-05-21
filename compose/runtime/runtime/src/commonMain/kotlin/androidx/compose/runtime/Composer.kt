@@ -25,8 +25,8 @@ import androidx.compose.runtime.snapshots.fastForEach
 import androidx.compose.runtime.snapshots.fastToSet
 import androidx.compose.runtime.tooling.CompositionData
 import androidx.compose.runtime.tooling.LocalInspectionTables
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
+import androidx.compose.runtime.external.kotlinx.collections.immutable.PersistentMap
+import androidx.compose.runtime.external.kotlinx.collections.immutable.persistentHashMapOf
 import kotlin.coroutines.CoroutineContext
 
 internal typealias Change = (
@@ -2338,7 +2338,7 @@ internal class ComposerImpl(
     private fun SlotReader.groupCompoundKeyPart(group: Int) =
         if (hasObjectKey(group)) groupObjectKey(group)?.hashCode() ?: 0
         else groupKey(group).let {
-            if (it == reusingGroup) groupAux(group)?.let { aux ->
+            if (it == reuseKey) groupAux(group)?.let { aux ->
                 if (aux == Composer.Empty) it else aux.hashCode()
             } ?: it else it
         }

@@ -46,7 +46,8 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.MeteringPoint;
 import androidx.camera.core.Preview;
-import androidx.camera.extensions.Extensions;
+import androidx.camera.extensions.ExtensionMode;
+import androidx.camera.extensions.ExtensionsInfo;
 import androidx.camera.extensions.ExtensionsManager;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -96,7 +97,7 @@ public class CameraExtensionsActivity extends AppCompatActivity
     ProcessCameraProvider mCameraProvider;
 
     Camera mCamera;
-    Extensions mExtensions;
+    ExtensionsInfo mExtensionsInfo;
 
     enum ImageCaptureType {
 
@@ -133,21 +134,21 @@ public class CameraExtensionsActivity extends AppCompatActivity
         bindUseCasesWithExtension(mCurrentImageCaptureType);
     }
 
-    @Extensions.ExtensionMode
+    @ExtensionMode.Mode
     int extensionModeFrom(ImageCaptureType imageCaptureType) {
         switch (imageCaptureType) {
             case IMAGE_CAPTURE_TYPE_HDR:
-                return Extensions.EXTENSION_MODE_HDR;
+                return ExtensionMode.HDR;
             case IMAGE_CAPTURE_TYPE_BOKEH:
-                return Extensions.EXTENSION_MODE_BOKEH;
+                return ExtensionMode.BOKEH;
             case IMAGE_CAPTURE_TYPE_NIGHT:
-                return Extensions.EXTENSION_MODE_NIGHT;
+                return ExtensionMode.NIGHT;
             case IMAGE_CAPTURE_TYPE_BEAUTY:
-                return Extensions.EXTENSION_MODE_BEAUTY;
+                return ExtensionMode.BEAUTY;
             case IMAGE_CAPTURE_TYPE_AUTO:
-                return Extensions.EXTENSION_MODE_AUTO;
+                return ExtensionMode.AUTO;
             case IMAGE_CAPTURE_TYPE_DEFAULT:
-                return Extensions.EXTENSION_MODE_NONE;
+                return ExtensionMode.NONE;
             default:
                 throw new IllegalArgumentException(
                         "ImageCaptureType does not exist: " + imageCaptureType);
@@ -164,9 +165,10 @@ public class CameraExtensionsActivity extends AppCompatActivity
     @SuppressLint("RestrictedAPI")
     boolean bindUseCasesWithExtension(ImageCaptureType imageCaptureType) {
         // Check that extension can be enabled and if so enable it
-        @Extensions.ExtensionMode
+        @ExtensionMode.Mode
         int extensionMode = extensionModeFrom(imageCaptureType);
-        if (!mExtensions.isExtensionAvailable(mCameraProvider, mCurrentCameraSelector,
+
+        if (!mExtensionsInfo.isExtensionAvailable(mCameraProvider, mCurrentCameraSelector,
                 extensionMode)) {
             return false;
         }
@@ -180,7 +182,7 @@ public class CameraExtensionsActivity extends AppCompatActivity
         mPreview = previewBuilder.build();
         mPreview.setSurfaceProvider(mPreviewView.getSurfaceProvider());
 
-        CameraSelector cameraSelector = mExtensions.getExtensionCameraSelector(
+        CameraSelector cameraSelector = mExtensionsInfo.getExtensionCameraSelector(
                 mCurrentCameraSelector, extensionMode);
 
         mCameraProvider.unbindAll();
@@ -319,7 +321,7 @@ public class CameraExtensionsActivity extends AppCompatActivity
                         switch (availability) {
                             case LIBRARY_AVAILABLE:
                             case NONE:
-                                mExtensions = ExtensionsManager.getExtensions(
+                                mExtensionsInfo = ExtensionsManager.getExtensionsInfo(
                                         getApplicationContext());
                                 ExtensionsManager.setExtensionsErrorListener((errorCode) ->
                                         Log.d(TAG, "Extensions error in error code: " + errorCode));
