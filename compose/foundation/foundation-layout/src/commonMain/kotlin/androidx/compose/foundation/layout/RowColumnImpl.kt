@@ -125,7 +125,7 @@ internal fun rowColumnMeasurePolicy(
                     targetSpace - fixedSpace - arrangementSpacingPx * (weightChildrenCount - 1)
 
                 val weightUnitSpace = if (totalWeight > 0) remainingToTarget / totalWeight else 0f
-                var remainder = remainingToTarget - rowColumnParentData.sumBy {
+                var remainder = remainingToTarget - rowColumnParentData.sumOf {
                     (weightUnitSpace * it.weight).roundToInt()
                 }
 
@@ -162,6 +162,8 @@ internal fun rowColumnMeasurePolicy(
                         placeables[i] = placeable
                     }
                 }
+                weightedSpace = (weightedSpace + arrangementSpacingPx * (weightChildrenCount - 1))
+                    .coerceAtMost(constraints.mainAxisMax - fixedSpace)
             }
 
             var beforeCrossAxisAlignmentLine = 0

@@ -54,7 +54,12 @@ internal class ComposeLayer {
     //  method?
     private val events = AWTDebounceEventQueue()
 
-    internal val wrapped = Wrapped()
+    internal val wrapped = Wrapped().apply {
+        onStateChanged(SkiaLayer.PropertyKind.ContentScale) { _ ->
+            resetDensity()
+        }
+    }
+
     internal val owners: DesktopOwners = DesktopOwners(
         coroutineScope,
         wrapped,
@@ -82,12 +87,7 @@ internal class ComposeLayer {
             initOwner()
         }
 
-        override fun contentScaleChanged() {
-            super.contentScaleChanged()
-            resetDensity()
-        }
-
-        private fun resetDensity() {
+        internal fun resetDensity() {
             this@ComposeLayer.density = detectCurrentDensity()
             owner?.density = density
         }
@@ -175,7 +175,7 @@ internal class ComposeLayer {
         })
         wrapped.addMouseMotionListener(object : MouseMotionAdapter() {
             override fun mouseDragged(event: MouseEvent) = events.post {
-                owners.onMouseDragged(
+                owners.onMouseMoved(
                     (event.x * density.density).toInt(),
                     (event.y * density.density).toInt(),
                     event
@@ -185,7 +185,8 @@ internal class ComposeLayer {
             override fun mouseMoved(event: MouseEvent) = events.post {
                 owners.onMouseMoved(
                     (event.x * density.density).toInt(),
-                    (event.y * density.density).toInt()
+                    (event.y * density.density).toInt(),
+                    event
                 )
             }
         })

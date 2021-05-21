@@ -26,7 +26,6 @@ import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.OptIn;
 import androidx.annotation.RestrictTo;
 import androidx.car.app.CarContext;
 import androidx.car.app.HostDispatcher;
@@ -57,8 +56,7 @@ import java.util.concurrent.Executor;
  *
  * <pre>{@code testCarContext.getCarService(TestScreenManager.class)}</pre>
  *
- * <p>Allows retrieving all {@link Intent}s sent via {@link CarContext#startCarApp(Intent)} and
- * {@link CarContext#startCarApp(Intent, Intent)}.
+ * <p>Allows retrieving all {@link Intent}s sent via {@link CarContext#startCarApp(Intent)}.
  */
 public class TestCarContext extends CarContext {
     private final Map<String, Object> mOverriddenService = new HashMap<>();
@@ -72,7 +70,7 @@ public class TestCarContext extends CarContext {
 
     final List<Intent> mStartCarAppIntents = new ArrayList<>();
     @Nullable
-    private PermissionRequest mLastPermissionRequest = null;
+    private PermissionRequestInfo mLastPermissionRequestInfo = null;
     private boolean mHasCalledFinishCarApp;
 
     /** Resets the values tracked by this {@link TestCarContext}. */
@@ -130,12 +128,11 @@ public class TestCarContext extends CarContext {
     }
 
     @Override
-    @OptIn(markerClass = androidx.car.app.annotations.ExperimentalCarApi.class)
-    public void requestPermissions(@NonNull Executor executor, @NonNull List<String> permissions,
+    public void requestPermissions(@NonNull List<String> permissions, @NonNull Executor executor,
             @NonNull OnRequestPermissionsCallback callback) {
-        mLastPermissionRequest = new PermissionRequest(requireNonNull(permissions),
+        mLastPermissionRequestInfo = new PermissionRequestInfo(requireNonNull(permissions),
                 requireNonNull(callback));
-        super.requestPermissions(executor, permissions, callback);
+        super.requestPermissions(permissions, executor, callback);
     }
 
     /**
@@ -164,7 +161,7 @@ public class TestCarContext extends CarContext {
     }
 
     /**
-     * Returns all {@link Intent}s sent via {@link CarContext#startCarApp}.
+     * Returns all {@link Intent}s sent via {@link CarContext#startCarApp(Intent)}.
      *
      * <p>The {@link Intent}s are stored in the order of when they were sent, where the first
      * intent in the list, is the first intent sent.
@@ -177,12 +174,12 @@ public class TestCarContext extends CarContext {
     }
 
     /**
-     * Returns a {@link PermissionRequest} including the information with the last call made to
+     * Returns a {@link PermissionRequestInfo} including the information with the last call made to
      * {@link CarContext#requestPermissions}, or {@code null} if no call was made.
      */
     @Nullable
-    public PermissionRequest getLastPermissionRequest() {
-        return mLastPermissionRequest;
+    public PermissionRequestInfo getLastPermissionRequestInfo() {
+        return mLastPermissionRequestInfo;
     }
 
     /** Verifies if {@link CarContext#finishCarApp} has been called. */
@@ -229,7 +226,14 @@ public class TestCarContext extends CarContext {
         return mTestLifecycleOwner;
     }
 
-    IStartCarApp getStartCarAppStub() {
+    /**
+     * Returns the {@link IStartCarApp} instance that is being used by this CarContext.
+     *
+     * @hide
+     */
+    @RestrictTo(LIBRARY_GROUP)
+    @NonNull
+    public IStartCarApp getStartCarAppStub() {
         return mStartCarApp;
     }
 
@@ -249,12 +253,12 @@ public class TestCarContext extends CarContext {
      * A representation of a permission request including the permissions that were requested as
      * well as the callback provided.
      */
-    public static class PermissionRequest {
+    public static class PermissionRequestInfo {
         private final List<String> mPermissionsRequested;
         private final OnRequestPermissionsCallback mCallback;
 
         @SuppressWarnings("ExecutorRegistration")
-        PermissionRequest(List<String> permissionsRequested,
+        PermissionRequestInfo(List<String> permissionsRequested,
                 OnRequestPermissionsCallback callback) {
             mPermissionsRequested = requireNonNull(permissionsRequested);
             mCallback = requireNonNull(callback);

@@ -65,7 +65,7 @@ fun Project.configureErrorProneForAndroid(variants: DomainObjectSet<out BaseVari
     val errorProneConfiguration = createErrorProneConfiguration()
     variants.all { variant ->
         // Using getName() instead of name due to b/150427408
-        if (variant.buildType.getName() == BuilderConstants.DEBUG) {
+        if (variant.buildType.getName() == BuilderConstants.RELEASE) {
             val task = variant.javaCompileProvider
             (variant as BaseVariant).annotationProcessorConfiguration.extendsFrom(
                 errorProneConfiguration
@@ -129,6 +129,9 @@ private fun JavaCompile.configureWithErrorProne() {
             "-Xep:InjectScopeAnnotationOnInterfaceOrAbstractClass:OFF",
             "-Xep:InvalidThrows:OFF",
 
+            // Disable checks which are already enforced by lint.
+            "-Xep:PrivateConstructorForUtilityClass:OFF",
+
             // Enforce the following checks.
             "-Xep:JavaTimeDefaultTimeZone:ERROR",
             "-Xep:ParameterNotNullable:ERROR",
@@ -142,7 +145,6 @@ private fun JavaCompile.configureWithErrorProne() {
             "-Xep:IntLongMath:ERROR",
             "-Xep:MissingFail:ERROR",
             "-Xep:JavaLangClash:ERROR",
-            "-Xep:PrivateConstructorForUtilityClass:ERROR",
             "-Xep:TypeParameterUnusedInFormals:ERROR",
             "-Xep:StringSplitter:ERROR",
             "-Xep:ReferenceEquality:ERROR",

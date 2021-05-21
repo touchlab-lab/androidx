@@ -17,11 +17,13 @@
 package androidx.wear.watchface
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent.CanceledException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.icu.util.Calendar
 import androidx.annotation.Px
+import androidx.annotation.RestrictTo
 import androidx.annotation.UiThread
 import androidx.annotation.VisibleForTesting
 import androidx.wear.complications.ComplicationBounds
@@ -29,6 +31,7 @@ import androidx.wear.complications.ComplicationHelperActivity
 import androidx.wear.complications.data.ComplicationData
 import androidx.wear.complications.data.ComplicationType
 import androidx.wear.complications.data.EmptyComplicationData
+import androidx.wear.watchface.control.data.IdTypeAndDefaultProviderPolicyWireFormat
 import androidx.wear.watchface.data.ComplicationBoundsType
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
@@ -66,9 +69,19 @@ public class ComplicationsManager(
         public fun onComplicationTapped(complicationId: Int) {}
     }
 
+    /**
+     * The [WatchState] of the associated watch face. This is only initialized after
+     * [WatchFaceService.createComplicationsManager] has completed.
+     *
+     * @hide
+     */
+    @VisibleForTesting
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    public lateinit var watchState: WatchState
+
     private lateinit var watchFaceHostApi: WatchFaceHostApi
     private lateinit var calendar: Calendar
-    private lateinit var renderer: Renderer
+    internal lateinit var renderer: Renderer
     private lateinit var pendingUpdate: CancellableUniqueTask
 
     /** A map of complication IDs to complications. */
@@ -107,21 +120,7 @@ public class ComplicationsManager(
         this.renderer = renderer
     }
 
-    internal fun init(
-        watchFaceHostApi: WatchFaceHostApi,
-        calendar: Calendar,
-        renderer: Renderer,
-        complicationInvalidateListener: Complication.InvalidateListener
-    ) {
-        this.watchFaceHostApi = watchFaceHostApi
-        this.calendar = calendar
-        this.renderer = renderer
-        pendingUpdate = CancellableUniqueTask(watchFaceHostApi.getHandler())
-
-        for ((_, complication) in complications) {
-            complication.init(this, complicationInvalidateListener)
-        }
-
+    init {
         val complicationsStyleCategory =
             currentUserStyleRepository.schema.userStyleSettings.firstOrNull {
                 it is ComplicationsUserStyleSetting
@@ -131,7 +130,7 @@ public class ComplicationsManager(
         // automatically apply them.
         if (complicationsStyleCategory != null) {
             // Ensure we apply any initial StyleCategoryOption overlay by initializing with null.
-            var previousOption: ComplicationsUserStyleSetting.ComplicationsOption? = null
+            var previousOption: ComplicationsOption? = null
             currentUserStyleRepository.addUserStyleChangeListener(
                 object : CurrentUserStyleRepository.UserStyleChangeListener {
                     override fun onUserStyleChanged(userStyle: UserStyle) {
@@ -146,13 +145,32 @@ public class ComplicationsManager(
             )
         }
 
+        for ((_, complication) in complications) {
+            complication.complicationsManager = this
+        }
+    }
+
+    /** Finish initialization. */
+    internal fun init(
+        watchFaceHostApi: WatchFaceHostApi,
+        calendar: Calendar,
+        renderer: Renderer,
+        complicationInvalidateListener: Complication.InvalidateListener
+    ) {
+        this.watchFaceHostApi = watchFaceHostApi
+        this.calendar = calendar
+        this.renderer = renderer
+        pendingUpdate = CancellableUniqueTask(watchFaceHostApi.getHandler())
+
+        for ((_, complication) in complications) {
+            complication.init(complicationInvalidateListener)
+        }
+
         // Activate complications.
         scheduleUpdate()
     }
 
-    internal fun applyComplicationsStyleCategoryOption(
-        styleOption: ComplicationsUserStyleSetting.ComplicationsOption
-    ) {
+    internal fun applyComplicationsStyleCategoryOption(styleOption: ComplicationsOption) {
         for ((id, complication) in complications) {
             val override = styleOption.complicationOverlays.find { it.complicationId == id }
             val initialConfig = initialComplicationConfigs[id]!!
@@ -170,7 +188,7 @@ public class ComplicationsManager(
     public operator fun get(id: Int): Complication? = complications[id]
 
     internal fun scheduleUpdate() {
-        if (!pendingUpdate.isPending()) {
+        if (this::pendingUpdate.isInitialized && !pendingUpdate.isPending()) {
             pendingUpdate.postUnique(this::updateComplications)
         }
     }
@@ -323,7 +341,12 @@ public class ComplicationsManager(
             return
         }
 
-        data.tapAction?.send()
+        try {
+            data.tapAction?.send()
+        } catch (e: CanceledException) {
+            // In case the PendingIntent is no longer able to execute the request.
+            // We don't need to do anything here.
+        }
         for (complicationListener in complicationListeners) {
             complicationListener.onComplicationTapped(complicationId)
         }
@@ -355,4 +378,14 @@ public class ComplicationsManager(
         }
         writer.decreaseIndent()
     }
+
+    internal fun getDefaultProviderPolicies(): Array<IdTypeAndDefaultProviderPolicyWireFormat> =
+        complications.map {
+            IdTypeAndDefaultProviderPolicyWireFormat(
+                it.key,
+                it.value.defaultProviderPolicy.providersAsList(),
+                it.value.defaultProviderPolicy.systemProviderFallback,
+                it.value.defaultProviderType.toWireComplicationType()
+            )
+        }.toTypedArray()
 }

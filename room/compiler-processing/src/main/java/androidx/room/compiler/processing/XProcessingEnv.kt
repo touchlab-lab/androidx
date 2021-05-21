@@ -132,11 +132,13 @@ interface XProcessingEnv {
         /**
          * Creates a new [XProcessingEnv] implementation derived from the given Java [env].
          */
+        @JvmStatic
         fun create(env: ProcessingEnvironment): XProcessingEnv = JavacProcessingEnv(env)
 
         /**
          * Creates a new [XProcessingEnv] implementation derived from the given KSP environment.
          */
+        @JvmStatic
         fun create(
             options: Map<String, String>,
             resolver: Resolver,
@@ -149,4 +151,16 @@ interface XProcessingEnv {
             resolver = resolver
         )
     }
+
+    /**
+     * Returns [XTypeElement]s with the given package name. Note that this call can be expensive.
+     *
+     * @param packageName the package name to look up.
+     *
+     * @return A list of [XTypeElement] with matching package name. This will return declarations
+     * from both dependencies and source.
+     */
+    fun getTypeElementsFromPackage(packageName: String): List<XTypeElement>
+
+    // TODO: Add support for getting top level members in a package
 }

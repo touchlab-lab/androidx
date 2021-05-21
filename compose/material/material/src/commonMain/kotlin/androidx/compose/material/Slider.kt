@@ -21,6 +21,7 @@ import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.MutatorMutex
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.DragScope
 import androidx.compose.foundation.gestures.DraggableState
@@ -58,6 +59,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
@@ -80,12 +82,16 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
+ * <a href="https://material.io/components/sliders" class="external" target="_blank">Material Design slider</a>.
+ *
  * Sliders allow users to make selections from a range of values.
  *
  * Sliders reflect a range of values along a bar, from which users may select a single value.
  * They are ideal for adjusting settings such as volume, brightness, or applying image filters.
  *
- * Use continuous sliders allow users to make meaningful selections that don’t
+ * ![Sliders image](https://developer.android.com/images/reference/androidx/compose/material/sliders.png)
+ *
+ * Use continuous sliders to allow users to make meaningful selections that don’t
  * require a specific value:
  *
  * @sample androidx.compose.material.samples.SliderSample
@@ -392,22 +398,17 @@ private fun SliderImpl(
             } else {
                 ThumbDefaultElevation
             }
-            Surface(
-                shape = CircleShape,
-                color = colors.thumbColor(enabled).value,
-                elevation = if (enabled) elevation else 0.dp,
-                modifier = Modifier
+            Spacer(
+                Modifier
+                    .size(thumbSize, thumbSize)
                     .focusable(interactionSource = interactionSource)
                     .indication(
                         interactionSource = interactionSource,
-                        indication = rememberRipple(
-                            bounded = false,
-                            radius = ThumbRippleRadius
-                        )
+                        indication = rememberRipple(bounded = false, radius = ThumbRippleRadius)
                     )
-            ) {
-                Spacer(Modifier.size(thumbSize, thumbSize))
-            }
+                    .shadow(if (enabled) elevation else 0.dp, CircleShape, clip = false)
+                    .background(colors.thumbColor(enabled).value, CircleShape)
+            )
         }
     }
 }

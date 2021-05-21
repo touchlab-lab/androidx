@@ -25,6 +25,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.attributes.Usage
 import org.gradle.api.tasks.ClasspathNormalizer
 import org.gradle.api.tasks.testing.Test
@@ -77,8 +78,7 @@ class AndroidXUiPlugin : Plugin<Project> {
 
                     val configure: (KotlinCompile<*>) -> Unit = { compile ->
                         // TODO(b/157230235): remove when this is enabled by default
-                        compile.kotlinOptions.freeCompilerArgs +=
-                            "-Xopt-in=kotlin.RequiresOptIn"
+                        compile.kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
                         compile.inputs.files({ kotlinPlugin.files })
                             .withPropertyName("composeCompilerExtension")
                             .withNormalizer(ClasspathNormalizer::class.java)
@@ -91,10 +91,7 @@ class AndroidXUiPlugin : Plugin<Project> {
                     }
 
                     project.tasks.withType(KotlinJvmCompile::class.java)
-                        .configureEach { compile ->
-                            compile.kotlinOptions.useIR = true
-                            configure(compile)
-                        }
+                        .configureEach(compile)
 
                     project.tasks.withType(KotlinJsCompile::class.java)
                         .configureEach(configure)
@@ -137,18 +134,29 @@ class AndroidXUiPlugin : Plugin<Project> {
                 ?: false
         }
 
+        /**
+         * @param isMultiplatformEnabled whether this module has a corresponding
+         * multiplatform configuration, or whether it is Android only
+         */
         @JvmStatic
-        fun Project.applyAndConfigureKotlinPlugin() {
-            if (isMultiplatformEnabled()) {
+        @JvmOverloads
+        fun Project.applyAndConfigureKotlinPlugin(
+            isMultiplatformEnabled: Boolean = isMultiplatformEnabled()
+        ) {
+            if (isMultiplatformEnabled) {
                 apply(plugin = "kotlin-multiplatform")
             } else {
                 apply(plugin = "org.jetbrains.kotlin.android")
             }
 
+            // https://youtrack.jetbrains.com/issue/KT-46368
+            apply(plugin = "dev.zacsweers.kgp-150-leak-patcher")
+
             configureManifests()
-            configureForKotlinMultiplatformSourceStructure()
             if (isMultiplatformEnabled()) {
                 configureForMultiplatform()
+            } else {
+                configureForKotlinMultiplatformSourceStructure()
             }
 
             tasks.withType(KotlinCompile::class.java).configureEach { compile ->
@@ -164,7 +172,7 @@ class AndroidXUiPlugin : Plugin<Project> {
         }
 
         private fun Project.configureAndroidCommonOptions(testedExtension: TestedExtension) {
-            testedExtension.defaultConfig.minSdkVersion(21)
+            testedExtension.defaultConfig.minSdk = 21
 
             afterEvaluate { project ->
                 val isPublished = project.extensions.findByType(AndroidXExtension::class.java)
@@ -307,6 +315,14 @@ class AndroidXUiPlugin : Plugin<Project> {
                     "multiplatformExtension is null (multiplatform plugin not enabled?)"
             }
 
+            /**
+             * Temporary workaround for https://youtrack.jetbrains.com/issue/KT-46096
+             * Should be removed once the build switches to Kotlin 1.5
+             */
+            tasks.withType(org.gradle.jvm.tasks.Jar::class.java).configureEach { jar ->
+                jar.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+            }
+
             /*
             The following configures source sets - note:
 
@@ -338,6 +354,23 @@ class AndroidXUiPlugin : Plugin<Project> {
                     tasks.named("desktopTestClasses").also(::addToBuildOnServer)
                 }
             }
+
+            // workaround after migration to AGP 7.0.0-alpha15
+            // https://youtrack.jetbrains.com/issue/KT-43944#focus=Comments-27-4612683.0-0
+            // TODO(demin): remove after migration to Kotlin 1.5.0:
+            //  https://android-review.googlesource.com/c/platform/frameworks/support/+/1651538
+            fun createNonExistentConfiguration(name: String) {
+                if (project.configurations.findByName(name) == null) {
+                    project.configurations.create(name)
+                }
+            }
+
+            createNonExistentConfiguration("androidTestApi")
+            createNonExistentConfiguration("androidTestDebugApi")
+            createNonExistentConfiguration("androidTestReleaseApi")
+            createNonExistentConfiguration("testApi")
+            createNonExistentConfiguration("testDebugApi")
+            createNonExistentConfiguration("testReleaseApi")
         }
 
         @JvmStatic

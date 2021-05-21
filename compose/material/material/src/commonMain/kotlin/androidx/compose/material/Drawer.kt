@@ -32,9 +32,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
@@ -338,10 +338,12 @@ fun rememberBottomDrawerState(
 }
 
 /**
- * Navigation drawers provide access to destinations in your app.
+ * <a href="https://material.io/components/navigation-drawer#modal-drawer" class="external" target="_blank">Material Design modal navigation drawer</a>.
  *
  * Modal navigation drawers block interaction with the rest of an app’s content with a scrim.
  * They are elevated above most of the app’s UI and don’t affect the screen’s layout grid.
+ *
+ * ![Modal drawer image](https://developer.android.com/images/reference/androidx/compose/material/modal-drawer.png)
  *
  * See [BottomDrawer] for a layout that introduces a bottom drawer, suitable when
  * using bottom navigation.
@@ -391,11 +393,6 @@ fun ModalDrawer(
 
         val anchors = mapOf(minValue to DrawerValue.Closed, maxValue to DrawerValue.Open)
         val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-        val blockClicks = if (drawerState.isOpen) {
-            Modifier.pointerInput(Unit) { detectTapGestures {} }
-        } else {
-            Modifier
-        }
         Box(
             Modifier.swipeable(
                 state = drawerState.swipeableState,
@@ -442,21 +439,19 @@ fun ModalDrawer(
                 contentColor = drawerContentColor,
                 elevation = drawerElevation
             ) {
-                Column(Modifier.fillMaxSize().then(blockClicks), content = drawerContent)
+                Column(Modifier.fillMaxSize(), content = drawerContent)
             }
         }
     }
 }
 
 /**
- * Navigation drawers provide access to destinations in your app.
+ * <a href="https://material.io/components/navigation-drawer#bottom-drawer" class="external" target="_blank">Material Design bottom navigation drawer</a>.
  *
- * Bottom navigation drawers are modal drawers that are anchored
- * to the bottom of the screen instead of the left or right edge.
- * They are only used with bottom app bars.
+ * Bottom navigation drawers are modal drawers that are anchored to the bottom of the screen instead
+ * of the left or right edge. They are only used with bottom app bars.
  *
- * These drawers open upon tapping the navigation menu icon in the bottom app bar.
- * They are only for use on mobile.
+ * ![Bottom drawer image](https://developer.android.com/images/reference/androidx/compose/material/bottom-drawer.png)
  *
  * See [ModalDrawer] for a layout that introduces a classic from-the-side drawer.
  *
@@ -514,12 +509,6 @@ fun BottomDrawer(
                 expandedHeight to BottomDrawerValue.Expanded
             )
         }
-
-        val blockClicks = if (drawerState.isClosed) {
-            Modifier
-        } else {
-            Modifier.pointerInput(Unit) { detectTapGestures {} }
-        }
         val drawerConstraints = with(LocalDensity.current) {
             Modifier
                 .sizeIn(
@@ -546,10 +535,10 @@ fun BottomDrawer(
             )
             Surface(
                 drawerConstraints
+                    .offset { IntOffset(x = 0, y = drawerState.offset.value.roundToInt()) }
                     .onGloballyPositioned { position ->
                         drawerHeight = position.size.height.toFloat()
                     }
-                    .offset { IntOffset(x = 0, y = drawerState.offset.value.roundToInt()) }
                     .semantics {
                         paneTitle = Strings.NavigationMenu
                         if (drawerState.isOpen) {
@@ -562,7 +551,7 @@ fun BottomDrawer(
                 contentColor = drawerContentColor,
                 elevation = drawerElevation
             ) {
-                Column(blockClicks, content = drawerContent)
+                Column(content = drawerContent)
             }
         }
     }

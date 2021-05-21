@@ -25,7 +25,7 @@ expect class NativeKeyEvent
  * When a user presses a key on a hardware keyboard, a [KeyEvent] is sent to the
  * [KeyInputModifier] that is currently active.
  */
-@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+@Suppress("INLINE_CLASS_DEPRECATED", "EXPERIMENTAL_FEATURE_WARNING")
 inline class KeyEvent(val nativeKeyEvent: NativeKeyEvent)
 
 /**
@@ -79,19 +79,32 @@ expect val KeyEvent.isShiftPressed: Boolean
 /**
  * The type of Key Event.
  */
-enum class KeyEventType {
-    /**
-     * Unknown key event.
-     */
-    Unknown,
+@Suppress("INLINE_CLASS_DEPRECATED", "EXPERIMENTAL_FEATURE_WARNING")
+inline class KeyEventType(val value: Int) {
 
-    /**
-     * Type of KeyEvent sent when the user lifts their finger off a key on the keyboard.
-     */
-    KeyUp,
+    override fun toString(): String {
+        return when (this) {
+            KeyUp -> "KeyUp"
+            KeyDown -> "KeyDown"
+            Unknown -> "Unknown"
+            else -> "Invalid"
+        }
+    }
 
-    /**
-     * Type of KeyEvent sent when the user presses down their finger on a key on the keyboard.
-     */
-    KeyDown
+    companion object {
+        /**
+         * Unknown key event.
+         */
+        val Unknown: KeyEventType = KeyEventType(0)
+
+        /**
+         * Type of KeyEvent sent when the user lifts their finger off a key on the keyboard.
+         */
+        val KeyUp: KeyEventType = KeyEventType(1)
+
+        /**
+         * Type of KeyEvent sent when the user presses down their finger on a key on the keyboard.
+         */
+        val KeyDown: KeyEventType = KeyEventType(2)
+    }
 }

@@ -26,12 +26,14 @@ plugins {
 }
 
 dependencies {
+    // These checks are only compatible with the latest lint.
     compileOnly(LINT_API_LATEST)
     compileOnly(KOTLIN_STDLIB)
 
     testImplementation(KOTLIN_STDLIB)
     testImplementation(LINT_CORE)
     testImplementation(LINT_TESTS)
+    testImplementation(JUNIT)
 }
 
 androidx {

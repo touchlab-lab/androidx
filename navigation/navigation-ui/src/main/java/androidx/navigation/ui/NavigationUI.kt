@@ -32,8 +32,10 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph
 import androidx.navigation.NavOptions
 import com.google.android.material.appbar.CollapsingToolbarLayout
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.navigationrail.NavigationRailView
 import com.google.android.material.navigation.NavigationView
 import java.lang.IllegalArgumentException
 import java.lang.ref.WeakReference
@@ -48,7 +50,7 @@ public object NavigationUI {
      * MenuItem should have been added via one of the helper methods in this class.
      *
      * Importantly, it assumes the [menu item id][MenuItem.getItemId] matches a valid
-     * [action id][NavDestination.getAction] or [destination id][NavDestination.getId] to be
+     * [action id][NavDestination.getAction] or [destination id][NavDestination.id] to be
      * navigated to.
      *
      * By default, the back stack will be popped back to the navigation graph's start destination.
@@ -62,7 +64,7 @@ public object NavigationUI {
      */
     @JvmStatic
     public fun onNavDestinationSelected(item: MenuItem, navController: NavController): Boolean {
-        val builder = NavOptions.Builder().setLaunchSingleTop(true)
+        val builder = NavOptions.Builder().setLaunchSingleTop(true).setRestoreState(true)
         if (
             navController.currentDestination!!.parent!!.findNode(item.itemId)
             is ActivityNavigator.Destination
@@ -78,7 +80,11 @@ public object NavigationUI {
                 .setPopExitAnim(R.animator.nav_default_pop_exit_anim)
         }
         if (item.order and Menu.CATEGORY_SECONDARY == 0) {
-            builder.setPopUpTo(findStartDestination(navController.graph).id, false)
+            builder.setPopUpTo(
+                findStartDestination(navController.graph).id,
+                inclusive = false,
+                saveState = true
+            )
         }
         val options = builder.build()
         return try {
@@ -118,7 +124,7 @@ public object NavigationUI {
      * when the Up button is pressed.
      *
      * In cases where no Up action is available, the
-     * [AppBarConfiguration.getFallbackOnNavigateUpListener] will be called to provide
+     * [AppBarConfiguration.fallbackOnNavigateUpListener] will be called to provide
      * additional control.
      *
      * @param navController The NavController that hosts your content.
@@ -153,7 +159,7 @@ public object NavigationUI {
      * with a [NavController].
      *
      * By calling this method, the title in the action bar will automatically be updated when
-     * the destination changes (assuming there is a valid [label][NavDestination.getLabel]).
+     * the destination changes (assuming there is a valid [label][NavDestination.label]).
      *
      * The start destination of your navigation graph is considered the only top level
      * destination. On the start destination of your navigation graph, the ActionBar will show
@@ -189,7 +195,7 @@ public object NavigationUI {
      * with a [NavController].
      *
      * By calling this method, the title in the action bar will automatically be updated when
-     * the destination changes (assuming there is a valid [label][NavDestination.getLabel]).
+     * the destination changes (assuming there is a valid [label][NavDestination.label]).
      *
      * The [AppBarConfiguration] you provide controls how the Navigation button is
      * displayed.
@@ -220,7 +226,7 @@ public object NavigationUI {
      * Sets up a [Toolbar] for use with a [NavController].
      *
      * By calling this method, the title in the Toolbar will automatically be updated when
-     * the destination changes (assuming there is a valid [label][NavDestination.getLabel]).
+     * the destination changes (assuming there is a valid [label][NavDestination.label]).
      *
      * The start destination of your navigation graph is considered the only top level
      * destination. On the start destination of your navigation graph, the Toolbar will show
@@ -254,7 +260,7 @@ public object NavigationUI {
      * Sets up a [Toolbar] for use with a [NavController].
      *
      * By calling this method, the title in the Toolbar will automatically be updated when
-     * the destination changes (assuming there is a valid [label][NavDestination.getLabel]).
+     * the destination changes (assuming there is a valid [label][NavDestination.label]).
      *
      * The [AppBarConfiguration] you provide controls how the Navigation button is
      * displayed and what action is triggered when the Navigation button is tapped. This method
@@ -289,7 +295,7 @@ public object NavigationUI {
      *
      * By calling this method, the title in the CollapsingToolbarLayout will automatically be
      * updated when the destination changes (assuming there is a valid
-     * [label][NavDestination.getLabel]).
+     * [label][NavDestination.label]).
      *
      * The start destination of your navigation graph is considered the only top level
      * destination. On the start destination of your navigation graph, the Toolbar will show
@@ -326,7 +332,7 @@ public object NavigationUI {
      *
      * By calling this method, the title in the CollapsingToolbarLayout will automatically be
      * updated when the destination changes (assuming there is a valid
-     * [label][NavDestination.getLabel]).
+     * [label][NavDestination.label]).
      *
      * The [AppBarConfiguration] you provide controls how the Navigation button is
      * displayed and what action is triggered when the Navigation button is tapped. This method
@@ -442,29 +448,30 @@ public object NavigationUI {
     }
 
     /**
-     * Sets up a [BottomNavigationView] for use with a [NavController]. This will call
+     * Sets up a [NavigationBarView] for use with a [NavController]. This will call
      * [onNavDestinationSelected] when a menu item is selected. The
-     * selected item in the BottomNavigationView will automatically be updated when the destination
+     * selected item in the NavigationBarView will automatically be updated when the destination
      * changes.
      *
-     * @param bottomNavigationView The BottomNavigationView that should be kept in sync with
-     * changes to the NavController.
+     * @param navigationBarView The NavigationBarView ([BottomNavigationView] or
+     * [NavigationRailView])
+     * that should be kept in sync with changes to the NavController.
      * @param navController The NavController that supplies the primary menu.
      * Navigation actions on this NavController will be reflected in the
-     * selected item in the BottomNavigationView.
+     * selected item in the NavigationBarView.
      */
     @JvmStatic
     public fun setupWithNavController(
-        bottomNavigationView: BottomNavigationView,
+        navigationBarView: NavigationBarView,
         navController: NavController
     ) {
-        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
+        navigationBarView.setOnItemSelectedListener { item ->
             onNavDestinationSelected(
                 item,
                 navController
             )
         }
-        val weakReference = WeakReference(bottomNavigationView)
+        val weakReference = WeakReference(navigationBarView)
         navController.addOnDestinationChangedListener(
             object : NavController.OnDestinationChangedListener {
                 override fun onDestinationChanged(
@@ -509,7 +516,7 @@ public object NavigationUI {
     @JvmStatic
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public fun matchDestinations(destination: NavDestination, destinationIds: Set<Int?>): Boolean =
-        generateSequence(destination) { it.parent }.all { destinationIds.contains(it.id) }
+        generateSequence(destination) { it.parent }.any { destinationIds.contains(it.id) }
 
     /**
      * Finds the actual start destination of the graph, handling cases where the graph's starting
@@ -518,9 +525,9 @@ public object NavigationUI {
     @JvmStatic
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public fun findStartDestination(graph: NavGraph): NavDestination =
-        generateSequence(graph.findNode(graph.startDestination)) {
+        generateSequence(graph.findNode(graph.startDestinationId)) {
             if (it is NavGraph) {
-                it.findNode(it.startDestination)
+                it.findNode(it.startDestinationId)
             } else {
                 null
             }

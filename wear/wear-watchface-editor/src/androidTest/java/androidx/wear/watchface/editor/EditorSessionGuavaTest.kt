@@ -23,17 +23,18 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Icon
-import android.support.wearable.complications.ComplicationProviderInfo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.wear.complications.ComplicationBounds
+import androidx.wear.complications.ComplicationProviderInfo
 import androidx.wear.complications.DefaultComplicationProviderPolicy
 import androidx.wear.complications.SystemProviders
 import androidx.wear.complications.data.ComplicationType
 import androidx.wear.complications.data.LongTextComplicationData
 import androidx.wear.complications.data.ShortTextComplicationData
+import androidx.wear.watchface.CanvasComplication
 import androidx.wear.watchface.Complication
 import androidx.wear.watchface.ComplicationsManager
 import androidx.wear.watchface.MutableWatchState
@@ -44,9 +45,7 @@ import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
@@ -63,13 +62,19 @@ public class EditorSessionGuavaTest {
     private var editorDelegate = Mockito.mock(WatchFace.EditorDelegate::class.java)
     private val screenBounds = Rect(0, 0, 400, 400)
 
+    private val mockInvalidateCallback =
+        Mockito.mock(CanvasComplication.InvalidateCallback::class.java)
     private val placeholderWatchState = MutableWatchState().asWatchState()
     private val mockLeftCanvasComplication =
-        CanvasComplicationDrawable(ComplicationDrawable(), placeholderWatchState)
+        CanvasComplicationDrawable(
+            ComplicationDrawable(),
+            placeholderWatchState,
+            mockInvalidateCallback
+        )
     private val leftComplication =
         Complication.createRoundRectComplicationBuilder(
             LEFT_COMPLICATION_ID,
-            mockLeftCanvasComplication,
+            { _, _, -> mockLeftCanvasComplication },
             listOf(
                 ComplicationType.RANGED_VALUE,
                 ComplicationType.LONG_TEXT,
@@ -83,11 +88,15 @@ public class EditorSessionGuavaTest {
             .build()
 
     private val mockRightCanvasComplication =
-        CanvasComplicationDrawable(ComplicationDrawable(), placeholderWatchState)
+        CanvasComplicationDrawable(
+            ComplicationDrawable(),
+            placeholderWatchState,
+            mockInvalidateCallback
+        )
     private val rightComplication =
         Complication.createRoundRectComplicationBuilder(
             RIGHT_COMPLICATION_ID,
-            mockRightCanvasComplication,
+            { _, _, -> mockRightCanvasComplication },
             listOf(
                 ComplicationType.RANGED_VALUE,
                 ComplicationType.LONG_TEXT,
@@ -108,6 +117,7 @@ public class EditorSessionGuavaTest {
     ): ActivityScenario<OnWatchFaceEditingTestActivity> {
         val userStyleRepository = CurrentUserStyleRepository(UserStyleSchema(userStyleSettings))
         val complicationsManager = ComplicationsManager(complications, userStyleRepository)
+        complicationsManager.watchState = placeholderWatchState
 
         WatchFace.registerEditorDelegate(testComponentName, editorDelegate)
         Mockito.`when`(editorDelegate.complicationsManager).thenReturn(complicationsManager)
@@ -151,13 +161,13 @@ public class EditorSessionGuavaTest {
 
         val leftComplicationData = previewData[LEFT_COMPLICATION_ID] as
             ShortTextComplicationData
-        Truth.assertThat(
+        assertThat(
             leftComplicationData.text.getTextAt(resources, 0)
         ).isEqualTo("Left")
 
         val rightComplicationData = previewData[RIGHT_COMPLICATION_ID] as
             LongTextComplicationData
-        Truth.assertThat(
+        assertThat(
             rightComplicationData.text.getTextAt(resources, 0)
         ).isEqualTo("Right")
     }
@@ -165,18 +175,19 @@ public class EditorSessionGuavaTest {
     @Test
     public fun listenableOpenComplicationProviderChooser() {
         ComplicationProviderChooserContract.useTestComplicationHelperActivity = true
+        val chosenComplicationProviderInfo = ComplicationProviderInfo(
+            "TestProvider3App",
+            "TestProvider3",
+            Icon.createWithBitmap(
+                Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+            ),
+            ComplicationType.LONG_TEXT,
+            provider3
+        )
         TestComplicationHelperActivity.resultIntent = Intent().apply {
             putExtra(
                 "android.support.wearable.complications.EXTRA_PROVIDER_INFO",
-                ComplicationProviderInfo(
-                    "TestProvider3App",
-                    "TestProvider3",
-                    Icon.createWithBitmap(
-                        Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-                    ),
-                    ComplicationType.LONG_TEXT.toWireComplicationType(),
-                    provider3
-                )
+                chosenComplicationProviderInfo.toWireComplicationProviderInfo()
             )
         }
         val scenario = createOnWatchFaceEditingTestActivity(
@@ -193,10 +204,16 @@ public class EditorSessionGuavaTest {
          * Invoke [TestComplicationHelperActivity] which will change the provider (and hence
          * the preview data) for [LEFT_COMPLICATION_ID].
          */
-        assertTrue(
+        val chosenComplicationProvider =
             listenableEditorSession.listenableOpenComplicationProviderChooser(
                 LEFT_COMPLICATION_ID
             ).get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        assertThat(chosenComplicationProvider).isNotNull()
+        checkNotNull(chosenComplicationProvider)
+        assertThat(chosenComplicationProvider.complicationId).isEqualTo(LEFT_COMPLICATION_ID)
+        assertEquals(
+            chosenComplicationProviderInfo,
+            chosenComplicationProvider.complicationProviderInfo
         )
 
         // This should update the preview data to point to the updated provider3 data.

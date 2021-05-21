@@ -29,7 +29,7 @@ import java.io.Serializable
  *
  * You should only use one of the static NavType instances and subclasses defined in this class.
  *
- * @param <T> the type of the data that is supported by this NavType
+ * @param T the type of the data that is supported by this NavType
  */
 public abstract class NavType<T> internal constructor(
     /**
@@ -82,7 +82,7 @@ public abstract class NavType<T> internal constructor(
     }
 
     /**
-     * Returns the name of this type.
+     * The name of this type.
      *
      * This is the same value that is used in Navigation XML `argType` attribute.
      *

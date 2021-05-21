@@ -24,6 +24,7 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.concurrent.futures.ResolvableFuture
+import androidx.wear.complications.ComplicationProviderInfo
 import androidx.wear.complications.data.ComplicationData
 import androidx.wear.watchface.RenderParameters
 import androidx.wear.watchface.client.ComplicationState
@@ -34,6 +35,7 @@ import androidx.wear.watchface.style.UserStyleSchema
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -48,6 +50,9 @@ public class ListenableEditorSession(
          * Constructs a [ListenableFuture] for a [ListenableEditorSession] for an on watch face
          * editor. This registers an activity result handler and so it must be called during an
          * Activity or Fragment initialization path.
+         *
+         * If watch face editor takes more than 4s to create a watch face, returned future will be
+         * resolved with [TimeoutCancellationException] exception.
          */
         @SuppressWarnings("ExecutorRegistration")
         @JvmStatic
@@ -69,9 +74,7 @@ public class ListenableEditorSession(
             coroutineScope.launch {
                 try {
                     result.set(
-                        createOnWatchEditingSession(activity, editIntent)?.let {
-                            ListenableEditorSession(it)
-                        }
+                        ListenableEditorSession(createOnWatchEditingSession(activity, editIntent))
                     )
                 } catch (e: Exception) {
                     result.setException(e)
@@ -96,7 +99,7 @@ public class ListenableEditorSession(
             activity,
             editIntent,
             headlessWatchFaceClient
-        )?.let {
+        ).let {
             ListenableEditorSession(it)
         }
     }
@@ -138,8 +141,25 @@ public class ListenableEditorSession(
             return future
         }
 
+    /** [ListenableFuture] wrapper around [EditorSession.getComplicationsProviderInfo]. */
+    public fun getListenableComplicationsProviderInfo():
+        ListenableFuture<Map<Int, ComplicationProviderInfo?>> {
+            val future = ResolvableFuture.create<Map<Int, ComplicationProviderInfo?>>()
+            getCoroutineScope().launch {
+                try {
+                    future.set(wrappedEditorSession.getComplicationsProviderInfo())
+                } catch (e: Exception) {
+                    future.setException(e)
+                }
+            }
+            return future
+        }
+
     override suspend fun getComplicationsPreviewData(): Map<Int, ComplicationData> =
         wrappedEditorSession.getComplicationsPreviewData()
+
+    override suspend fun getComplicationsProviderInfo(): Map<Int, ComplicationProviderInfo?> =
+        wrappedEditorSession.getComplicationsProviderInfo()
 
     @get:SuppressWarnings("AutoBoxing")
     override val backgroundComplicationId: Int?
@@ -162,8 +182,8 @@ public class ListenableEditorSession(
     /** [ListenableFuture] wrapper around [EditorSession.openComplicationProviderChooser]. */
     public fun listenableOpenComplicationProviderChooser(
         complicationId: Int
-    ): ListenableFuture<Boolean> {
-        val future = ResolvableFuture.create<Boolean>()
+    ): ListenableFuture<ChosenComplicationProvider?> {
+        val future = ResolvableFuture.create<ChosenComplicationProvider?>()
         getCoroutineScope().launch {
             try {
                 future.set(
@@ -176,8 +196,9 @@ public class ListenableEditorSession(
         return future
     }
 
-    override suspend fun openComplicationProviderChooser(complicationId: Int): Boolean =
-        wrappedEditorSession.openComplicationProviderChooser(complicationId)
+    override suspend fun openComplicationProviderChooser(complicationId: Int):
+        ChosenComplicationProvider? =
+            wrappedEditorSession.openComplicationProviderChooser(complicationId)
 
     override fun close() {
         wrappedEditorSession.close()

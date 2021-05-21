@@ -37,6 +37,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.R;
 
 import java.util.ArrayList;
+
 /**
  * FragmentContainerView is a customized Layout designed specifically for Fragments. It extends
  * {@link FrameLayout}, so it can reliably handle Fragment Transactions, and it also has additional
@@ -216,6 +217,13 @@ public final class FragmentContainerView extends FrameLayout {
         mApplyWindowInsetsListener = listener;
     }
 
+    @NonNull
+    @RequiresApi(20)
+    @Override
+    public WindowInsets onApplyWindowInsets(@NonNull WindowInsets insets) {
+        return insets;
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -228,7 +236,7 @@ public final class FragmentContainerView extends FrameLayout {
         WindowInsetsCompat insetsCompat = WindowInsetsCompat.toWindowInsetsCompat(insets);
         WindowInsetsCompat dispatchInsets = mApplyWindowInsetsListener != null
                 ? WindowInsetsCompat.toWindowInsetsCompat(
-                        mApplyWindowInsetsListener.onApplyWindowInsets(this, insets)
+                Api20Impl.onApplyWindowInsets(mApplyWindowInsetsListener, this, insets)
         ) : ViewCompat.onApplyWindowInsets(this, insetsCompat);
         if (!dispatchInsets.isConsumed()) {
             int count = getChildCount();
@@ -390,6 +398,34 @@ public final class FragmentContainerView extends FrameLayout {
                 mDisappearingFragmentChildren = new ArrayList<>();
             }
             mDisappearingFragmentChildren.add(v);
+        }
+    }
+
+    /**
+     * This method grabs the {@link Fragment} whose view was most recently
+     * added to the container. This may used as an alternative to calling
+     * {@link FragmentManager#findFragmentById(int)} and passing in the
+     * {@link FragmentContainerView}'s id.
+     *
+     * @return The fragment if any exist, null otherwise.
+     */
+    @Nullable
+    @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"}) // a ClassCastException is
+    // automatically thrown if the given type of F is wrong
+    public <F extends Fragment> F getFragment() {
+        return (F) FragmentManager.findFragmentManager(this).findFragmentById(this.getId());
+    }
+
+    @RequiresApi(20)
+    static class Api20Impl {
+        private Api20Impl() { }
+
+        static WindowInsets onApplyWindowInsets(
+                @NonNull OnApplyWindowInsetsListener onApplyWindowInsetsListener,
+                @NonNull View v,
+                @NonNull WindowInsets insets
+        ) {
+            return onApplyWindowInsetsListener.onApplyWindowInsets(v, insets);
         }
     }
 }

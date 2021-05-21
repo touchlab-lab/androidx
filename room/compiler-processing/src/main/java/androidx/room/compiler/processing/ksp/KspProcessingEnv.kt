@@ -22,12 +22,15 @@ import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XType
 import androidx.room.compiler.processing.XTypeElement
 import androidx.room.compiler.processing.javac.XTypeElementStore
+import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSTypeAlias
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.google.devtools.ksp.symbol.KSTypeReference
@@ -41,6 +44,7 @@ internal class KspProcessingEnv(
     val resolver: Resolver
 ) : XProcessingEnv {
     override val backend: XProcessingEnv.Backend = XProcessingEnv.Backend.KSP
+    private val ksFileMemberContainers = mutableMapOf<KSFile, KspFileMemberContainer>()
 
     private val typeElementStore =
         XTypeElementStore(
@@ -77,6 +81,14 @@ internal class KspProcessingEnv(
 
     override fun findTypeElement(qName: String): XTypeElement? {
         return typeElementStore[qName]
+    }
+
+    @OptIn(KspExperimental::class)
+    override fun getTypeElementsFromPackage(packageName: String): List<XTypeElement> {
+        return resolver.getDeclarationsFromPackage(packageName)
+            .filterIsInstance<KSClassDeclaration>()
+            .map { KspTypeElement.create(this, it) }
+            .toList()
     }
 
     override fun findType(qName: String): XType? {
@@ -169,8 +181,20 @@ internal class KspProcessingEnv(
      * decision.
      */
     fun wrap(ksType: KSType, allowPrimitives: Boolean): KspType {
-        val qName = ksType.declaration.qualifiedName?.asString()
         val declaration = ksType.declaration
+        if (declaration is KSTypeAlias) {
+            val actual = wrap(
+                ksType = declaration.type.resolve(),
+                allowPrimitives = allowPrimitives && ksType.nullability == Nullability.NOT_NULL
+            )
+            // if this type is nullable, carry it over
+            return if (ksType.nullability == Nullability.NULLABLE) {
+                actual.makeNullable()
+            } else {
+                actual
+            }
+        }
+        val qName = ksType.declaration.qualifiedName?.asString()
         if (declaration is KSTypeParameter) {
             return KspTypeArgumentType(
                 env = this,
@@ -197,6 +221,15 @@ internal class KspProcessingEnv(
 
     fun wrapClassDeclaration(declaration: KSClassDeclaration): KspTypeElement {
         return typeElementStore[declaration]
+    }
+
+    fun wrapKSFile(file: KSFile): KspMemberContainer {
+        return ksFileMemberContainers.getOrPut(file) {
+            KspFileMemberContainer(
+                env = this,
+                ksFile = file
+            )
+        }
     }
 
     class CommonTypes(resolver: Resolver) {

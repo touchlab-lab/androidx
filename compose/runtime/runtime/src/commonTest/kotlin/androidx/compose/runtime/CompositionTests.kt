@@ -1955,7 +1955,6 @@ class CompositionTests {
         var innerScope: RecomposeScope? = null
 
         @Composable
-        @OptIn(ComposeCompilerApi::class)
         fun Test() {
             outerScope = currentRecomposeScope
             outerKeys.add(currentComposer.compoundKeyHash)
@@ -2519,7 +2518,53 @@ class CompositionTests {
         expectNoChanges()
     }
 
-    @OptIn(ComposeCompilerApi::class)
+    @Composable
+    fun <T> calculateValue(state: State<T>): T {
+        return remember { state.value }
+    }
+
+    var observationScopeTestCalls = 0
+    var observationScopeTestForwardWrite = false
+
+    @Composable
+    fun <T> ObservationScopesTest(state: State<T>, forwardWrite: Boolean) {
+        observationScopeTestCalls++
+        calculateValue(state)
+        observationScopeTestForwardWrite = forwardWrite
+    }
+
+    @Composable
+    fun ForwardWrite(state: MutableState<String>) {
+        state.value += ", forward write"
+    }
+
+    @Test // Regression test for b/186787946
+    fun testObservationScopes_ReadInRemember() = compositionTest {
+        val state = mutableStateOf("state")
+        var mainState by mutableStateOf("main state")
+        var doForwardWrite by mutableStateOf(false)
+        compose {
+            Text(mainState)
+            ObservationScopesTest(state, doForwardWrite)
+            if (doForwardWrite)
+                ForwardWrite(state)
+        }
+
+        // Set up the case by skipping ObservationScopeTest
+        mainState += ", changed"
+        advance()
+
+        // Do the forward write after skipping ObserveScopesTest.
+        // This triggers a backward write in ForwardWrite because of the remember.
+        // This backwards write is transitory as future writes will just be forward writes.
+        doForwardWrite = true
+        advance(ignorePendingWork = true)
+
+        // Assert we saw true. In the bug this is false because a stale value was used for
+        // `doForwardWrite` because the scope callback lambda was not updated correctly.
+        assertTrue(observationScopeTestForwardWrite)
+    }
+
     @Test
     fun testApplierBeginEndCallbacks() = compositionTest {
         val checks = mutableListOf<String>()
@@ -2856,6 +2901,29 @@ class CompositionTests {
             composition.dispose()
             assertTrue(composition.isDisposed)
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testSubcomposeSingleComposition() = compositionTest {
+        var flag by mutableStateOf(true)
+        var flagCopy by mutableStateOf(true)
+        var copyValue = true
+        var rememberedValue = true
+        compose {
+            Text("Parent $flag")
+            flagCopy = flag
+            TestSubcomposition {
+                copyValue = flagCopy
+                rememberedValue = remember(flagCopy) { copyValue }
+            }
+        }
+
+        flag = false
+        val count = advanceCount()
+        assertFalse(copyValue)
+        assertFalse(rememberedValue)
+        assertEquals(1, count)
     }
 }
 

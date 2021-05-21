@@ -26,7 +26,6 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.car.app.annotations.CarProtocol;
-import androidx.car.app.annotations.ExperimentalCarApi;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,9 +45,8 @@ import java.util.Objects;
  *
  * <ul>
  *   <li>The previous template is in a loading state (see {@link Builder#setLoading}, or
- *   <li>The template title has not changed, and the number of rows and the string contents
- *       (title, texts, not counting spans) of each rowbetween the previous and new
- *       {@link ItemList}s have not changed.
+ *   <li>The template title has not changed, and the number of rows and the title (not counting
+ *       spans) of each row between the previous and new {@link ItemList}s have not changed.
  * </ul>
  */
 @CarProtocol
@@ -280,7 +278,6 @@ public final class PlaceListMapTemplate implements Template {
          * @throws NullPointerException if {@code title} is {@code null}
          * @see CarText
          */
-        @ExperimentalCarApi
         @NonNull
         public Builder setTitle(@NonNull CarText title) {
             mTitle = requireNonNull(title);

@@ -24,6 +24,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.wear.watchface.control.IInteractiveWatchFace
 import androidx.wear.watchface.control.IPendingInteractiveWatchFace
 import androidx.wear.watchface.control.InteractiveInstanceManager
+import androidx.wear.watchface.control.data.CrashInfoParcel
 import androidx.wear.watchface.control.data.WallpaperInteractiveWatchFaceInstanceParams
 import androidx.wear.watchface.data.DeviceConfig
 import androidx.wear.watchface.data.WatchUiState
@@ -37,6 +38,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.launch
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,16 +59,37 @@ internal class TestAsyncWatchFaceService(
     }
 
     abstract class AsyncWatchFaceFactory {
+        abstract fun createUserStyleSchema(): UserStyleSchema
+
+        abstract fun createComplicationsManager(
+            currentUserStyleRepository: CurrentUserStyleRepository
+        ): ComplicationsManager
+
         abstract fun createWatchFaceAsync(
             surfaceHolder: SurfaceHolder,
-            watchState: WatchState
+            watchState: WatchState,
+            complicationsManager: ComplicationsManager,
+            currentUserStyleRepository: CurrentUserStyleRepository
         ): Deferred<WatchFace>
     }
 
+    override fun createUserStyleSchema() = factory.createUserStyleSchema()
+
+    override fun createComplicationsManager(
+        currentUserStyleRepository: CurrentUserStyleRepository
+    ) = factory.createComplicationsManager(currentUserStyleRepository)
+
     override suspend fun createWatchFace(
         surfaceHolder: SurfaceHolder,
-        watchState: WatchState
-    ) = factory.createWatchFaceAsync(surfaceHolder, watchState).await()
+        watchState: WatchState,
+        complicationsManager: ComplicationsManager,
+        currentUserStyleRepository: CurrentUserStyleRepository
+    ) = factory.createWatchFaceAsync(
+        surfaceHolder,
+        watchState,
+        complicationsManager,
+        currentUserStyleRepository
+    ).await()
 
     override fun getHandler() = handler
 
@@ -94,7 +117,6 @@ public class AsyncWatchFaceInitTest {
     private val surfaceHolder = mock<SurfaceHolder>()
     private var looperTimeMillis = 0L
     private val pendingTasks = PriorityQueue<Task>()
-    private val userStyleRepository = CurrentUserStyleRepository(UserStyleSchema(emptyList()))
     private val initParams = WallpaperInteractiveWatchFaceInstanceParams(
         "instanceId",
         DeviceConfig(
@@ -167,9 +189,17 @@ public class AsyncWatchFaceInitTest {
         val service = TestAsyncWatchFaceService(
             handler,
             object : TestAsyncWatchFaceService.AsyncWatchFaceFactory() {
+                override fun createUserStyleSchema() = UserStyleSchema(emptyList())
+
+                override fun createComplicationsManager(
+                    currentUserStyleRepository: CurrentUserStyleRepository
+                ) = ComplicationsManager(emptyList(), currentUserStyleRepository)
+
                 override fun createWatchFaceAsync(
                     surfaceHolder: SurfaceHolder,
-                    watchState: WatchState
+                    watchState: WatchState,
+                    complicationsManager: ComplicationsManager,
+                    currentUserStyleRepository: CurrentUserStyleRepository
                 ) = completableWatchFace
             },
             MutableWatchState(),
@@ -199,17 +229,27 @@ public class AsyncWatchFaceInitTest {
     @Test
     public fun directBootAndGetExistingInstanceOrSetPendingWallpaperInteractiveWatchFaceInstance() {
         val completableDirectBootWatchFace = CompletableDeferred<WatchFace>()
+        lateinit var pendingCurrentUserStyleRepository: CurrentUserStyleRepository
         lateinit var pendingSurfaceHolder: SurfaceHolder
         lateinit var pendingWatchState: WatchState
         val service = TestAsyncWatchFaceService(
             handler,
             object : TestAsyncWatchFaceService.AsyncWatchFaceFactory() {
+                override fun createUserStyleSchema() = UserStyleSchema(emptyList())
+
+                override fun createComplicationsManager(
+                    currentUserStyleRepository: CurrentUserStyleRepository
+                ) = ComplicationsManager(emptyList(), currentUserStyleRepository)
+
                 override fun createWatchFaceAsync(
                     surfaceHolder: SurfaceHolder,
-                    watchState: WatchState
+                    watchState: WatchState,
+                    complicationsManager: ComplicationsManager,
+                    currentUserStyleRepository: CurrentUserStyleRepository
                 ): Deferred<WatchFace> {
                     pendingSurfaceHolder = surfaceHolder
                     pendingWatchState = watchState
+                    pendingCurrentUserStyleRepository = currentUserStyleRepository
                     return completableDirectBootWatchFace
                 }
             },
@@ -238,6 +278,12 @@ public class AsyncWatchFaceInitTest {
                             ) {
                                 pendingInteractiveWatchFaceWcs = iInteractiveWatchFaceWcs
                             }
+
+                            override fun onInteractiveWatchFaceCrashed(
+                                exception: CrashInfoParcel?
+                            ) {
+                                fail("WatchFace crashed: $exception")
+                            }
                         }
                     )
                 )
@@ -250,8 +296,12 @@ public class AsyncWatchFaceInitTest {
         completableDirectBootWatchFace.complete(
             WatchFace(
                 WatchFaceType.ANALOG,
-                userStyleRepository,
-                TestRenderer(pendingSurfaceHolder, userStyleRepository, pendingWatchState, 16L)
+                TestRenderer(
+                    pendingSurfaceHolder,
+                    pendingCurrentUserStyleRepository,
+                    pendingWatchState,
+                    16L
+                )
             )
         )
 

@@ -22,7 +22,6 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.car.app.annotations.CarProtocol;
-import androidx.car.app.annotations.ExperimentalCarApi;
 import androidx.car.app.model.CarIcon;
 import androidx.car.app.model.CarText;
 import androidx.car.app.utils.CollectionUtils;
@@ -174,15 +173,21 @@ public final class Step {
         private Maneuver mManeuver;
         @Nullable
         private CarIcon mLanesImage;
+        @Nullable
         private CarText mCue;
         @Nullable
         private CarText mRoad;
 
         /**
+        * Constructs a new builder of {@link Step}.
+        */
+        public Builder() {
+        }
+
+        /**
          * Constructs a new builder of {@link Step} with a cue.
          *
-         * <p>A cue must always be set when the step is created and is used as a fallback when
-         * {@link Maneuver} is not set or is unavailable.
+         * <p>A cue can be used as a fallback when {@link Maneuver} is not set or is unavailable.
          *
          * <p>Some cluster displays do not support UTF-8 encoded characters, in which case
          * unsupported characters will not be displayed properly.
@@ -205,7 +210,6 @@ public final class Step {
          * @throws NullPointerException if {@code cue} is {@code null}
          * @see Builder#Builder(CharSequence)
          */
-        @ExperimentalCarApi
         public Builder(@NonNull CarText cue) {
             mCue = requireNonNull(cue);
         }
@@ -269,8 +273,7 @@ public final class Step {
         /**
          * Sets a text description of this maneuver.
          *
-         * <p>Must always be set when the step is created and is used as a fallback when {@link
-         * Maneuver} is not set or is unavailable.
+         * <p>A cue can be used as a fallback when {@link Maneuver} is not set or is unavailable.
          *
          * <p>For example "Turn left", "Make a U-Turn", "Sharp Right", or "Take the exit using
          * the left lane"
