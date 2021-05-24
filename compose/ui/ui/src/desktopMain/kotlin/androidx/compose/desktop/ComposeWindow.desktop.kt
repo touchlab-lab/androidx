@@ -68,6 +68,9 @@ class ComposeWindow : JFrame() {
         pane.remove(component)
     }
 
+    fun reparentTo(pid: Long, winId: Long,x:Int, y:Int, w:Int, h:Int) {
+        //layer.component.reparentTo(pid, winId, x, y, w, h)
+    }
     /**
      * Sets Compose content of the ComposeWindow.
      *
