@@ -81,21 +81,11 @@ fun checkoutExternalDeps(path: File) {
 
 fun Project.getExternalProjectPath(): File {
     val path = if (System.getenv("ALLOW_PUBLIC_REPOS") != null)
-        File(rootProject.projectDir, "/../external").also {
+        File(rootProject.projectDir, "/buildSrc/build/external").also {
             checkoutExternalDeps(it)
         }
     else
         File(rootProject.projectDir, "../../external")
-    return path.getCanonicalFile()
-}
-
-fun getExternalProjectPath(scriptDir: File): File {
-    val path = if (System.getenv("ALLOW_PUBLIC_REPOS") != null)
-        File(scriptDir, "/../external").also {
-            checkoutExternalDeps(it)
-        }
-    else
-        File(scriptDir, "../../external")
     return path.getCanonicalFile()
 }
 

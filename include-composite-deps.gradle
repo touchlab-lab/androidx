@@ -48,7 +48,7 @@ def checkoutExternalDeps(File path) {
 File getExternalProjectPath() {
     def scriptDir = file(buildscript.sourceFile.parent)
     if (System.getenv("ALLOW_PUBLIC_REPOS") != null) {
-        def path = new File(scriptDir, "/../external")
+        def path = new File(scriptDir, "/buildSrc/build/external")
         checkoutExternalDeps(path)
         return path.getCanonicalFile()
     } else {
