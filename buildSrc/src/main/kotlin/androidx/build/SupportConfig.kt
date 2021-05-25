@@ -16,6 +16,7 @@
 
 package androidx.build
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtraPropertiesExtension
 import java.io.File
@@ -54,9 +55,59 @@ object SupportConfig {
     const val TARGET_SDK_VERSION = 30
 }
 
-fun Project.getExternalProjectPath(): File {
-    return File(project.getCheckoutRoot(), "external")
+private fun runCommand(args: Array<String>, path: File) {
+    val proc = ProcessBuilder(*args)
+                  .directory(path)
+                  .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                  .redirectError(ProcessBuilder.Redirect.PIPE)
+                  .start()
+        proc.waitFor(5, java.util.concurrent.TimeUnit.MINUTES)
+        if (proc.exitValue() != 0) {
+            val out = proc.inputStream.bufferedReader().readText()
+            val err = proc.errorStream.bufferedReader().readText()
+            println(out)
+            println(err)
+            throw GradleException("Cannot run ${args.joinToString(" ")}: $err")
+        }
 }
+
+fun checkoutExternalDeps(path: File) {
+    path.mkdirs()
+    if (File(path, "doclava").exists())
+        runCommand(arrayOf("git", "pull"), File(path, "doclava"))
+    else
+        runCommand(arrayOf("git", "clone", "--depth", "1", "https://github.com/JetBrains/doclava-mirror.git", "doclava"), path)
+}
+
+fun Project.getExternalProjectPath(): File {
+    val path = if (System.getenv("ALLOW_PUBLIC_REPOS") != null)
+        File(rootProject.projectDir, "/../external").also {
+            checkoutExternalDeps(it)
+        }
+    else
+        File(rootProject.projectDir, "../../external")
+    return path.getCanonicalFile()
+}
+
+fun getExternalProjectPath(scriptDir: File): File {
+    val path = if (System.getenv("ALLOW_PUBLIC_REPOS") != null)
+        File(scriptDir, "/../external").also {
+            checkoutExternalDeps(it)
+        }
+    else
+        File(scriptDir, "../../external")
+    return path.getCanonicalFile()
+}
+
+fun Project.getGoldenPath(): File {
+    if (System.getenv("ALLOW_PUBLIC_REPOS") != null) {
+        val externalPath = getExternalProjectPath()
+        return File(externalPath, "golden")
+    } else {
+        return File("${rootDir.absolutePath}/../../golden").getCanonicalFile()
+    }
+}
+
 
 fun Project.getKeystore(): File {
     return File(project.getSupportRootFolder(), "development/keystore/debug.keystore")

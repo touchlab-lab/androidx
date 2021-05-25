@@ -6,6 +6,9 @@ buildscript {
         maven {
             url("${supportRootFolder}/../../prebuilts/androidx/external")
         }
+        if (System.getenv("ALLOW_PUBLIC_REPOS") != null) {
+            mavenCentral()
+        }
     }
 
     dependencies {

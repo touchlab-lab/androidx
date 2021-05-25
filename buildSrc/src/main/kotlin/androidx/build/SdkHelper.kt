@@ -54,7 +54,7 @@ fun Project.writeSdkPathToLocalPropertiesFile() {
  * Returns the root project's platform-specific SDK path as a file.
  */
 fun Project.getSdkPath(): File {
-    if (rootProject.plugins.hasPlugin(AndroidXPlaygroundRootPlugin::class.java)) {
+    if (rootProject.plugins.hasPlugin(AndroidXPlaygroundRootPlugin::class.java) || System.getenv("ALLOW_PUBLIC_REPOS") != null) {
         // This is not full checkout, use local settings instead.
         // https://developer.android.com/studio/command-line/variables
         // check for local.properties first

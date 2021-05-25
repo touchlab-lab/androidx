@@ -21,13 +21,17 @@
 
 boolean currentBuildIsRootBuild = (gradle.parent == null)
 
+File externalRoot() {
+    def root = new File(buildscript.sourceFile.parent + "/../external")
+    // TODO: call SupportConfigKt.getExternalProjectPath(buildscript.sourceFile.parent)
+    // for now just manually run
+    // mkdir ../external && cd ../external && \
+    //  git clone --depth 1 https://github.com/JetBrains/doclava-mirror.git doclava
+    return root
+}
+
 // Add included builds. This only works if this is currently the root build, so this script should
 // be applied to several builds and will only enable itself when part of the root build.
 if (currentBuildIsRootBuild) {
-  String buildScriptDir = buildscript.sourceFile.parent
-  File externalRoot = new File(buildScriptDir, "../../external")
-
-  includeBuild(new File(externalRoot, "doclava"))
+  includeBuild(new File(externalRoot(), "doclava"))
 }
-
-
