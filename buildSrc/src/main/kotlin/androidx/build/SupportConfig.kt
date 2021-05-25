@@ -16,6 +16,7 @@
 
 package androidx.build
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtraPropertiesExtension
 import java.io.File
@@ -54,8 +55,36 @@ object SupportConfig {
     const val TARGET_SDK_VERSION = 30
 }
 
+private fun runCommand(args: Array<String>, path: File) {
+    val proc = ProcessBuilder(*args)
+        .directory(path)
+        .redirectOutput(ProcessBuilder.Redirect.PIPE)
+        .redirectError(ProcessBuilder.Redirect.PIPE)
+        .start()
+    proc.waitFor(5, java.util.concurrent.TimeUnit.MINUTES)
+    if (proc.exitValue() != 0) {
+        val out = proc.inputStream.bufferedReader().readText()
+        val err = proc.errorStream.bufferedReader().readText()
+        println(out)
+        println(err)
+        throw GradleException("Cannot run ${args.joinToString(" ")}: $err")
+    }
+}
+
 fun Project.getExternalProjectPath(): File {
-    return File(project.getCheckoutRoot(), "external")
+    val path = if (System.getenv("COMPOSE_DESKTOP_GITHUB_BUILD") != null)
+        File(rootProject.projectDir, "/buildSrc/build/external").also {
+            if (!File(it, "doclava").isDirectory()) {
+                throw GradleException(
+                    "Please run 'pushd $it " +
+                        " && git clone https://github.com/JetBrains/doclava-mirror.git doclava " +
+                        " && popd'"
+                )
+            }
+        }
+    else
+        File(rootProject.projectDir, "../../external")
+    return path.getCanonicalFile()
 }
 
 fun Project.getKeystore(): File {
