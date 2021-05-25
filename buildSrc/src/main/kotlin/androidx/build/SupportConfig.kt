@@ -80,7 +80,7 @@ fun checkoutExternalDeps(path: File) {
 }
 
 fun Project.getExternalProjectPath(): File {
-    val path = if (System.getenv("ALLOW_PUBLIC_REPOS") != null)
+    val path = if (System.getenv("GITHUB_BUILD") != null)
         File(rootProject.projectDir, "/buildSrc/build/external").also {
             checkoutExternalDeps(it)
         }
@@ -90,7 +90,7 @@ fun Project.getExternalProjectPath(): File {
 }
 
 fun Project.getGoldenPath(): File {
-    if (System.getenv("ALLOW_PUBLIC_REPOS") != null) {
+    if (System.getenv("GITHUB_BUILD") != null) {
         val externalPath = getExternalProjectPath()
         return File(externalPath, "golden")
     } else {
