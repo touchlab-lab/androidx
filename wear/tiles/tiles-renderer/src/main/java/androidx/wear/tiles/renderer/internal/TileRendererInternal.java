@@ -117,7 +117,8 @@ import androidx.wear.tiles.proto.ModifiersProto.SpanModifiers;
 import androidx.wear.tiles.proto.StateProto.State;
 import androidx.wear.tiles.renderer.R;
 import androidx.wear.tiles.renderer.internal.ResourceResolvers.ResourceAccessException;
-import androidx.wear.tiles.renderer.internal.WearArcLayout.ArcLayoutWidget;
+import androidx.wear.widget.ArcLayout;
+import androidx.wear.widget.CurvedTextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -142,9 +143,9 @@ public final class TileRendererInternal {
     private static final int TEXT_ALIGN_DEFAULT = Gravity.CENTER_HORIZONTAL;
     private static final ScaleType IMAGE_DEFAULT_SCALE_TYPE = ScaleType.FIT_CENTER;
 
-    @WearArcLayout.LayoutParams.VerticalAlignment
+    @ArcLayout.LayoutParams.VerticalAlignment
     private static final int ARC_VERTICAL_ALIGN_DEFAULT =
-            WearArcLayout.LayoutParams.VERTICAL_ALIGN_CENTER;
+            ArcLayout.LayoutParams.VERTICAL_ALIGN_CENTER;
 
     private static final int SPAN_VERTICAL_ALIGN_DEFAULT = ImageSpan.ALIGN_BOTTOM;
 
@@ -162,8 +163,7 @@ public final class TileRendererInternal {
                     .setWrappedDimension(WrappedDimensionProp.getDefaultInstance())
                     .build();
 
-    @WearArcLayout.AnchorType
-    private static final int ARC_ANCHOR_DEFAULT = WearArcLayout.ANCHOR_CENTER;
+    @ArcLayout.AnchorType private static final int ARC_ANCHOR_DEFAULT = ArcLayout.ANCHOR_CENTER;
 
     // White
     private static final int LINE_COLOR_DEFAULT = 0xFFFFFFFF;
@@ -302,13 +302,13 @@ public final class TileRendererInternal {
         //
         // A Row (LinearLayout) supports this with width=0 and weight>0. After doing a layout pass,
         // it will assign all remaining space to elements with width=0 and weight>0, biased by the
-        // weight. This causes problems if there are two (or more) "expand" elements in a row,
-        // which is itself set to WRAP_CONTENTS, and one of those elements has a measured width
-        // (e.g. Text). In that case, the LinearLayout will measure the text, then ensure that
-        // all elements with a weight set have their widths set according to the weight. For us,
-        // that means that _all_ elements with expand=true will size themselves to the same width
-        // as the Text, pushing out the bounds of the parent row. This happens on columns too,
-        // but of course regarding height.
+        // weight. This causes problems if there are two (or more) "expand" elements in a row, which
+        // is itself set to WRAP_CONTENTS, and one of those elements has a measured width (e.g.
+        // Text). In that case, the LinearLayout will measure the text, then ensure that all
+        // elements with a weight set have their widths set according to the weight. For us, that
+        // means that _all_ elements with expand=true will size themselves to the same width as the
+        // Text, pushing out the bounds of the parent row. This happens on columns too, but of
+        // course regarding height.
         //
         // To get around this, if an element with expand=true is added to a row that is WRAP_CONTENT
         // (e.g. a row with no explicit width, that is not expanded), we ignore the expand=true, and
@@ -403,15 +403,15 @@ public final class TileRendererInternal {
         return VERTICAL_ALIGN_DEFAULT_GRAVITY;
     }
 
-    @WearArcLayout.LayoutParams.VerticalAlignment
+    @ArcLayout.LayoutParams.VerticalAlignment
     private static int verticalAlignmentToArcVAlign(VerticalAlignmentProp alignment) {
         switch (alignment.getValue()) {
             case VERTICAL_ALIGN_TOP:
-                return WearArcLayout.LayoutParams.VERTICAL_ALIGN_OUTER;
+                return ArcLayout.LayoutParams.VERTICAL_ALIGN_OUTER;
             case VERTICAL_ALIGN_CENTER:
-                return WearArcLayout.LayoutParams.VERTICAL_ALIGN_CENTER;
+                return ArcLayout.LayoutParams.VERTICAL_ALIGN_CENTER;
             case VERTICAL_ALIGN_BOTTOM:
-                return WearArcLayout.LayoutParams.VERTICAL_ALIGN_INNER;
+                return ArcLayout.LayoutParams.VERTICAL_ALIGN_INNER;
             case UNRECOGNIZED:
             case VERTICAL_ALIGN_UNDEFINED:
                 return ARC_VERTICAL_ALIGN_DEFAULT;
@@ -459,10 +459,10 @@ public final class TileRendererInternal {
     private static boolean isBold(FontStyle fontStyle) {
         // Although this method could be a simple equality check against FONT_WEIGHT_BOLD, we list
         // all current cases here so that this will become a compile time error as soon as a new
-        // FontWeight value is added to the schema. If this fails to build, then this means that
-        // an int typeface style is no longer enough to represent all FontWeight values and a
-        // customizable, per-weight text style must be introduced to TileRendererInternal to
-        // handle this. See b/176980535
+        // FontWeight value is added to the schema. If this fails to build, then this means that an
+        // int typeface style is no longer enough to represent all FontWeight values and a
+        // customizable, per-weight text style must be introduced to TileRendererInternal to handle
+        // this. See b/176980535
         switch (fontStyle.getWeight().getValue()) {
             case FONT_WEIGHT_BOLD:
                 return true;
@@ -538,8 +538,8 @@ public final class TileRendererInternal {
 
     private void applyFontStyle(FontStyle style, TextView textView) {
         // Need to supply typefaceStyle when creating the typeface (will select specialist
-        // bold/italic typefaces), *and* when setting the typeface (will set synthetic
-        // bold/italic flags in Paint if they're not supported by the given typeface).
+        // bold/italic typefaces), *and* when setting the typeface (will set synthetic bold/italic
+        // flags in Paint if they're not supported by the given typeface).
         textView.setTypeface(createTypeface(style), fontStyleToTypefaceStyle(style));
 
         int currentPaintFlags = textView.getPaintFlags();
@@ -564,22 +564,15 @@ public final class TileRendererInternal {
         textView.setTextColor(extractTextColorArgb(style));
     }
 
-    private void applyFontStyle(FontStyle style, WearCurvedTextView textView) {
+    private void applyFontStyle(FontStyle style, CurvedTextView textView) {
         // Need to supply typefaceStyle when creating the typeface (will select specialist
-        // bold/italic typefaces), *and* when setting the typeface (will set synthetic
-        // bold/italic flags in Paint if they're not supported by the given typeface).
+        // bold/italic typefaces), *and* when setting the typeface (will set synthetic bold/italic
+        // flags in Paint if they're not supported by the given typeface).
         textView.setTypeface(createTypeface(style), fontStyleToTypefaceStyle(style));
 
-        int currentPaintFlags = textView.getPaintFlags();
-
-        // Remove the bits we're setting
-        currentPaintFlags &= ~Paint.UNDERLINE_TEXT_FLAG;
-
-        if (style.hasUnderline() && style.getUnderline().getValue()) {
-            currentPaintFlags |= Paint.UNDERLINE_TEXT_FLAG;
-        }
-
-        textView.setPaintFlags(currentPaintFlags);
+        // TODO(b/188801917): Implement underline. CurvedTextView (well, drawTextOnArc) doesn't
+        // support underline. We can implement this later by drawing a line under the text ourselves
+        // though.
 
         if (style.hasSize()) {
             textView.setTextSize(toPx(style.getSize()));
@@ -716,14 +709,14 @@ public final class TileRendererInternal {
         return view;
     }
 
-    // This is a little nasty; ArcLayoutWidget is just an interface, so we have no guarantee that
-    // the instance also extends View (as it should). Instead, just take a View in and rename
-    // this, and check that it's an ArcLayoutWidget internally.
+    // This is a little nasty; ArcLayout.Widget is just an interface, so we have no guarantee that
+    // the instance also extends View (as it should). Instead, just take a View in and rename this,
+    // and check that it's an ArcLayout.Widget internally.
     private View applyModifiersToArcLayoutView(View view, ArcModifiers modifiers) {
-        if (!(view instanceof ArcLayoutWidget)) {
+        if (!(view instanceof ArcLayout.Widget)) {
             Log.e(
                     TAG,
-                    "applyModifiersToArcLayoutView should only be called with an ArcLayoutWidget");
+                    "applyModifiersToArcLayoutView should only be called with an ArcLayout.Widget");
             return view;
         }
 
@@ -770,15 +763,15 @@ public final class TileRendererInternal {
         return TEXT_OVERFLOW_DEFAULT;
     }
 
-    @WearArcLayout.AnchorType
+    @ArcLayout.AnchorType
     private static int anchorTypeToAnchorPos(ArcAnchorTypeProp type) {
         switch (type.getValue()) {
             case ARC_ANCHOR_START:
-                return WearArcLayout.ANCHOR_START;
+                return ArcLayout.ANCHOR_START;
             case ARC_ANCHOR_CENTER:
-                return WearArcLayout.ANCHOR_CENTER;
+                return ArcLayout.ANCHOR_CENTER;
             case ARC_ANCHOR_END:
-                return WearArcLayout.ANCHOR_END;
+                return ArcLayout.ANCHOR_END;
             case ARC_ANCHOR_UNDEFINED:
             case UNRECOGNIZED:
                 return ARC_ANCHOR_DEFAULT;
@@ -939,17 +932,17 @@ public final class TileRendererInternal {
 
         // HACK: FrameLayout has a bug in it. If we add one WRAP_CONTENT child, and one MATCH_PARENT
         // child, the expected behaviour is that the FrameLayout sizes itself to fit the
-        // WRAP_CONTENT child (e.g. a TextView), then the MATCH_PARENT child is forced to the
-        // same size as the outer FrameLayout (and hence, the size of the TextView, after
-        // accounting for padding etc). Because of a bug though, this doesn't happen; instead,
-        // the MATCH_PARENT child will just keep its intrinsic size. This is because FrameLayout
-        // only forces MATCH_PARENT children to a given size if there are _more than one_ of them
-        // (see the bottom of FrameLayout#onMeasure).
+        // WRAP_CONTENT child (e.g. a TextView), then the MATCH_PARENT child is forced to the same
+        // size as the outer FrameLayout (and hence, the size of the TextView, after accounting for
+        // padding etc). Because of a bug though, this doesn't happen; instead, the MATCH_PARENT
+        // child will just keep its intrinsic size. This is because FrameLayout only forces
+        // MATCH_PARENT children to a given size if there are _more than one_ of them (see the
+        // bottom of FrameLayout#onMeasure).
         //
         // To work around this (without copying the whole of FrameLayout just to change a "1" to
-        // "0"), we add a Space element in if there is one MATCH_PARENT child. This has a tiny
-        // cost to the measure pass, and negligible cost to layout/draw (since it doesn't take
-        // part in those passes).
+        // "0"), we add a Space element in if there is one MATCH_PARENT child. This has a tiny cost
+        // to the measure pass, and negligible cost to layout/draw (since it doesn't take part in
+        // those passes).
         int numMatchParentChildren = 0;
         for (int i = 0; i < frame.getChildCount(); i++) {
             LayoutParams lp = frame.getChildAt(i).getLayoutParams();
@@ -1015,7 +1008,7 @@ public final class TileRendererInternal {
         LayoutParams layoutParams = generateDefaultLayoutParams();
 
         space.setSweepAngleDegrees(lengthDegrees);
-        space.setThicknessPx(thicknessPx);
+        space.setThickness(thicknessPx);
 
         View wrappedView = applyModifiersToArcLayoutView(space, spacer.getModifiers());
         parent.addView(wrappedView, layoutParams);
@@ -1067,8 +1060,8 @@ public final class TileRendererInternal {
     }
 
     private View inflateArcText(ViewGroup parent, ArcText text) {
-        WearCurvedTextView textView =
-                new WearCurvedTextView(
+        CurvedTextView textView =
+                new CurvedTextView(
                         mAppContext, /* attrs= */ null, R.attr.tilesFallbackTextAppearance);
 
         LayoutParams layoutParams = generateDefaultLayoutParams();
@@ -1217,17 +1210,20 @@ public final class TileRendererInternal {
         parent.addView(wrappedView, ratioWrapperLayoutParams);
 
         ListenableFuture<Drawable> drawableFuture = mResourceResolvers.getDrawable(protoResId);
-        if (drawableFuture.isDone()) {
+        boolean isImageSet = false;
+        if (drawableFuture.isDone() && !drawableFuture.isCancelled()) {
             // If the future is done, immediately draw.
-            setImageDrawable(imageView, drawableFuture, protoResId);
-        } else {
+            isImageSet = setImageDrawable(imageView, drawableFuture, protoResId);
+        }
+
+        if (!isImageSet) {
             // Is there a placeholder to use in the meantime?
             try {
                 if (mResourceResolvers.hasPlaceholderDrawable(protoResId)) {
                     imageView.setImageDrawable(
                             mResourceResolvers.getPlaceholderDrawableOrThrow(protoResId));
                 }
-            } catch (ResourceAccessException ex) {
+            } catch (ResourceAccessException | IllegalArgumentException ex) {
                 Log.e(TAG, "Exception loading placeholder for resource " + protoResId, ex);
             }
 
@@ -1262,13 +1258,15 @@ public final class TileRendererInternal {
         return wrappedView;
     }
 
-    private static void setImageDrawable(
+    private static boolean setImageDrawable(
             ImageView imageView, Future<Drawable> drawableFuture, String protoResId) {
         try {
             imageView.setImageDrawable(drawableFuture.get());
+            return true;
         } catch (ExecutionException | InterruptedException e) {
             Log.w(TAG, "Could not get drawable for image " + protoResId);
         }
+        return false;
     }
 
     @Nullable
@@ -1293,7 +1291,7 @@ public final class TileRendererInternal {
             lineColor = line.getColor().getArgb();
         }
 
-        lineView.setThicknessPx(thicknessPx);
+        lineView.setThickness(thicknessPx);
         lineView.setSweepAngleDegrees(lengthDegrees);
         lineView.setColor(lineColor);
 
@@ -1305,7 +1303,7 @@ public final class TileRendererInternal {
 
     @Nullable
     private View inflateArc(ViewGroup parent, Arc arc) {
-        WearArcLayout arcLayout = new WearArcLayout(mAppContext);
+        ArcLayout arcLayout = new ArcLayout(mAppContext);
 
         LayoutParams layoutParams = generateDefaultLayoutParams();
         layoutParams.width = LayoutParams.MATCH_PARENT;
@@ -1318,15 +1316,15 @@ public final class TileRendererInternal {
         for (ArcLayoutElement child : arc.getContentsList()) {
             @Nullable View childView = inflateArcLayoutElement(arcLayout, child);
             if (childView != null) {
-                WearArcLayout.LayoutParams childLayoutParams =
-                        (WearArcLayout.LayoutParams) childView.getLayoutParams();
+                ArcLayout.LayoutParams childLayoutParams =
+                        (ArcLayout.LayoutParams) childView.getLayoutParams();
                 boolean rotate = false;
                 if (child.hasAdapter()) {
                     rotate = child.getAdapter().getRotateContents().getValue();
                 }
 
                 // Apply rotation and gravity.
-                childLayoutParams.setRotate(rotate);
+                childLayoutParams.setRotated(rotate);
                 childLayoutParams.setVerticalAlignment(
                         verticalAlignmentToArcVAlign(arc.getVerticalAlign()));
             }
@@ -1891,9 +1889,9 @@ public final class TileRendererInternal {
         private static Typeface loadTypeface(TypedArray array, int styleableResId) {
             // Resources are a little nasty; we can't just check if resType =
             // TypedValue.TYPE_REFERENCE, because it never is (if you use @font/foo inside of
-            // styles.xml, the value will be a string of the form res/font/foo.ttf). Instead, see
-            // if there's a resource ID at all, and use that, otherwise assume it's a well known
-            // font family.
+            // styles.xml, the value will be a string of the form res/font/foo.ttf). Instead, see if
+            // there's a resource ID at all, and use that, otherwise assume it's a well known font
+            // family.
             int resType = array.getType(styleableResId);
 
             if (array.getResourceId(styleableResId, -1) != -1

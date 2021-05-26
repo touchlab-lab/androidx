@@ -425,6 +425,16 @@ package androidx.car.app.model {
     method public androidx.car.app.model.GridTemplate.Builder setTitle(CharSequence);
   }
 
+  @androidx.car.app.annotations.RequiresCarApi(2) public interface InputCallback {
+    method public void onInputSubmitted(String);
+    method public void onInputTextChanged(String);
+  }
+
+  @androidx.car.app.annotations.RequiresCarApi(2) public interface InputCallbackDelegate {
+    method public void sendInputSubmitted(String, androidx.car.app.OnDoneCallback);
+    method public void sendInputTextChanged(String, androidx.car.app.OnDoneCallback);
+  }
+
   @androidx.car.app.annotations.CarProtocol public interface Item {
   }
 
@@ -492,12 +502,14 @@ package androidx.car.app.model {
   }
 
   @androidx.car.app.annotations.CarProtocol public final class MessageTemplate implements androidx.car.app.model.Template {
+    method @androidx.car.app.annotations.RequiresCarApi(2) public androidx.car.app.model.ActionStrip? getActionStrip();
     method public java.util.List<androidx.car.app.model.Action!> getActions();
     method public androidx.car.app.model.CarText? getDebugMessage();
     method public androidx.car.app.model.Action? getHeaderAction();
     method public androidx.car.app.model.CarIcon? getIcon();
     method public androidx.car.app.model.CarText getMessage();
     method public androidx.car.app.model.CarText? getTitle();
+    method @androidx.car.app.annotations.RequiresCarApi(2) public boolean isLoading();
   }
 
   public static final class MessageTemplate.Builder {
@@ -505,10 +517,12 @@ package androidx.car.app.model {
     ctor public MessageTemplate.Builder(androidx.car.app.model.CarText);
     method public androidx.car.app.model.MessageTemplate.Builder addAction(androidx.car.app.model.Action);
     method public androidx.car.app.model.MessageTemplate build();
+    method @androidx.car.app.annotations.RequiresCarApi(2) public androidx.car.app.model.MessageTemplate.Builder setActionStrip(androidx.car.app.model.ActionStrip);
     method public androidx.car.app.model.MessageTemplate.Builder setDebugMessage(Throwable);
     method public androidx.car.app.model.MessageTemplate.Builder setDebugMessage(String);
     method public androidx.car.app.model.MessageTemplate.Builder setHeaderAction(androidx.car.app.model.Action);
     method public androidx.car.app.model.MessageTemplate.Builder setIcon(androidx.car.app.model.CarIcon);
+    method @androidx.car.app.annotations.RequiresCarApi(2) public androidx.car.app.model.MessageTemplate.Builder setLoading(boolean);
     method public androidx.car.app.model.MessageTemplate.Builder setTitle(CharSequence);
   }
 
@@ -756,6 +770,7 @@ package androidx.car.app.model.signin {
     method public androidx.car.app.model.CarText? getDefaultValue();
     method public androidx.car.app.model.CarText? getErrorMessage();
     method public androidx.car.app.model.CarText? getHint();
+    method public androidx.car.app.model.InputCallbackDelegate getInputCallbackDelegate();
     method public int getInputType();
     method public int getKeyboardType();
     method public androidx.car.app.model.OnInputCompletedDelegate getOnInputCompletedDelegate();
@@ -770,6 +785,7 @@ package androidx.car.app.model.signin {
 
   public static final class InputSignInMethod.Builder {
     ctor public InputSignInMethod.Builder(androidx.car.app.model.OnInputCompletedListener);
+    ctor public InputSignInMethod.Builder(androidx.car.app.model.InputCallback);
     method public androidx.car.app.model.signin.InputSignInMethod build();
     method public androidx.car.app.model.signin.InputSignInMethod.Builder setDefaultValue(String);
     method public androidx.car.app.model.signin.InputSignInMethod.Builder setErrorMessage(CharSequence);

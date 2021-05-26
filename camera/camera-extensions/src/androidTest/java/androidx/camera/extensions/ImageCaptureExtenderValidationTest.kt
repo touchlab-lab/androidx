@@ -22,6 +22,8 @@ import android.os.Build
 import androidx.camera.core.CameraInfoUnavailableException
 import androidx.camera.core.CameraSelector
 import androidx.camera.extensions.ExtensionMode.Mode
+import androidx.camera.extensions.internal.ExtensionVersion
+import androidx.camera.extensions.internal.Version
 import androidx.camera.extensions.util.ExtensionsTestUtil
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.testing.CameraUtil
@@ -57,6 +59,7 @@ class ImageCaptureExtenderValidationTest(
     @Before
     @Throws(Exception::class)
     fun setUp() {
+        ExtensionsTestUtil.assumeCompatibleDevice()
         Assume.assumeTrue(CameraUtil.deviceHasCamera())
         Assume.assumeTrue(
             CameraUtil.hasCameraWithLensFacing(
@@ -84,7 +87,9 @@ class ImageCaptureExtenderValidationTest(
         TimeoutException::class
     )
     fun cleanUp() {
-        cameraProvider.shutdown()[10000, TimeUnit.MILLISECONDS]
+        if (::cameraProvider.isInitialized) {
+            cameraProvider.shutdown().get(10000, TimeUnit.MILLISECONDS)
+        }
         ExtensionsManager.deinit()[10000, TimeUnit.MILLISECONDS]
     }
 
@@ -102,7 +107,8 @@ class ImageCaptureExtenderValidationTest(
     )
     fun getSupportedResolutionsImplementationTest() {
         // getSupportedResolutions supported since version 1.1
-        Assume.assumeTrue(ExtensionVersion.getRuntimeVersion().compareTo(Version.VERSION_1_1) >= 0)
+        val version = ExtensionVersion.getRuntimeVersion()
+        Assume.assumeTrue(version != null && version.compareTo(Version.VERSION_1_1) >= 0)
 
         // Creates the ImageCaptureExtenderImpl to retrieve the target format/resolutions pair list
         // from vendor library for the target effect mode.

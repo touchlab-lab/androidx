@@ -30,6 +30,9 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.impl.utils.executor.CameraXExecutors;
 import androidx.camera.core.impl.utils.futures.Futures;
 import androidx.camera.extensions.impl.InitializerImpl;
+import androidx.camera.extensions.internal.ExtensionVersion;
+import androidx.camera.extensions.internal.Version;
+import androidx.camera.extensions.internal.VersionName;
 import androidx.concurrent.futures.CallbackToFutureAdapter;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -147,15 +150,14 @@ public final class ExtensionsManager {
                                 public void onSuccess() {
                                     Logger.d(TAG, "Successfully initialized extensions");
                                     setInitialized(true);
-                                    completer.set(
-                                        ExtensionsAvailability.LIBRARY_AVAILABLE);
+                                    completer.set(ExtensionsAvailability.LIBRARY_AVAILABLE);
                                 }
 
                                 @Override
                                 public void onFailure(int error) {
                                     Logger.d(TAG, "Failed to initialize extensions");
-                                    completer.set(
-                                        ExtensionsAvailability.LIBRARY_UNAVAILABLE_ERROR_LOADING);
+                                    completer.set(ExtensionsAvailability
+                                            .LIBRARY_UNAVAILABLE_ERROR_LOADING);
                                 }
                                 },
                                 CameraXExecutors.mainThreadExecutor());
@@ -363,7 +365,14 @@ public final class ExtensionsManager {
         }
     }
 
-    static void postExtensionsError(ExtensionsErrorListener.ExtensionsErrorCode errorCode) {
+    /**
+     * Posts extension error to the listener.
+     *
+     * @hide
+     */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    public static void postExtensionsError(
+            @NonNull ExtensionsErrorListener.ExtensionsErrorCode errorCode) {
         synchronized (ERROR_LOCK) {
             final ExtensionsErrorListener listenerReference = sExtensionsErrorListener;
             if (listenerReference != null) {

@@ -78,8 +78,8 @@ const val JSQLPARSER = "com.github.jsqlparser:jsqlparser:3.1"
 const val JSR250 = "javax.annotation:javax.annotation-api:1.2"
 const val JUNIT = "junit:junit:4.12"
 const val KOTLINPOET = "com.squareup:kotlinpoet:1.8.0"
-const val KOTLIN_COMPILE_TESTING = "com.github.tschuchortdev:kotlin-compile-testing:1.3.6"
-const val KOTLIN_COMPILE_TESTING_KSP = "com.github.tschuchortdev:kotlin-compile-testing-ksp:1.3.6"
+const val KOTLIN_COMPILE_TESTING = "com.github.tschuchortdev:kotlin-compile-testing:1.4.0"
+const val KOTLIN_COMPILE_TESTING_KSP = "com.github.tschuchortdev:kotlin-compile-testing-ksp:1.4.0"
 
 /**
  * KSP is used both as a plugin and runtime dependency, hence its version is declared in the
@@ -87,7 +87,7 @@ const val KOTLIN_COMPILE_TESTING_KSP = "com.github.tschuchortdev:kotlin-compile-
  */
 internal lateinit var kspVersion: String
 val KSP_VERSION get() = kspVersion
-const val KOTLIN_GRADLE_PLUGIN = "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0"
+const val KOTLIN_GRADLE_PLUGIN = "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.10"
 
 const val KOTLIN_METADATA_JVM = "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.3.0"
 

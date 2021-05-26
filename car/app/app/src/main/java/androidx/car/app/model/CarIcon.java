@@ -48,14 +48,12 @@ import java.util.Objects;
  *
  * <h4>Car Screen Pixel Densities</h4>
  *
- * <p>Similar to Android devices, car screens cover a wide range of pixel densities. To ensure that
- * icons and images render well across all car screens, use vector assets whenever possible to avoid
- * scaling issues. If you use a bitmap instead, ensure that you have resources that address multiple
- * pixel density buckets.
- *
- * <p>In order to support all car screen sizes and pixel density, you can use configuration
- * qualifiers in your resource files (e.g. "mdpi", "hdpi", etc). See
- * {@link androidx.car.app.CarContext} for more details.
+ * <p>Similar to Android devices, car screens cover a wide range of sizes and densities. To
+ * ensure that icons and images render well across all car screens, use vector assets whenever
+ * possible to avoid scaling issues. If your app relies on bitmaps or other non-vector
+ * assets, you should ensure that you have resources that address multiple size and  pixel density
+ * buckets using configuration qualifiers in your resource folders (e.g. "large", "xlarge", "mdpi",
+ * "hdpi", etc). See {@link androidx.car.app.CarContext} for more details.
  *
  * <h4>Themed Drawables</h4>
  *
@@ -353,13 +351,14 @@ public final class CarIcon {
          * Sets the tint of the icon to the given {@link CarColor}.
          *
          * <p>This tint overrides the tint set through {@link IconCompat#setTint(int)} in the
-         * backing {@link IconCompat} with a {@link CarColor} tint.The tint set through {@link
+         * backing {@link IconCompat} with a {@link CarColor} tint. The tint set through {@link
          * IconCompat#setTint(int)} is not guaranteed to be applied if the {@link CarIcon} tint
          * is not set.
          *
          * <p>The tint mode used to blend this color is {@link Mode#SRC_IN}.
          *
-         * <p>By default, no tint is set unless one is specified with this method.
+         * <p>Depending on contrast requirements, capabilities of the vehicle screens, or other
+         *  factors, the color may be ignored by the host or overridden by the vehicle system.
          *
          * @throws NullPointerException if {@code tin} is {@code null}
          * @see CarColor

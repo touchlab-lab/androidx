@@ -230,7 +230,7 @@ public abstract class WatchFaceService : WallpaperService() {
          * Whether to enable tracing for each call to [WatchFaceImpl.onDraw()] and
          * [WatchFaceImpl.onSurfaceRedrawNeeded()]
          */
-        private const val TRACE_DRAW = false
+        private const val TRACE_DRAW = true
 
         // Reference time for editor screenshots for analog watch faces.
         // 2020/10/10 at 09:30 Note the date doesn't matter, only the hour.
@@ -1660,7 +1660,12 @@ internal fun <R> CoroutineScope.runBlockingWithTracing(
     val latch = CountDownLatch(1)
     var r: R? = null
     launch {
-        r = task()
+        try {
+            r = task()
+        } catch (e: Exception) {
+            Log.e("CoroutineScope", "Exception in traceEventName", e)
+            throw e
+        }
         latch.countDown()
     }
     latch.await()

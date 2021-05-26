@@ -48,6 +48,8 @@ import androidx.camera.extensions.impl.CaptureStageImpl;
 import androidx.camera.extensions.impl.ImageCaptureExtenderImpl;
 import androidx.camera.extensions.internal.AdaptingCaptureProcessor;
 import androidx.camera.extensions.internal.AdaptingCaptureStage;
+import androidx.camera.extensions.internal.ExtensionVersion;
+import androidx.camera.extensions.internal.Version;
 import androidx.core.util.Consumer;
 
 import java.util.ArrayList;
@@ -146,11 +148,8 @@ public abstract class ImageCaptureExtender {
 
     /**
      * Update extension related configs to the builder.
-     *
-     * @hide
      */
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public static void updateBuilderConfig(@NonNull ImageCapture.Builder builder,
+    private static void updateBuilderConfig(@NonNull ImageCapture.Builder builder,
             @ExtensionMode.Mode int effectMode, @NonNull ImageCaptureExtenderImpl impl,
             @NonNull Context context) {
         CaptureProcessorImpl captureProcessor = impl.getCaptureProcessor();

@@ -570,8 +570,10 @@ private val dackkaDirsToProcess = listOf(
     "androidx/benchmark/**",
     "androidx/collection/**",
     "androidx/compose/**",
+    "androidx/lifecycle/**",
     "androidx/navigation/**",
     "androidx/paging/**",
+    "androidx/room/**",
     "androidx/window/**"
 )
 
