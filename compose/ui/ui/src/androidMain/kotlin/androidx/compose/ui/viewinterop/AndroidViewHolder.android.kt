@@ -24,6 +24,7 @@ import android.view.ViewGroup
 import android.view.ViewParent
 import androidx.compose.runtime.CompositionContext
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -46,6 +47,7 @@ import kotlin.math.roundToInt
  * This API is not designed to be used directly, but rather using the [AndroidView] and
  * `AndroidViewBinding` APIs, which are built on top of [AndroidViewHolder].
  */
+@OptIn(ExperimentalComposeUiApi::class)
 internal abstract class AndroidViewHolder(
     context: Context,
     parentContext: CompositionContext?
@@ -57,6 +59,8 @@ internal abstract class AndroidViewHolder(
         parentContext?.let {
             compositionContext = it
         }
+        // We save state ourselves, depending on composition.
+        isSaveFromParentEnabled = false
     }
 
     /**
@@ -183,8 +187,6 @@ internal abstract class AndroidViewHolder(
      * The [LayoutNode] will proxy the Compose core calls to the [View].
      */
     val layoutNode: LayoutNode = run {
-        // TODO(soboleva): add layout direction here?
-        // TODO(popam): forward pointer input and focus
         // Prepare layout node that proxies measure and layout passes to the View.
         val layoutNode = LayoutNode()
 
@@ -230,9 +232,7 @@ internal abstract class AndroidViewHolder(
                 if (constraints.minHeight != 0) {
                     getChildAt(0).minimumHeight = constraints.minHeight
                 }
-                // TODO (soboleva): native view should get LD value from Compose?
 
-                // TODO(shepshapard): !! necessary?
                 measure(
                     obtainMeasureSpec(
                         constraints.minWidth,

@@ -51,6 +51,10 @@ public open class NavDestinationBuilder<out D : NavDestination> internal constru
      *
      * @return the newly constructed [NavDestination]
      */
+    @Deprecated(
+        "Use routes to build your NavDestination instead",
+        ReplaceWith("NavDestinationBuilder(navigator, route = id.toString())")
+    )
     public constructor(navigator: Navigator<out D>, @IdRes id: Int) :
         this(navigator, id, null)
 
@@ -131,6 +135,10 @@ public open class NavDestinationBuilder<out D : NavDestination> internal constru
     /**
      * Adds a new [NavAction] to the destination
      */
+    @Deprecated(
+        "Building NavDestinations using IDs with the Kotlin DSL has been deprecated in " +
+            "favor of using routes. When using routes there is no need for actions."
+    )
     public fun action(actionId: Int, actionBuilder: NavActionBuilder.() -> Unit) {
         actions[actionId] = NavActionBuilder().apply(actionBuilder).build()
     }

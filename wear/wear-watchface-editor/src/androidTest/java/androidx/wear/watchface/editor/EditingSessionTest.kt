@@ -32,6 +32,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.support.wearable.complications.IPreviewComplicationDataCallback
 import android.support.wearable.complications.IProviderInfoService
+import android.support.wearable.watchface.Constants
 import android.view.Surface
 import android.view.SurfaceHolder
 import androidx.activity.ComponentActivity
@@ -53,6 +54,7 @@ import androidx.wear.complications.data.EmptyComplicationData
 import androidx.wear.complications.data.LongTextComplicationData
 import androidx.wear.complications.data.PlainComplicationText
 import androidx.wear.complications.data.ShortTextComplicationData
+import androidx.wear.watchface.BroadcastsObserver
 import androidx.wear.watchface.CanvasComplication
 import androidx.wear.watchface.CanvasType
 import androidx.wear.watchface.Complication
@@ -403,7 +405,8 @@ public class EditorSessionTest {
         previewReferenceTimeMillis: Long = 12345,
         providerInfoRetrieverProvider: ProviderInfoRetrieverProvider =
             TestProviderInfoRetrieverProvider(),
-        shouldTimeout: Boolean = false
+        shouldTimeout: Boolean = false,
+        preRFlow: Boolean = false
     ): ActivityScenario<OnWatchFaceEditingTestActivity> {
         val userStyleRepository = CurrentUserStyleRepository(UserStyleSchema(userStyleSettings))
         val complicationsManager = ComplicationsManager(complications, userStyleRepository)
@@ -437,6 +440,18 @@ public class EditorSessionTest {
         }
 
         OnWatchFaceEditingTestActivity.providerInfoRetrieverProvider = providerInfoRetrieverProvider
+
+        if (preRFlow) {
+            return ActivityScenario.launch(
+                Intent().apply {
+                    putExtra(Constants.EXTRA_WATCH_FACE_COMPONENT, testComponentName)
+                    component = ComponentName(
+                        ApplicationProvider.getApplicationContext<Context>(),
+                        OnWatchFaceEditingTestActivity::class.java
+                    )
+                }
+            )
+        }
 
         return ActivityScenario.launch(
             WatchFaceEditorContract().createIntent(
@@ -1110,6 +1125,9 @@ public class EditorSessionTest {
         val editorObserver = TestEditorObserver()
         val observerId = EditorService.globalEditorService.registerObserver(editorObserver)
 
+        val oldWFColorStyleSetting = editorDelegate.userStyle[colorStyleSetting]!!.id.value
+        val oldWFWatchHandStyleSetting = editorDelegate.userStyle[watchHandStyleSetting]!!.id.value
+
         scenario.onActivity { activity ->
             runBlocking {
                 // Select [blueStyleOption] and [gothicStyleOption].
@@ -1135,11 +1153,12 @@ public class EditorSessionTest {
         assertThat(result.watchFaceId.id).isEqualTo(testInstanceId.id)
         assertTrue(result.shouldCommitChanges)
 
-        // The style change should also have been applied to the watchface
+        // The style change shouldn't be applied to the watchface as it gets reverted to the old
+        // one when editor closes.
         assertThat(editorDelegate.userStyle[colorStyleSetting]!!.id.value)
-            .isEqualTo(blueStyleOption.id.value)
+            .isEqualTo(oldWFColorStyleSetting)
         assertThat(editorDelegate.userStyle[watchHandStyleSetting]!!.id.value)
-            .isEqualTo(gothicStyleOption.id.value)
+            .isEqualTo(oldWFWatchHandStyleSetting)
 
         assertThat(result.previewComplicationsData.size).isEqualTo(2)
         val leftComplicationData = result.previewComplicationsData[LEFT_COMPLICATION_ID] as
@@ -1257,6 +1276,53 @@ public class EditorSessionTest {
             .isEqualTo(redStyleOption.id.value)
         assertThat(editorDelegate.userStyle[watchHandStyleSetting]!!.id.value)
             .isEqualTo(classicStyleOption.id.value)
+
+        EditorService.globalEditorService.unregisterObserver(observerId)
+    }
+
+    @Test
+    public fun commitChanges_preRFlow() {
+        val scenario = createOnWatchFaceEditingTestActivity(
+            listOf(colorStyleSetting, watchHandStyleSetting),
+            emptyList(),
+            preRFlow = true
+        )
+        val editorObserver = TestEditorObserver()
+        val observerId = EditorService.globalEditorService.registerObserver(editorObserver)
+        scenario.onActivity { activity ->
+            runBlocking {
+                assertThat(editorDelegate.userStyle[colorStyleSetting]!!.id.value)
+                    .isEqualTo(redStyleOption.id.value)
+                assertThat(editorDelegate.userStyle[watchHandStyleSetting]!!.id.value)
+                    .isEqualTo(classicStyleOption.id.value)
+
+                // Select [blueStyleOption] and [gothicStyleOption].
+                val styleMap = activity.editorSession.userStyle.selectedOptions.toMutableMap()
+                for (userStyleSetting in activity.editorSession.userStyleSchema.userStyleSettings) {
+                    styleMap[userStyleSetting] = userStyleSetting.options.last()
+                }
+                activity.editorSession.userStyle = UserStyle(styleMap)
+
+                activity.editorSession.close()
+                activity.finish()
+            }
+        }
+
+        val result = editorObserver.awaitEditorStateChange(
+            TIMEOUT_MILLIS,
+            TimeUnit.MILLISECONDS
+        ).asApiEditorState()
+        assertThat(result.userStyle.userStyleMap[colorStyleSetting.id.value])
+            .isEqualTo(blueStyleOption.id.value)
+        assertThat(result.userStyle.userStyleMap[watchHandStyleSetting.id.value])
+            .isEqualTo(gothicStyleOption.id.value)
+        assertTrue(result.shouldCommitChanges)
+
+        // Changes should be applied to the delegate too.
+        assertThat(editorDelegate.userStyle[colorStyleSetting]!!.id.value)
+            .isEqualTo(blueStyleOption.id.value)
+        assertThat(editorDelegate.userStyle[watchHandStyleSetting]!!.id.value)
+            .isEqualTo(gothicStyleOption.id.value)
 
         EditorService.globalEditorService.unregisterObserver(observerId)
     }
@@ -1514,7 +1580,15 @@ public class EditorSessionTest {
                 mockWatchFaceHostApi,
                 watchState,
                 currentUserStyleRepository,
-                ComplicationsManager(emptyList(), currentUserStyleRepository)
+                ComplicationsManager(emptyList(), currentUserStyleRepository),
+                Calendar.getInstance(),
+                BroadcastsObserver(
+                    watchState,
+                    mockWatchFaceHostApi,
+                    CompletableDeferred(),
+                    CoroutineScope(mockHandler.asCoroutineDispatcher())
+                ),
+                null
             )
 
             assertThat(activity.onCreateException).isInstanceOf(IllegalStateException::class.java)

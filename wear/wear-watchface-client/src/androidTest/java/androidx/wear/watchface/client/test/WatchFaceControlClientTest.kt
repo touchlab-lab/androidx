@@ -28,6 +28,7 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.MediumTest
 import androidx.test.screenshot.AndroidXScreenshotTestRule
 import androidx.test.screenshot.assertAgainstGolden
@@ -465,6 +466,7 @@ public class WatchFaceControlClientTest {
         }
     }
 
+    @FlakyTest(bugId = 189880224)
     @Test
     public fun interactiveWatchFaceClient_ComplicationDetails() {
         val deferredInteractiveInstance = handlerCoroutineScope.async {
@@ -841,7 +843,7 @@ public class WatchFaceControlClientTest {
 
     @Test
     public fun crashingWatchFace() {
-        val wallpaperService = TestCrashingWatchFaceServiceWithBaseContext()
+        val wallpaperService = TestCrashingWatchFaceServiceWithBaseContext(surfaceHolder)
         val client = handlerCoroutineScope.async {
             service.getOrCreateInteractiveWatchFaceClient(
                 "testId",
@@ -992,8 +994,12 @@ internal open class TestCrashingWatchFaceService : WatchFaceService() {
     }
 }
 
-internal class TestCrashingWatchFaceServiceWithBaseContext : TestCrashingWatchFaceService() {
+internal class TestCrashingWatchFaceServiceWithBaseContext(
+    private var surfaceHolderOverride: SurfaceHolder
+) : TestCrashingWatchFaceService() {
     init {
         attachBaseContext(ApplicationProvider.getApplicationContext<Context>())
     }
+
+    override fun getWallpaperSurfaceHolderOverride() = surfaceHolderOverride
 }

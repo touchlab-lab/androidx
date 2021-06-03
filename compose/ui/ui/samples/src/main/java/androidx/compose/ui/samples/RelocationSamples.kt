@@ -36,14 +36,14 @@ import androidx.compose.ui.unit.dp
 @ExperimentalComposeUiApi
 @Sampled
 @Composable
-fun BringIntoParentBoundsSample() {
+fun BringIntoViewSample() {
     val relocationRequester = remember { RelocationRequester() }
     Column {
         Box(Modifier.width(100.dp).horizontalScroll(rememberScrollState())) {
             Box(Modifier.size(100.dp))
             Box(Modifier.size(100.dp).relocationRequester(relocationRequester))
         }
-        Button(onClick = { relocationRequester.bringIntoParentBounds() }) {
+        Button(onClick = { relocationRequester.bringIntoView() }) {
             Text("Bring box into view")
         }
     }

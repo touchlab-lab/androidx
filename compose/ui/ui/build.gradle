@@ -63,6 +63,7 @@ dependencies {
         implementation(KOTLIN_COROUTINES_ANDROID)
 
         implementation("androidx.savedstate:savedstate:1.1.0")
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.3.0")
         implementation("androidx.lifecycle:lifecycle-runtime:2.3.0")
         implementation("androidx.lifecycle:lifecycle-viewmodel:2.3.0")
 
@@ -150,6 +151,7 @@ if(AndroidXUiPlugin.isMultiplatformEnabled(project)) {
                 implementation(KOTLIN_COROUTINES_ANDROID)
 
                 implementation("androidx.savedstate:savedstate:1.1.0")
+                implementation("androidx.lifecycle:lifecycle-common-java8:2.3.0")
                 implementation("androidx.lifecycle:lifecycle-runtime:2.3.0")
                 implementation("androidx.lifecycle:lifecycle-viewmodel:2.3.0")
             }
@@ -263,16 +265,22 @@ android {
 }
 
 // Diagnostics for b/188565660
-if (!AndroidXUiPlugin.isMultiplatformEnabled(project)) {
+def verifyKotlinModule(String variant) {
     project.afterEvaluate {
-        tasks.named("compileReleaseKotlin").configure { t ->
+        def capitalVariant = variant.capitalize()
+        tasks.named("compile${capitalVariant}Kotlin").configure { t ->
             t.doLast {
-                def moduleFile = project.file("${buildDir}/tmp/kotlin-classes/release/META-INF/ui_release.kotlin_module")
+                def moduleFile = project.file("${buildDir}/tmp/kotlin-classes/${variant}/META-INF/ui_${variant}.kotlin_module")
                 // This file should be large, about 3.2K. If this file is short then many symbols will fail to resolve
                 if (moduleFile.length() < 250) {
                     throw new GradleException("kotlin_module file ($moduleFile) too short! See b/188565660 for more information. File text: ${moduleFile.text}")
                 }
             }
         }
+    }
+}
+if (!AndroidXUiPlugin.isMultiplatformEnabled(project)) {
+    for (variant in ["debug", "release"]) {
+        verifyKotlinModule(variant)
     }
 }

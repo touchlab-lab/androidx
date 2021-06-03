@@ -39,10 +39,12 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.StringDef;
 import androidx.car.app.annotations.RequiresCarApi;
 import androidx.car.app.constraints.ConstraintManager;
+import androidx.car.app.hardware.CarHardwareManager;
 import androidx.car.app.navigation.NavigationManager;
 import androidx.car.app.notification.CarPendingIntent;
 import androidx.car.app.utils.RemoteUtils;
@@ -93,7 +95,8 @@ public class CarContext extends ContextWrapper {
      *
      * @hide
      */
-    @StringDef({APP_SERVICE, CAR_SERVICE, NAVIGATION_SERVICE, SCREEN_SERVICE, CONSTRAINT_SERVICE})
+    @StringDef({APP_SERVICE, CAR_SERVICE, NAVIGATION_SERVICE, SCREEN_SERVICE, CONSTRAINT_SERVICE,
+            HARDWARE_SERVICE})
     @Retention(RetentionPolicy.SOURCE)
     @RestrictTo(LIBRARY)
     public @interface CarServiceType {
@@ -119,6 +122,10 @@ public class CarContext extends ContextWrapper {
      * Internal usage only. Top level binder to host.
      */
     public static final String CAR_SERVICE = "car";
+
+    /** Manages access to androidx.car.app.hardware properties, sensors and actions. */
+    @RequiresCarApi(3)
+    public static final String HARDWARE_SERVICE = "hardware";
 
     /**
      * Key for including a IStartCarApp in the notification {@link Intent}, for starting the app
@@ -148,13 +155,21 @@ public class CarContext extends ContextWrapper {
     /**
      * Key for binder extra for permission result callback.
      */
-    static final String EXTRA_ON_REQUEST_PERMISSIONS_RESULT_CALLBACK_KEY =
-            "androidx.car.app.action.EXTRA_ON_REQUEST_PERMISSIONS_RESULT_CALLBACK_KEY";
+    static final String EXTRA_ON_REQUEST_PERMISSIONS_RESULT_LISTENER_KEY =
+            "androidx.car.app.action.EXTRA_ON_REQUEST_PERMISSIONS_RESULT_LISTENER_KEY";
+
+    /**
+     * Holds an exception to be thrown when accessing {@link CarHardwareManager} if there is an
+     * error during initialization.
+     */
+    @Nullable
+    private final IllegalStateException mCarHardwareManagerException;
 
     private final AppManager mAppManager;
     private final NavigationManager mNavigationManager;
     private final ScreenManager mScreenManager;
     private final ConstraintManager mConstraintManager;
+    private final CarHardwareManager mCarHardwareManager;
     private final OnBackPressedDispatcher mOnBackPressedDispatcher;
     private final HostDispatcher mHostDispatcher;
     private final Lifecycle mLifecycle;
@@ -208,6 +223,11 @@ public class CarContext extends ContextWrapper {
                 return mScreenManager;
             case CONSTRAINT_SERVICE:
                 return mConstraintManager;
+            case HARDWARE_SERVICE:
+                if (mCarHardwareManagerException != null) {
+                    throw mCarHardwareManagerException;
+                }
+                return mCarHardwareManager;
             default: // fall out
         }
 
@@ -258,6 +278,8 @@ public class CarContext extends ContextWrapper {
             return SCREEN_SERVICE;
         } else if (serviceClass.isInstance(mConstraintManager)) {
             return CONSTRAINT_SERVICE;
+        } else if (serviceClass.isInstance(mCarHardwareManager)) {
+            return HARDWARE_SERVICE;
         }
 
         throw new IllegalArgumentException("The class does not correspond to a car service");
@@ -450,73 +472,70 @@ public class CarContext extends ContextWrapper {
     }
 
     /**
-     * Requests the provided {@code permissions} from the user.
+     * Requests the provided {@code permissions} from the user, calling the provided {@code
+     * listener} in the main thread.
      *
-     * <p>When the result is available, the {@code callback} provided will be called on the main
-     * thread.
-     *
-     * <p>This method should be called using a parked only listener.
-     *
-     * <p>If this method is calle while the host deems it is unsafe (for example, when the user
-     * is driving), the permission(s) may not be requested from the user, automatically rejecting
-     * the permissions requested.
-     *
-     * <p>If the Session is destroyed before the user accepts or rejects the permissions, the
-     * callback will not be executed.
-     *
-     * @param permissions the runtime permissions to request from the user
-     * @param callback    callback that will be notified when the user takes action on the
-     *                    permission request
-     * @throws NullPointerException if either {@code permissions} or {@code callback} are {@code
-     *                              null}
+     * @see CarContext#requestPermissions(List, Executor, OnRequestPermissionsListener)=
      */
     public void requestPermissions(@NonNull List<String> permissions,
-            @NonNull OnRequestPermissionsCallback callback) {
-        requestPermissions(permissions, ContextCompat.getMainExecutor(this), callback);
+            @NonNull OnRequestPermissionsListener listener) {
+        requestPermissions(permissions, ContextCompat.getMainExecutor(this), listener);
     }
 
     /**
      * Requests the provided {@code permissions} from the user.
      *
-     * <p>When the result is available, the {@code callback} provided will be called using the
+     * <p>When the result is available, the {@code listener} provided will be called using the
      * {@link Executor} provided.
      *
-     * <p>This method should be called using a parked only listener.
+     * <p>This method should be called using a
+     * {@link androidx.car.app.model.ParkedOnlyOnClickListener}.
      *
-     * <p>If this method is calle while the host deems it is unsafe (for example, when the user
-     * is driving), the permission(s) may not be requested from the user, automatically rejecting
-     * the permissions requested.
+     * <p>If this method is called while the host deems it is unsafe (for example, when the user
+     * is driving), the permission(s) will not be requested from the user.
      *
-     * <p>If the Session is destroyed before the user accepts or rejects the permissions, the
-     * callback will not be executed.
+     * <p>If the {@link Session} is destroyed before the user accepts or rejects the permissions,
+     * the callback will not be executed.
+     *
+     * <h4>Platform Considerations</h4>
+     *
+     * Using this method allows the app to work across all platforms supported by the library with
+     * the same API (e.g. Android Auto on mobile devices and Android Automotive OS on native car
+     * heads unit). On a mobile platform, this method will start an activity that will display the
+     * platform's permissions UI over it. You can choose to not
+     * use this method and instead implement your own activity and code to request the
+     * permissions in that platform. On Automotive OS however, distraction-optimized activities
+     * other than {@link androidx.car.app.activity.CarAppActivity} are not allowed and may be
+     * rejected during app submission. See {@link androidx.car.app.activity.CarAppActivity} for
+     * more details.
      *
      * @param permissions the runtime permissions to request from the user
      * @param executor    the executor that will be used for calling the {@code callback} provided
-     * @param callback    callback that will be notified when the user takes action on the
+     * @param listener    listener that will be notified when the user takes action on the
      *                    permission request
      * @throws NullPointerException if any of {@code executor}, {@code permissions} or
      *                              {@code callback} are {@code null}
      */
     public void requestPermissions(@NonNull List<String> permissions,
             @NonNull /* @CallbackExecutor */ Executor executor,
-            @NonNull OnRequestPermissionsCallback callback) {
+            @NonNull OnRequestPermissionsListener listener) {
         requireNonNull(executor);
         requireNonNull(permissions);
-        requireNonNull(callback);
+        requireNonNull(listener);
 
         ComponentName appActivityComponent = new ComponentName(this, CarAppInternalActivity.class);
 
         Lifecycle lifecycle = mLifecycle;
         Bundle extras = new Bundle(2);
-        extras.putBinder(EXTRA_ON_REQUEST_PERMISSIONS_RESULT_CALLBACK_KEY,
-                new IOnRequestPermissionsCallback.Stub() {
+        extras.putBinder(EXTRA_ON_REQUEST_PERMISSIONS_RESULT_LISTENER_KEY,
+                new IOnRequestPermissionsListener.Stub() {
                     @Override
                     public void onRequestPermissionsResult(String[] approvedPermissions,
                             String[] rejectedPermissions) {
                         if (lifecycle.getCurrentState().isAtLeast(Lifecycle.State.CREATED)) {
                             List<String> approved = Arrays.asList(approvedPermissions);
                             List<String> rejected = Arrays.asList(rejectedPermissions);
-                            executor.execute(() -> callback.onRequestPermissionsResult(approved,
+                            executor.execute(() -> listener.onRequestPermissionsResult(approved,
                                     rejected));
                         }
                     }
@@ -627,6 +646,24 @@ public class CarContext extends ContextWrapper {
         mNavigationManager = NavigationManager.create(this, hostDispatcher, lifecycle);
         mScreenManager = ScreenManager.create(this, lifecycle);
         mConstraintManager = ConstraintManager.create(this, hostDispatcher);
+
+        // Try to instantiate a CarHardwareManager.
+        CarHardwareManager carHardwareManager = null;
+        IllegalStateException carHardwareManagerException = null;
+        try {
+            carHardwareManager = CarHardwareManager.create(this, hostDispatcher);
+            if (carHardwareManager == null) {
+                carHardwareManagerException = new IllegalStateException("CarHardwareManager not "
+                        + "configured. Did you forget to add a dependency on automotive or "
+                        + "projected artifacts?");
+            }
+        } catch (IllegalStateException e) {
+            carHardwareManager = new CarHardwareManager() { };
+            carHardwareManagerException = e;
+        }
+        mCarHardwareManager = carHardwareManager;
+        mCarHardwareManagerException = carHardwareManagerException;
+
         mOnBackPressedDispatcher =
                 new OnBackPressedDispatcher(() -> getCarService(ScreenManager.class).pop());
         mLifecycle = lifecycle;

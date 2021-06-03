@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -410,7 +411,13 @@ fun ModalDrawer(
             }
             Scrim(
                 open = drawerState.isOpen,
-                onClose = { scope.launch { drawerState.close() } },
+                onClose = {
+                    scope.launch {
+                        if (drawerState.swipeableState.confirmStateChange(DrawerValue.Closed)) {
+                            drawerState.close()
+                        }
+                    }
+                },
                 fraction = {
                     calculateFraction(minValue, maxValue, drawerState.offset.value)
                 },
@@ -431,7 +438,16 @@ fun ModalDrawer(
                     .semantics {
                         paneTitle = Strings.NavigationMenu
                         if (drawerState.isOpen) {
-                            dismiss(action = { scope.launch { drawerState.close() }; true })
+                            dismiss {
+                                scope.launch {
+                                    if (
+                                        drawerState.swipeableState
+                                            .confirmStateChange(DrawerValue.Closed)
+                                    ) {
+                                        drawerState.close()
+                                    }
+                                }; true
+                            }
                         }
                     },
                 shape = drawerShape,
@@ -468,7 +484,9 @@ fun ModalDrawer(
  * @param drawerContentColor color of the content to use inside the drawer sheet. Defaults to
  * either the matching content color for [drawerBackgroundColor], or, if it is not a color from
  * the theme, this will keep the same value set above this Surface.
- * @param scrimColor color of the scrim that obscures content when the drawer is open
+ * @param scrimColor color of the scrim that obscures content when the drawer is open. If the
+ * color passed is [Color.Unspecified], then a scrim will no longer be applied and the bottom
+ * drawer will not block interaction with the rest of the screen when visible.
  * @param content content of the rest of the UI
  *
  */
@@ -530,7 +548,13 @@ fun BottomDrawer(
             content()
             BottomDrawerScrim(
                 color = scrimColor,
-                onDismiss = { scope.launch { drawerState.close() } },
+                onDismiss = {
+                    scope.launch {
+                        if (drawerState.confirmStateChange(BottomDrawerValue.Closed)) {
+                            drawerState.close()
+                        }
+                    }
+                },
                 visible = drawerState.targetValue != BottomDrawerValue.Closed
             )
             Surface(
@@ -543,7 +567,13 @@ fun BottomDrawer(
                         paneTitle = Strings.NavigationMenu
                         if (drawerState.isOpen) {
                             // TODO(b/180101663) The action currently doesn't return the correct results
-                            dismiss(action = { scope.launch { drawerState.close() }; true })
+                            dismiss {
+                                scope.launch {
+                                    if (drawerState.confirmStateChange(BottomDrawerValue.Closed)) {
+                                        drawerState.close()
+                                    }
+                                }; true
+                            }
                         }
                     },
                 shape = drawerShape,
@@ -586,7 +616,7 @@ private fun BottomDrawerScrim(
     onDismiss: () -> Unit,
     visible: Boolean
 ) {
-    if (color != Color.Transparent) {
+    if (color.isSpecified) {
         val alpha by animateFloatAsState(
             targetValue = if (visible) 1f else 0f,
             animationSpec = TweenSpec()

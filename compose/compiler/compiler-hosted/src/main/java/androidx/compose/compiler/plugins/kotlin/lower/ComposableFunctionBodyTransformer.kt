@@ -3530,9 +3530,7 @@ class ComposableFunctionBodyTransformer(
                 realizeCoalescableChildGroup = {
                     scope.realizeGroup(makeEnd)
                     realizeGroup()
-                    realizeCoalescableChildGroup = {
-                        error("Attempted to realize group twice")
-                    }
+                    realizeCoalescableChildGroup = { }
                 }
             }
 

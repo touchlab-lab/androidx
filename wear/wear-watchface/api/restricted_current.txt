@@ -6,6 +6,32 @@ package androidx.wear.watchface {
     method public boolean hitTest(androidx.wear.watchface.Complication complication, android.graphics.Rect screenBounds, @Px int x, @Px int y);
   }
 
+  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public final class BroadcastsObserver implements androidx.wear.watchface.BroadcastsReceiver.BroadcastEventObserver {
+    ctor public BroadcastsObserver(androidx.wear.watchface.WatchState watchState, androidx.wear.watchface.WatchFaceHostApi watchFaceHostApi, kotlinx.coroutines.Deferred<androidx.wear.watchface.WatchFaceImpl> deferredWatchFaceImpl, kotlinx.coroutines.CoroutineScope uiThreadCoroutineScope);
+    method public void onActionBatteryLow();
+    method public void onActionBatteryOkay();
+    method public void onActionPowerConnected();
+    method public void onActionTimeChanged();
+    method public void onActionTimeTick();
+    method public void onActionTimeZoneChanged();
+    method public void onMockTime(android.content.Intent intent);
+  }
+
+  @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public final class BroadcastsReceiver {
+    ctor public BroadcastsReceiver(android.content.Context context, androidx.wear.watchface.BroadcastsReceiver.BroadcastEventObserver observer);
+    method public void onDestroy();
+  }
+
+  public static interface BroadcastsReceiver.BroadcastEventObserver {
+    method @UiThread public void onActionBatteryLow();
+    method @UiThread public void onActionBatteryOkay();
+    method @UiThread public void onActionPowerConnected();
+    method @UiThread public void onActionTimeChanged();
+    method @UiThread public void onActionTimeTick();
+    method @UiThread public void onActionTimeZoneChanged();
+    method @UiThread public void onMockTime(android.content.Intent intent);
+  }
+
   public interface CanvasComplication {
     method public void drawHighlight(android.graphics.Canvas canvas, android.graphics.Rect bounds, @androidx.wear.watchface.data.ComplicationBoundsType int boundsType, android.icu.util.Calendar calendar, @ColorInt int color);
     method public androidx.wear.complications.data.ComplicationData? getData();
@@ -21,7 +47,7 @@ package androidx.wear.watchface {
   }
 
   public interface CanvasComplicationFactory {
-    method @UiThread public androidx.wear.watchface.CanvasComplication create(androidx.wear.watchface.WatchState, androidx.wear.watchface.CanvasComplication.InvalidateCallback);
+    method @WorkerThread public androidx.wear.watchface.CanvasComplication create(androidx.wear.watchface.WatchState, androidx.wear.watchface.CanvasComplication.InvalidateCallback);
   }
 
   public final class Complication {
@@ -122,13 +148,6 @@ package androidx.wear.watchface {
     enum_constant public static final androidx.wear.watchface.DrawMode MUTE;
   }
 
-  public final class MutableObservableWatchData<T> extends androidx.wear.watchface.ObservableWatchData<T> {
-    ctor public MutableObservableWatchData(T? initialValue);
-    ctor public MutableObservableWatchData();
-    method @UiThread public void setValue(T v);
-    property @UiThread public T value;
-  }
-
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public final class MutableWatchState {
     method public androidx.wear.watchface.WatchState asWatchState();
     method public long getAnalogPreviewReferenceTimeMillis();
@@ -136,37 +155,44 @@ package androidx.wear.watchface {
     method public long getDigitalPreviewReferenceTimeMillis();
     method public boolean getHasBurnInProtection();
     method public boolean getHasLowBitAmbient();
-    method public androidx.wear.watchface.MutableObservableWatchData<java.lang.Integer> getInterruptionFilter();
-    method public androidx.wear.watchface.MutableObservableWatchData<java.lang.Boolean> isAmbient();
-    method public androidx.wear.watchface.MutableObservableWatchData<java.lang.Boolean> isBatteryLowAndNotCharging();
+    method public androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Integer> getInterruptionFilter();
+    method public androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Boolean> isAmbient();
+    method public androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Boolean> isBatteryLowAndNotCharging();
     method public boolean isHeadless();
-    method public androidx.wear.watchface.MutableObservableWatchData<java.lang.Boolean> isVisible();
+    method public androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Boolean> isVisible();
     method public void setAnalogPreviewReferenceTimeMillis(long p);
     method public void setChinHeight(@Px int value);
     method public void setDigitalPreviewReferenceTimeMillis(long p);
     method public void setHasBurnInProtection(boolean p);
     method public void setHasLowBitAmbient(boolean p);
     method public void setHeadless(boolean p);
-    method public void setInterruptionFilter(androidx.wear.watchface.MutableObservableWatchData<java.lang.Integer> p);
+    method public void setInterruptionFilter(androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Integer> p);
     property public final long analogPreviewReferenceTimeMillis;
     property @Px public final int chinHeight;
     property public final long digitalPreviewReferenceTimeMillis;
     property public final boolean hasBurnInProtection;
     property public final boolean hasLowBitAmbient;
-    property public final androidx.wear.watchface.MutableObservableWatchData<java.lang.Integer> interruptionFilter;
-    property public final androidx.wear.watchface.MutableObservableWatchData<java.lang.Boolean> isAmbient;
-    property public final androidx.wear.watchface.MutableObservableWatchData<java.lang.Boolean> isBatteryLowAndNotCharging;
+    property public final androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Integer> interruptionFilter;
+    property public final androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Boolean> isAmbient;
+    property public final androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Boolean> isBatteryLowAndNotCharging;
     property public final boolean isHeadless;
-    property public final androidx.wear.watchface.MutableObservableWatchData<java.lang.Boolean> isVisible;
+    property public final androidx.wear.watchface.ObservableWatchData.MutableObservableWatchData<java.lang.Boolean> isVisible;
   }
 
-  public class ObservableWatchData<T> {
+  public abstract sealed class ObservableWatchData<T> {
     method @UiThread public final void addObserver(androidx.wear.watchface.Observer<T> observer);
     method @UiThread public T getValue();
     method @UiThread public final T getValueOr(T p);
     method @UiThread public final boolean hasValue();
     method @UiThread public final void removeObserver(androidx.wear.watchface.Observer<T> observer);
     method @UiThread protected void setValue(T v);
+    property @UiThread public T value;
+  }
+
+  public static final class ObservableWatchData.MutableObservableWatchData<T> extends androidx.wear.watchface.ObservableWatchData<T> {
+    ctor public ObservableWatchData.MutableObservableWatchData(T? initialValue);
+    ctor public ObservableWatchData.MutableObservableWatchData();
+    method @UiThread public void setValue(T v);
     property @UiThread public T value;
   }
 
@@ -361,14 +387,13 @@ package androidx.wear.watchface {
     method public androidx.wear.watchface.style.data.UserStyleWireFormat? getInitialUserStyle();
     method public android.os.Handler getUiThreadHandler();
     method @UiThread public void invalidate();
-    method public void onUserStyleChanged();
     method public void setActiveComplications(int[] watchFaceComplicationIds);
     method public void setDefaultComplicationProviderWithFallbacks(int watchFaceComplicationId, java.util.List<android.content.ComponentName>? providers, @androidx.wear.complications.SystemProviders.ProviderId int fallbackSystemProvider, int type);
     method public void updateContentDescriptionLabels();
   }
 
   @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) public final class WatchFaceImpl {
-    ctor @UiThread public WatchFaceImpl(androidx.wear.watchface.WatchFace watchface, androidx.wear.watchface.WatchFaceHostApi watchFaceHostApi, androidx.wear.watchface.WatchState watchState, androidx.wear.watchface.style.CurrentUserStyleRepository currentUserStyleRepository, androidx.wear.watchface.ComplicationsManager complicationsManager);
+    ctor @UiThread public WatchFaceImpl(androidx.wear.watchface.WatchFace watchface, androidx.wear.watchface.WatchFaceHostApi watchFaceHostApi, androidx.wear.watchface.WatchState watchState, androidx.wear.watchface.style.CurrentUserStyleRepository currentUserStyleRepository, androidx.wear.watchface.ComplicationsManager complicationsManager, android.icu.util.Calendar calendar, androidx.wear.watchface.BroadcastsObserver broadcastsObserver, androidx.wear.watchface.BroadcastsReceiver? broadcastsReceiver);
     method public long getPreviewReferenceTimeMillis();
     property public final long previewReferenceTimeMillis;
   }
@@ -399,7 +424,6 @@ package androidx.wear.watchface {
     method public androidx.wear.watchface.style.data.UserStyleWireFormat? getInitialUserStyle();
     method public android.os.Handler getUiThreadHandler();
     method public void invalidate();
-    method @UiThread public void onUserStyleChanged();
     method public void setActiveComplications(int[] watchFaceComplicationIds);
     method public void setDefaultComplicationProviderWithFallbacks(int watchFaceComplicationId, java.util.List<android.content.ComponentName>? providers, @androidx.wear.complications.SystemProviders.ProviderId int fallbackSystemProvider, int type);
     method @UiThread public void updateContentDescriptionLabels();

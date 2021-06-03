@@ -35,6 +35,7 @@ import androidx.room.compiler.processing.ksp.KspProcessingEnv
 import androidx.room.compiler.processing.ksp.KspTypeElement
 import androidx.room.compiler.processing.ksp.findEnclosingMemberContainer
 import androidx.room.compiler.processing.ksp.overrides
+import androidx.room.compiler.processing.util.sanitizeAsJavaParameterName
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.symbol.KSPropertyAccessor
 import com.google.devtools.ksp.symbol.KSPropertyGetter
@@ -151,8 +152,12 @@ internal sealed class KspSyntheticPropertyMethodElement(
                 return if (propName.startsWith("is")) {
                     propName
                 } else {
-                    @Suppress("DEPRECATION") // b/187985877
-                    "get${propName.capitalize(Locale.US)}"
+                    val capitalizedName = propName.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.US
+                        ) else it.toString()
+                    }
+                    "get$capitalizedName"
                 }
             }
         }
@@ -218,7 +223,8 @@ internal sealed class KspSyntheticPropertyMethodElement(
             ) {
 
             override val name: String by lazy {
-                origin.field.declaration.setter?.parameter?.name?.asString() ?: "value"
+                val originalName = origin.field.declaration.setter?.parameter?.name?.asString()
+                originalName.sanitizeAsJavaParameterName(0)
             }
             override val type: XType
                 get() = origin.field.type
@@ -244,8 +250,12 @@ internal sealed class KspSyntheticPropertyMethodElement(
                 return if (propName.startsWith("is")) {
                     "set${propName.substring(2)}"
                 } else {
-                    @Suppress("DEPRECATION") // b/187985877
-                    "set${propName.capitalize(Locale.US)}"
+                    val capitalizedName = propName.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.US
+                        ) else it.toString()
+                    }
+                    "set$capitalizedName"
                 }
             }
         }

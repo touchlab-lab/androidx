@@ -33,7 +33,7 @@ import org.junit.runner.RunWith
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
-class DynamicIncludeNavGraphBuilderTest {
+public class DynamicIncludeNavGraphBuilderTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val navController = NavController(context).apply {
@@ -44,8 +44,9 @@ class DynamicIncludeNavGraphBuilderTest {
         navigatorProvider += NoOpNavigator()
     }
 
+    @Suppress("DEPRECATION")
     @Test
-    fun includeDynamic() {
+    public fun includeDynamic() {
         val graph = navController.navigatorProvider.navigation(startDestination = GRAPH_ID) {
             includeDynamic(GRAPH_ID, MODULE_NAME, GRAPH_RESOURCE_NAME) {
                 graphPackage = GRAPH_PACKAGE
@@ -65,7 +66,9 @@ class DynamicIncludeNavGraphBuilderTest {
             .isEqualTo(GRAPH_RESOURCE_NAME)
     }
 
-    fun includeDynamic_emptyModuleName() {
+    @Suppress("DEPRECATION")
+    @Test
+    public fun includeDynamic_emptyModuleName() {
         navController.navigatorProvider.navigation(startDestination = GRAPH_ID) {
             try {
                 includeDynamic(GRAPH_ID, "", GRAPH_RESOURCE_NAME)
@@ -76,8 +79,9 @@ class DynamicIncludeNavGraphBuilderTest {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
-    fun includeDynamic_graphPackage_null() {
+    public fun includeDynamic_graphPackage_null() {
         val graph = navController.navigatorProvider.navigation(startDestination = GRAPH_ID) {
             includeDynamic(GRAPH_ID, MODULE_NAME, GRAPH_RESOURCE_NAME)
         }
@@ -87,8 +91,9 @@ class DynamicIncludeNavGraphBuilderTest {
             .that(includeDynamic.graphPackage).isEqualTo("${context.packageName}.$MODULE_NAME")
     }
 
+    @Suppress("DEPRECATION")
     @Test
-    fun includeDynamic_graphPackage_empty() {
+    public fun includeDynamic_graphPackage_empty() {
         navController.navigatorProvider.navigation(startDestination = GRAPH_ID) {
             try {
                 includeDynamic(GRAPH_ID, MODULE_NAME, GRAPH_RESOURCE_NAME) {
@@ -101,8 +106,9 @@ class DynamicIncludeNavGraphBuilderTest {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
-    fun includeDynamic_graphResourceName_empty() {
+    public fun includeDynamic_graphResourceName_empty() {
         navController.navigatorProvider.navigation(startDestination = GRAPH_ID) {
             try {
                 includeDynamic(GRAPH_ID, MODULE_NAME, "")
@@ -114,7 +120,7 @@ class DynamicIncludeNavGraphBuilderTest {
     }
 
     @Test
-    fun includeDynamicRoute() {
+    public fun includeDynamicRoute() {
         val graph = navController.navigatorProvider.navigation(startDestination = GRAPH_ROUTE) {
             includeDynamic(GRAPH_ROUTE, MODULE_NAME, GRAPH_RESOURCE_NAME) {
                 graphPackage = GRAPH_PACKAGE
@@ -135,7 +141,7 @@ class DynamicIncludeNavGraphBuilderTest {
             .isEqualTo(GRAPH_RESOURCE_NAME)
     }
 
-    fun includeDynamic_emptyModuleNameRoute() {
+    public fun includeDynamic_emptyModuleNameRoute() {
         navController.navigatorProvider.navigation(startDestination = GRAPH_ROUTE) {
             try {
                 includeDynamic(GRAPH_ROUTE, "", GRAPH_RESOURCE_NAME)
@@ -147,7 +153,7 @@ class DynamicIncludeNavGraphBuilderTest {
     }
 
     @Test
-    fun includeDynamic_graphPackage_nullRoute() {
+    public fun includeDynamic_graphPackage_nullRoute() {
         val graph = navController.navigatorProvider.navigation(startDestination = GRAPH_ROUTE) {
             includeDynamic(GRAPH_ROUTE, MODULE_NAME, GRAPH_RESOURCE_NAME)
         }
@@ -159,7 +165,7 @@ class DynamicIncludeNavGraphBuilderTest {
     }
 
     @Test
-    fun includeDynamic_graphPackage_emptyRoute() {
+    public fun includeDynamic_graphPackage_emptyRoute() {
         navController.navigatorProvider.navigation(startDestination = GRAPH_ROUTE) {
             try {
                 includeDynamic(GRAPH_ROUTE, MODULE_NAME, GRAPH_RESOURCE_NAME) {
@@ -173,7 +179,7 @@ class DynamicIncludeNavGraphBuilderTest {
     }
 
     @Test
-    fun includeDynamic_graphResourceName_emptyRoute() {
+    public fun includeDynamic_graphResourceName_emptyRoute() {
         navController.navigatorProvider.navigation(startDestination = GRAPH_ROUTE) {
             try {
                 includeDynamic(GRAPH_ROUTE, MODULE_NAME, "")

@@ -18,12 +18,14 @@ package androidx.compose.compiler.plugins.kotlin.lower
 
 import androidx.compose.compiler.plugins.kotlin.KtxNameConventions
 import androidx.compose.compiler.plugins.kotlin.analysis.ComposeWritableSlices
-import androidx.compose.compiler.plugins.kotlin.hasComposableAnnotation
 import androidx.compose.compiler.plugins.kotlin.irTrace
 import androidx.compose.compiler.plugins.kotlin.lower.decoys.copyWithNewTypeParams
 import androidx.compose.compiler.plugins.kotlin.lower.decoys.isDecoy
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
+import org.jetbrains.kotlin.backend.common.ir.copyTypeParametersFrom
+import org.jetbrains.kotlin.backend.common.ir.moveBodyTo
+import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineParameter
 import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.InlineClassAbi
 import org.jetbrains.kotlin.descriptors.Modality
@@ -374,18 +376,21 @@ class ComposerParamTransformer(
                         propertySymbol.owner.getter = fn
                     }
                     if (propertySymbol.owner.setter == this) {
-                        propertySymbol.owner.setter = this
+                        propertySymbol.owner.setter = fn
                     }
                 }
             }
             fn.parent = parent
-            fn.typeParameters = this.typeParameters.map {
-                it.parent = fn
-                it
-            }
+            fn.copyTypeParametersFrom(this)
+
+            fun IrType.remapTypeParameters() =
+                remapTypeParameters(this@copy, fn)
+
+            fn.returnType = returnType.remapTypeParameters()
+
             fn.dispatchReceiverParameter = dispatchReceiverParameter?.copyTo(fn)
             fn.extensionReceiverParameter = extensionReceiverParameter?.copyTo(fn)
-            fn.valueParameters = valueParameters.map { p ->
+            fn.valueParameters = valueParameters.map { param ->
                 // Composable lambdas will always have `IrGet`s of all of their parameters
                 // generated, since they are passed into the restart lambda. This causes an
                 // interesting corner case with "anonymous parameters" of composable functions.
@@ -394,15 +399,19 @@ class ComposerParamTransformer(
                 // case in composable lambdas. The synthetic name that kotlin generates for
                 // anonymous parameters has an issue where it is not safe to dex, so we sanitize
                 // the names here to ensure that dex is always safe.
-                p.copyTo(
-                    irFunction = fn,
-                    name = dexSafeName(p.name),
-                    defaultValue = p.defaultValue?.copyWithNewTypeParams(this, fn)
+                val newName = dexSafeName(param.name)
+
+                val newType = defaultParameterType(param).remapTypeParameters()
+                param.copyTo(
+                    fn,
+                    name = newName,
+                    type = newType,
+                    isAssignable = param.defaultValue != null
                 )
             }
-            fn.annotations = annotations.map { a -> a }
+            fn.annotations = annotations.toList()
             fn.metadata = metadata
-            fn.body = body
+            fn.body = moveBodyTo(fn)?.copyWithNewTypeParams(this, fn)
         }
     }
 
@@ -488,11 +497,6 @@ class ComposerParamTransformer(
                 fn.correspondingPropertySymbol?.owner?.setter = fn
             }
 
-            fn.valueParameters = fn.valueParameters.map { param ->
-                val newType = defaultParameterType(param)
-                param.copyTo(fn, type = newType, isAssignable = param.defaultValue != null)
-            }
-
             val valueParametersMapping = explicitParameters
                 .zip(fn.explicitParameters)
                 .toMap()
@@ -527,6 +531,8 @@ class ComposerParamTransformer(
                     )
                 }
             }
+
+            inlinedFunctions += IrInlineReferenceLocator.scan(context, fn)
 
             fn.transformChildrenVoid(object : IrElementTransformerVoid() {
                 var isNestedScope = false
@@ -605,7 +611,6 @@ class ComposerParamTransformer(
         return isInvoke() && dispatchReceiver?.type?.hasComposableAnnotation() == true
     }
 
-    @OptIn(ObsoleteDescriptorBasedAPI::class)
     private fun IrFunction.isNonComposableInlinedLambda(): Boolean {
         for (element in inlinedFunctions) {
             if (element.argument.function != this)

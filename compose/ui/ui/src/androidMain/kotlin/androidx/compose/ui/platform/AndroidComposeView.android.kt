@@ -62,11 +62,12 @@ import androidx.compose.ui.focus.FocusDirection.Companion.Up
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusManagerImpl
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect as ComposeRect
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.CanvasHolder
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.setFrom
-import androidx.compose.ui.hapticfeedback.AndroidHapticFeedback
+import androidx.compose.ui.hapticfeedback.PlatformHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.input.key.Key.Companion.Back
 import androidx.compose.ui.input.key.Key.Companion.DirectionCenter
@@ -112,6 +113,7 @@ import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.accessibility.AccessibilityNodeProviderCompat
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewTreeLifecycleOwner
@@ -124,7 +126,7 @@ import android.view.KeyEvent as AndroidKeyEvent
 @OptIn(ExperimentalComposeUiApi::class)
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 internal class AndroidComposeView(context: Context) :
-    ViewGroup(context), Owner, ViewRootForTest, PositionCalculator {
+    ViewGroup(context), Owner, ViewRootForTest, PositionCalculator, DefaultLifecycleObserver {
 
     /**
      * Signal that AndroidComposeView's superclass constructors have finished running.
@@ -191,7 +193,12 @@ internal class AndroidComposeView(context: Context) :
     override val autofillTree = AutofillTree()
 
     // OwnedLayers that are dirty and should be redrawn.
-    internal val dirtyLayers = mutableListOf<OwnedLayer>()
+    private val dirtyLayers = mutableListOf<OwnedLayer>()
+    // OwnerLayers that invalidated themselves during their last draw. They will be redrawn
+    // during the next AndroidComposeView dispatchDraw pass.
+    private var postponedDirtyLayers: MutableList<OwnedLayer>? = null
+
+    private var isDrawingContent = false
 
     private val motionEventAdapter = MotionEventAdapter()
     private val pointerInputEventProcessor = PointerInputEventProcessor(root)
@@ -286,7 +293,7 @@ internal class AndroidComposeView(context: Context) :
      * Current [ViewTreeOwners]. Use [setOnViewTreeOwnersAvailable] if you want to
      * execute your code when the object will be created.
      */
-    var viewTreeOwners: ViewTreeOwners? = null
+    var viewTreeOwners: ViewTreeOwners? by mutableStateOf(null)
         private set
 
     private var onViewTreeOwnersAvailable: ((ViewTreeOwners) -> Unit)? = null
@@ -322,7 +329,7 @@ internal class AndroidComposeView(context: Context) :
      * Provide haptic feedback to the user. Use the Android version of haptic feedback.
      */
     override val hapticFeedBack: HapticFeedback =
-        AndroidHapticFeedback(this)
+        PlatformHapticFeedback(this)
 
     /**
      * Provide textToolbar to the user, for text-related operation. Use the Android version of
@@ -345,6 +352,12 @@ internal class AndroidComposeView(context: Context) :
         ViewCompat.setAccessibilityDelegate(this, accessibilityDelegate)
         ViewRootForTest.onViewCreatedCallback?.invoke(this)
         root.attach(this)
+    }
+
+    override fun onResume(owner: LifecycleOwner) {
+        // Refresh in onResume in case the value has changed.
+        @OptIn(InternalCoreApi::class)
+        showLayoutBounds = getIsShowingLayoutBounds()
     }
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
@@ -531,6 +544,12 @@ internal class AndroidComposeView(context: Context) :
             measureAndLayoutDelegate.updateRootConstraints(constraints)
             measureAndLayoutDelegate.measureAndLayout()
             setMeasuredDimension(root.width, root.height)
+            if (_androidViewsHandler != null) {
+                androidViewsHandler.measure(
+                    MeasureSpec.makeMeasureSpec(root.width, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(root.height, MeasureSpec.EXACTLY)
+                )
+            }
         }
     }
 
@@ -556,10 +575,11 @@ internal class AndroidComposeView(context: Context) :
             // AndroidViewsHandler for accessibility and for Views making assumptions based on
             // the size of their ancestors. Usually the Views in the hierarchy will not
             // be relaid out, as they have not requested layout in the meantime.
-            // However, there is also chance for the AndroidViewsHandler to be isLayoutRequested
-            // at this point, in case the Views hierarchy receives forceLayout().
-            // In this case, calling layout here will relayout to clear the isLayoutRequested
-            // info on the Views, as otherwise further layout requests will be discarded.
+            // However, there is also chance for the AndroidViewsHandler and the children to be
+            // isLayoutRequested at this point, in case the Views hierarchy receives forceLayout().
+            // In case of a forceLayout(), calling layout here will traverse the entire subtree
+            // and replace the Views at the same position, which is needed to clean up their
+            // layout state, which otherwise might cause further requestLayout()s to be blocked.
             androidViewsHandler.layout(0, 0, r - l, b - t)
         }
     }
@@ -633,12 +653,17 @@ internal class AndroidComposeView(context: Context) :
         }
     }
 
+    override fun requestRectangleOnScreen(rect: ComposeRect) {
+        requestRectangleOnScreen(rect.toRect())
+    }
+
     override fun dispatchDraw(canvas: android.graphics.Canvas) {
         if (!isAttachedToWindow) {
             invalidateLayers(root)
         }
         measureAndLayout()
 
+        isDrawingContent = true
         // we don't have to observe here because the root has a layer modifier
         // that will observe all children. The AndroidComposeView has only the
         // root, so it doesn't have to invalidate itself based on model changes.
@@ -649,7 +674,6 @@ internal class AndroidComposeView(context: Context) :
                 val layer = dirtyLayers[i]
                 layer.updateDisplayList()
             }
-            dirtyLayers.clear()
         }
 
         if (ViewLayer.shouldUseDispatchDraw) {
@@ -662,6 +686,33 @@ internal class AndroidComposeView(context: Context) :
             super.dispatchDraw(canvas)
             canvas.restoreToCount(saveCount)
         }
+
+        dirtyLayers.clear()
+        isDrawingContent = false
+
+        // updateDisplayList operations performed above (during root.draw and during the explicit
+        // layer.updateDisplayList() calls) can result in the same layers being invalidated. These
+        // layers have been added to postponedDirtyLayers and will be redrawn during the next
+        // dispatchDraw.
+        if (postponedDirtyLayers != null) {
+            val postponed = postponedDirtyLayers!!
+            dirtyLayers.addAll(postponed)
+            postponed.clear()
+        }
+    }
+
+    internal fun notifyLayerIsDirty(layer: OwnedLayer, isDirty: Boolean) {
+        if (!isDirty) {
+            // It is correct to remove the layer here regardless of this if, but for performance
+            // we are hackily not doing the removal here in order to just do clear() a bit later.
+            if (!isDrawingContent) require(dirtyLayers.remove(layer))
+        } else if (!isDrawingContent) {
+            dirtyLayers += layer
+        } else {
+            val postponed = postponedDirtyLayers
+                ?: mutableListOf<OwnedLayer>().also { postponedDirtyLayers = it }
+            postponed += layer
+        }
     }
 
     /**
@@ -672,7 +723,8 @@ internal class AndroidComposeView(context: Context) :
         val viewTreeOwners = viewTreeOwners
         if (viewTreeOwners != null) {
             callback(viewTreeOwners)
-        } else {
+        }
+        if (!isAttachedToWindow) {
             onViewTreeOwnersAvailable = callback
         }
     }
@@ -717,19 +769,37 @@ internal class AndroidComposeView(context: Context) :
         super.onAttachedToWindow()
         invalidateLayoutNodeMeasurement(root)
         invalidateLayers(root)
-        showLayoutBounds = getIsShowingLayoutBounds()
         snapshotObserver.startObserving()
         ifDebug { if (autofillSupported()) _autofill?.registerCallback() }
 
-        if (viewTreeOwners == null) {
-            val lifecycleOwner = ViewTreeLifecycleOwner.get(this) ?: throw IllegalStateException(
-                "Composed into the View which doesn't propagate ViewTreeLifecycleOwner!"
-            )
-            val savedStateRegistryOwner =
-                ViewTreeSavedStateRegistryOwner.get(this) ?: throw IllegalStateException(
+        val lifecycleOwner = ViewTreeLifecycleOwner.get(this)
+        val savedStateRegistryOwner = ViewTreeSavedStateRegistryOwner.get(this)
+
+        val oldViewTreeOwners = viewTreeOwners
+        // We need to change the ViewTreeOwner if there isn't one yet (null)
+        // or if either the lifecycleOwner or savedStateRegistryOwner has changed.
+        val resetViewTreeOwner = oldViewTreeOwners == null ||
+            (
+                (lifecycleOwner != null && savedStateRegistryOwner != null) &&
+                    (
+                        lifecycleOwner !== oldViewTreeOwners.lifecycleOwner ||
+                            savedStateRegistryOwner !== oldViewTreeOwners.lifecycleOwner
+                        )
+                )
+        if (resetViewTreeOwner) {
+            if (lifecycleOwner == null) {
+                throw IllegalStateException(
+                    "Composed into the View which doesn't propagate ViewTreeLifecycleOwner!"
+                )
+            }
+            if (savedStateRegistryOwner == null) {
+                throw IllegalStateException(
                     "Composed into the View which doesn't propagate" +
                         "ViewTreeSavedStateRegistryOwner!"
                 )
+            }
+            oldViewTreeOwners?.lifecycleOwner?.lifecycle?.removeObserver(this)
+            lifecycleOwner.lifecycle.addObserver(this)
             val viewTreeOwners = ViewTreeOwners(
                 lifecycleOwner = lifecycleOwner,
                 savedStateRegistryOwner = savedStateRegistryOwner
@@ -738,6 +808,7 @@ internal class AndroidComposeView(context: Context) :
             onViewTreeOwnersAvailable?.invoke(viewTreeOwners)
             onViewTreeOwnersAvailable = null
         }
+        viewTreeOwners!!.lifecycleOwner.lifecycle.addObserver(this)
         viewTreeObserver.addOnGlobalLayoutListener(globalLayoutListener)
         viewTreeObserver.addOnScrollChangedListener(scrollChangedListener)
     }
@@ -745,6 +816,7 @@ internal class AndroidComposeView(context: Context) :
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         snapshotObserver.stopObserving()
+        viewTreeOwners?.lifecycleOwner?.lifecycle?.removeObserver(this)
         ifDebug { if (autofillSupported()) _autofill?.unregisterCallback() }
         viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
         viewTreeObserver.removeOnScrollChangedListener(scrollChangedListener)
@@ -1135,4 +1207,8 @@ private fun Matrix.invertTo(other: Matrix) {
     other[3, 1] = ((a00 * b09 - a01 * b07 + a02 * b06) * invDet)
     other[3, 2] = ((-a30 * b03 + a31 * b01 - a32 * b00) * invDet)
     other[3, 3] = ((a20 * b03 - a21 * b01 + a22 * b00) * invDet)
+}
+
+private fun ComposeRect.toRect(): Rect {
+    return Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
 }

@@ -1,0 +1,3 @@
+// Baseline format: 1.0
+RemovedMethod: androidx.compose.material.FabPosition#getValue():
+    Removed method androidx.compose.material.FabPosition.getValue()

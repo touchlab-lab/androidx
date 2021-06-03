@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package androidx.build.lint
 
-import com.android.tools.lint.checks.infrastructure.TestFile
-import com.android.tools.lint.checks.infrastructure.TestFiles
-import com.android.tools.lint.checks.infrastructure.TestLintResult
-import com.android.tools.lint.checks.infrastructure.TestLintTask.lint
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-@Suppress("UnstableApiUsage")
 @RunWith(JUnit4::class)
-class IdeaSuppressionDetectorTest {
-
-    private fun check(
-        vararg testFiles: TestFile,
-    ): TestLintResult {
-        return lint()
-            .files(
-                *testFiles,
-            )
-            .issues(IdeaSuppressionDetector.ISSUE)
-            .run()
-    }
+class IdeaSuppressionDetectorTest : AbstractLintDetectorTest(
+    useDetector = IdeaSuppressionDetector(),
+    useIssues = listOf(IdeaSuppressionDetector.ISSUE),
+) {
 
     @Test
     fun `Detection of IDEA-specific suppression in Java sources`() {
@@ -56,11 +45,4 @@ src/androidx/IdeaSuppressionJava.java:29: Error: Uses IntelliJ-specific suppress
 
         check(*input).expect(expected)
     }
-
-    /**
-     * Loads a [TestFile] from Java source code included in the JAR resources.
-     */
-    private fun javaSample(className: String): TestFile = TestFiles.java(
-        javaClass.getResource("/java/${className.replace('.', '/')}.java").readText()
-    )
 }

@@ -24,7 +24,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Offset.Companion.Zero
 import androidx.compose.ui.input.nestedscroll.NestedScrollDelegatingWrapper
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource.Drag
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource.Companion.Relocate
 import androidx.compose.ui.node.LayoutNodeWrapper
 import androidx.compose.ui.platform.debugInspectorInfo
 import kotlin.math.abs
@@ -34,9 +34,15 @@ import kotlin.math.abs
 internal class RelocationRequesterModifier : OnGloballyPositionedModifier {
     lateinit var coordinates: LayoutCoordinates
 
-    fun bringIntoParentBounds() {
-        (coordinates as LayoutNodeWrapper).findPreviousNestedScrollWrapper()
-            ?.bringIntoParentBounds(coordinates)
+    fun bringIntoView() {
+        val layoutNodeWrapper = coordinates
+        check(layoutNodeWrapper is LayoutNodeWrapper)
+
+        // Recursively scroll parents so that the item is visible.
+        layoutNodeWrapper.findPreviousNestedScrollWrapper()?.bringIntoView(coordinates)
+
+        // Ask the owner to send a request to its parents to make sure this item is visible.
+        layoutNodeWrapper.layoutNode.owner?.requestRectangleOnScreen(coordinates.boundsInRoot())
     }
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
@@ -50,7 +56,7 @@ internal class RelocationRequesterModifier : OnGloballyPositionedModifier {
  * Here is an example where the a [relocationRequester] can be used to bring an item into parent
  * bounds. It demonstrates how a composable can ask its parents to scroll so that the component
  * using this modifier is brought into the bounds of all its parents.
- * @sample androidx.compose.ui.samples.BringIntoParentBoundsSample
+ * @sample androidx.compose.ui.samples.BringIntoViewSample
  *
  * @param relocationRequester an instance of [RelocationRequester]. This hoisted object can be
  * used to send relocation requests to parents of the current composable.
@@ -73,7 +79,7 @@ fun Modifier.relocationRequester(relocationRequester: RelocationRequester): Modi
 // Scroll this nested scroll parent to bring the child into view. Then find the nested scroll parent
 // of this nested scroll parent and ask them to do the same. This results in scrolls propagating
 // up to all the nested scroll parents to bring the specified child into view.
-private fun NestedScrollDelegatingWrapper.bringIntoParentBounds(child: LayoutCoordinates) {
+private fun NestedScrollDelegatingWrapper.bringIntoView(child: LayoutCoordinates) {
     val childBounds = localBoundingBoxOf(child, false)
     val offset = Offset(
         calculateOffset(childBounds.left, childBounds.right, size.width.toFloat()),
@@ -82,9 +88,10 @@ private fun NestedScrollDelegatingWrapper.bringIntoParentBounds(child: LayoutCoo
     // TODO(b/187432148): We ideally shouldn't be using internal connection functions. We need to
     //  build a better system with a more granular API that allows us to send scroll requests to
     //  specific parents.
-    modifier.connection.onPostScroll(Zero, offset, Drag)
+    @Suppress("DEPRECATION")
+    modifier.connection.onPostScroll(Zero, offset, @OptIn(ExperimentalComposeUiApi::class) Relocate)
 
-    wrappedBy?.findPreviousNestedScrollWrapper()?.bringIntoParentBounds(child)
+    wrappedBy?.findPreviousNestedScrollWrapper()?.bringIntoView(child)
 }
 
 // Calculate the offset needed to bring one of the edges into view. The leadingEdge is the side

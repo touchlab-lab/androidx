@@ -18,6 +18,7 @@ package androidx.build
 
 import androidx.build.dependencyTracker.AffectedModuleDetector
 import androidx.build.gradle.getByType
+import com.android.build.api.extension.AndroidComponentsExtension
 import com.android.build.gradle.internal.dsl.LintOptions
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -40,16 +41,6 @@ private const val UPDATE_LINT_BASELINE = "updateLintBaseline"
 private const val LINT_BASELINE_CONTINUE = "lint.baselines.continue"
 
 fun Project.configureNonAndroidProjectForLint(extension: AndroidXExtension) {
-    if (path == ":buildSrc-tests:project-subsets" ||
-        path == ":lint-checks:tests" ||
-        path == ":paging:paging-common-ktx" ||
-        path == ":compose:compiler:compiler" ||
-        path == ":room:integration-tests:room-incremental-annotation-processing" ||
-        path == ":compose:compiler:compiler-hosted:integration-tests:kotlin-compiler-repackaged" ||
-        path == ":lifecycle:integration-tests:incrementality"
-    ) {
-        return // disabled for AGP 7.0.0-alpha15 due to b/180408027
-    }
     apply(mapOf("plugin" to "com.android.lint"))
 
     // Create fake variant tasks since that is what is invoked by developers.
@@ -130,9 +121,9 @@ fun Project.configureLint(lintOptions: LintOptions, extension: AndroidXExtension
         isCheckReleaseBuilds = false
     }
 
-    // Lint is configured entirely in afterEvaluate so that individual projects cannot easily
+    // Lint is configured entirely in finalizeDsl so that individual projects cannot easily
     // disable individual checks in the DSL for any reason.
-    afterEvaluate {
+    val finalizeDsl: () -> Unit = {
         lintOptions.apply {
             if (!isTestingLintItself) {
                 isAbortOnError = true
@@ -171,13 +162,9 @@ fun Project.configureLint(lintOptions: LintOptions, extension: AndroidXExtension
 
             // Broken in 7.0.0-alpha15 due to b/180408990
             disable("RestrictedApi")
-            disable("VisibleForTests")
 
             // Broken in 7.0.0-alpha15 due to b/187343720
             disable("UnusedResources")
-
-            // Broken in 7.0.0-alpha15 due to b/187341964
-            disable("VectorDrawableCompat")
 
             // Broken in 7.0.0-alpha15 due to b/187418637
             disable("EnforceSampledAnnotation")
@@ -280,21 +267,6 @@ fun Project.configureLint(lintOptions: LintOptions, extension: AndroidXExtension
                 System.setProperty(LINT_BASELINE_CONTINUE, "true")
             }
 
-            listOf(
-                tasks.named("lintAnalyzeDebug"),
-                tasks.named("lintAnalyze"),
-            ).forEach { task ->
-                task.configure {
-                    it.doLast {
-                        // Workaround for b/187319075 where lint uses the wrong output dir.
-                        val lintBuildDir = File(project.projectDir, "build")
-                        if (lintBuildDir.isDirectory) {
-                            lintBuildDir.deleteRecursively()
-                        }
-                    }
-                }
-            }
-
             // Lint complains when it generates a new, blank baseline file so we'll just avoid
             // telling it about the baseline if one doesn't already exist OR we're explicitly
             // updating (and creating) baseline files.
@@ -302,6 +274,16 @@ fun Project.configureLint(lintOptions: LintOptions, extension: AndroidXExtension
                 baseline(lintBaseline)
             }
         }
+    }
+
+    @Suppress("UnstableApiUsage") // Will be stable in AGP 7.0.0
+    val androidComponents = extensions.findByType(AndroidComponentsExtension::class.java)
+    if (null != androidComponents) {
+        @Suppress("UnstableApiUsage")
+        androidComponents.finalizeDsl { finalizeDsl() }
+    } else {
+        // Support the lint standalone plugin case which, as yet, lacks AndroidComponents DSL
+        afterEvaluate { finalizeDsl() }
     }
 }
 

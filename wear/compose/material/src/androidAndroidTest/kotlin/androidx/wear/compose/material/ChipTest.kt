@@ -19,6 +19,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.testutils.assertShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -37,6 +39,7 @@ import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTopPositionInRootIsEqualTo
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -45,6 +48,7 @@ import androidx.compose.ui.test.onChild
 import androidx.compose.ui.test.onChildAt
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
@@ -254,6 +258,110 @@ class ChipSizeTest {
             .assertTopPositionInRootIsEqualTo((itemBounds.height - iconBounds.height) / 2)
     }
 
+    @Test
+    fun icon_only_compact_chip_has_correct_default_width_and_height() {
+        val iconTag = "TestIcon"
+        val chipTag = "chip"
+        rule
+            .setContentWithThemeForSizeAssertions(useUnmergedTree = true) {
+                CompactChip(
+                    onClick = {},
+                    modifier = Modifier.testTag(chipTag),
+                    icon = { CreateImage(iconTag) }
+                )
+            }
+
+        rule.onRoot().assertWidthIsEqualTo(52.dp).assertHeightIsEqualTo(32.dp)
+    }
+
+    @Test
+    fun label_only_compact_chip_has_correct_default_height() {
+        val chipTag = "chip"
+        rule
+            .setContentWithThemeForSizeAssertions(useUnmergedTree = true) {
+                CompactChip(
+                    onClick = {},
+                    modifier = Modifier.testTag(chipTag),
+                    label = { Text("Test") }
+                )
+            }
+
+        rule.onRoot().assertHeightIsEqualTo(32.dp)
+    }
+
+    @Test
+    fun no_content_compact_chip_has_correct_default_width_and_height() {
+        val chipTag = "chip"
+        rule
+            .setContentWithThemeForSizeAssertions(useUnmergedTree = true) {
+                CompactChip(
+                    onClick = {},
+                    modifier = Modifier.testTag(chipTag),
+                )
+            }
+
+        rule.onRoot().assertWidthIsEqualTo(52.dp).assertHeightIsEqualTo(32.dp)
+    }
+
+    @Test
+    fun icon_only_compact_chip_can_have_width_overridden() {
+        val iconTag = "TestIcon"
+        val chipTag = "chip"
+        rule
+            .setContentWithThemeForSizeAssertions(useUnmergedTree = true) {
+                CompactChip(
+                    onClick = {},
+                    modifier = Modifier
+                        .testTag(chipTag)
+                        .width(100.dp),
+                    icon = { CreateImage(iconTag) }
+                )
+            }
+
+        rule.onRoot().assertWidthIsEqualTo(100.dp)
+    }
+
+    @Test
+    fun has_icon_in_correct_location_when_compact_chip() {
+        val iconTag = "TestIcon"
+        val chipTag = "chip"
+        rule
+            .setContentWithThemeForSizeAssertions(useUnmergedTree = true) {
+                CompactChip(
+                    onClick = {},
+                    label = { Text("Blue green orange") },
+                    icon = { CreateImage(iconTag) },
+                    modifier = Modifier.testTag(chipTag)
+                )
+            }
+        val itemBounds = rule.onNodeWithTag(chipTag).getUnclippedBoundsInRoot()
+        val iconBounds = rule.onNodeWithTag(iconTag, useUnmergedTree = true)
+            .getUnclippedBoundsInRoot()
+
+        rule.onNodeWithContentDescription(iconTag, useUnmergedTree = true)
+            .assertTopPositionInRootIsEqualTo((itemBounds.height - iconBounds.height) / 2)
+    }
+
+    @Test
+    fun has_icon_in_correct_location_when_icon_only_chip() {
+        val iconTag = "TestIcon"
+        val chipTag = "chip"
+        rule
+            .setContentWithThemeForSizeAssertions(useUnmergedTree = true) {
+                CompactChip(
+                    onClick = {},
+                    modifier = Modifier.testTag(chipTag),
+                    icon = { CreateImage(iconTag) }
+                )
+            }
+        val itemBounds = rule.onNodeWithTag(chipTag).getUnclippedBoundsInRoot()
+        val iconBounds = rule.onNodeWithTag(iconTag, useUnmergedTree = true)
+            .getUnclippedBoundsInRoot()
+
+        rule.onNodeWithContentDescription(iconTag, useUnmergedTree = true)
+            .assertTopPositionInRootIsEqualTo((itemBounds.height - iconBounds.height) / 2)
+    }
+
     private fun verifyHeight(expectedHeight: Dp) {
         rule.verifyHeight(expectedHeight) {
             Chip(
@@ -276,12 +384,20 @@ class ChipColorTest {
             TestChipColors.Primary,
             ChipStatus.Enabled,
             { MaterialTheme.colors.primary },
-            { MaterialTheme.colors.onPrimary }
+            { MaterialTheme.colors.onPrimary },
+        )
+
+    @Test
+    fun gives_primary_gradient_enabled_colors() =
+        verifyGradientBackgroundColors(
+            TestChipColors.PrimaryGradient,
+            ChipStatus.Enabled,
+            { MaterialTheme.colors.onPrimary },
         )
 
     @Test
     fun three_slot_layout_gives_primary_enabled_colors() =
-        verifyThreeSlotColors(
+        verifySlotColors(
             TestChipColors.Primary,
             ChipStatus.Enabled,
             { MaterialTheme.colors.primary },
@@ -291,17 +407,29 @@ class ChipColorTest {
         )
 
     @Test
+    fun compact_chip_gives_primary_enabled_colors() =
+        verifySlotColors(
+            TestChipColors.Primary,
+            ChipStatus.Enabled,
+            { MaterialTheme.colors.primary },
+            { MaterialTheme.colors.onPrimary },
+            { MaterialTheme.colors.onPrimary },
+            { MaterialTheme.colors.onPrimary },
+            compactChip = true
+        )
+
+    @Test
     fun gives_primary_disabled_colors() =
         verifyColors(
             TestChipColors.Primary,
             ChipStatus.Disabled,
             { MaterialTheme.colors.primary },
-            { MaterialTheme.colors.onPrimary }
+            { MaterialTheme.colors.onPrimary },
         )
 
     @Test
     fun three_slot_layout_gives_primary_disabled_colors() =
-        verifyThreeSlotColors(
+        verifySlotColors(
             TestChipColors.Primary,
             ChipStatus.Disabled,
             { MaterialTheme.colors.primary },
@@ -320,8 +448,17 @@ class ChipColorTest {
         )
 
     @Test
+    fun gives_child_enabled_colors() =
+        verifyColors(
+            TestChipColors.Child,
+            ChipStatus.Enabled,
+            { Color.Transparent },
+            { MaterialTheme.colors.onSurface }
+        )
+
+    @Test
     fun three_slot_layout_gives_secondary_enabled_colors() =
-        verifyThreeSlotColors(
+        verifySlotColors(
             TestChipColors.Secondary,
             ChipStatus.Enabled,
             { MaterialTheme.colors.surface },
@@ -340,14 +477,35 @@ class ChipColorTest {
         )
 
     @Test
+    fun gives_child_disabled_colors() =
+        verifyColors(
+            TestChipColors.Child,
+            ChipStatus.Disabled,
+            { Color.Transparent },
+            { MaterialTheme.colors.onSurface }
+        )
+
+    @Test
     fun three_slot_layout_gives_secondary_disabled_colors() =
-        verifyThreeSlotColors(
+        verifySlotColors(
             TestChipColors.Secondary,
             ChipStatus.Enabled,
             { MaterialTheme.colors.surface },
             { MaterialTheme.colors.onSurface },
             { MaterialTheme.colors.onSurface },
             { MaterialTheme.colors.onSurface }
+        )
+
+    @Test
+    fun compact_chip_gives_secondary_disabled_colors() =
+        verifySlotColors(
+            TestChipColors.Secondary,
+            ChipStatus.Enabled,
+            { MaterialTheme.colors.surface },
+            { MaterialTheme.colors.onSurface },
+            { MaterialTheme.colors.onSurface },
+            { MaterialTheme.colors.onSurface },
+            compactChip = true
         )
 
     @Test
@@ -488,25 +646,25 @@ class ChipColorTest {
         assertEquals(overrideColor, actualContentColor)
     }
 
-    private fun verifyColors(
+    private fun verifyGradientBackgroundColors(
         testChipColors: TestChipColors,
         status: ChipStatus,
-        backgroundColor: @Composable () -> Color,
         contentColor: @Composable () -> Color
     ) {
-        var expectedBackground = Color.Transparent
         var expectedContent = Color.Transparent
         var actualContent = Color.Transparent
-        var expectedAlpha = 0.0f
+        val testBackground = Color.White
 
         rule.setContentWithTheme {
-            expectedBackground = backgroundColor()
-            expectedContent = contentColor()
-            expectedAlpha = ContentAlpha.disabled
+            if (status.enabled()) {
+                expectedContent = contentColor()
+            } else {
+                expectedContent = contentColor().copy(alpha = ContentAlpha.disabled)
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(expectedBackground)
+                    .background(testBackground)
             ) {
                 Chip(
                     onClick = {},
@@ -518,26 +676,66 @@ class ChipColorTest {
             }
         }
 
-        if (status.enabled()) {
-            assertEquals(expectedContent, actualContent)
-        } else {
-            assertEquals(expectedContent.copy(alpha = expectedAlpha), actualContent)
-        }
+        assertEquals(expectedContent, actualContent)
 
-        if (expectedBackground != Color.Transparent) {
-            rule.onNodeWithTag("test-item").onChildAt(0)
-                .captureToImage()
-                .assertContainsColor(expectedBackground, 50.0f)
-        }
+        // Background checks are clearly missing here. There is no good way to check that
+        // a gradient background matches with this approach.
     }
 
-    private fun verifyThreeSlotColors(
+    private fun verifyColors(
+        testChipColors: TestChipColors,
+        status: ChipStatus,
+        backgroundColor: @Composable () -> Color,
+        contentColor: @Composable () -> Color
+    ) {
+        var expectedBackground = Color.Transparent
+        var expectedContent = Color.Transparent
+        var actualContent = Color.Transparent
+        val testBackground = Color.White
+
+        rule.setContentWithTheme {
+            if (status.enabled()) {
+                expectedBackground = backgroundColor()
+                expectedContent = contentColor()
+            } else {
+                expectedBackground =
+                    backgroundColor().copy(alpha = ContentAlpha.disabled)
+                        .compositeOver(testBackground)
+                expectedContent = contentColor().copy(alpha = ContentAlpha.disabled)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(testBackground)
+            ) {
+                Chip(
+                    onClick = {},
+                    colors = testChipColors.chipColors(),
+                    content = { actualContent = LocalContentColor.current },
+                    enabled = status.enabled(),
+                    modifier = Modifier.testTag("test-item")
+                )
+            }
+        }
+
+        assertEquals(expectedContent, actualContent)
+
+        rule.onNodeWithTag("test-item")
+            .captureToImage()
+            .assertContainsColor(
+                if (expectedBackground != Color.Transparent) expectedBackground else testBackground,
+                50.0f
+            )
+    }
+
+    private fun verifySlotColors(
         testChipColors: TestChipColors,
         status: ChipStatus,
         backgroundColor: @Composable () -> Color,
         contentColor: @Composable () -> Color,
         secondaryContentColor: @Composable () -> Color,
-        iconColor: @Composable () -> Color
+        iconColor: @Composable () -> Color,
+        compactChip: Boolean = false
     ) {
         var expectedBackground = Color.Transparent
         var expectedContent = Color.Transparent
@@ -546,49 +744,63 @@ class ChipColorTest {
         var actualContent = Color.Transparent
         var actualSecondaryContent = Color.Transparent
         var actualIcon = Color.Transparent
-        var expectedAlpha = 0.0f
+        val testBackground = Color.White
 
         rule.setContentWithTheme {
-            expectedBackground = backgroundColor()
-            expectedContent = contentColor()
-            expectedSecondaryContent = secondaryContentColor()
-            expectedIcon = iconColor()
-            expectedAlpha = ContentAlpha.disabled
+            if (status.enabled()) {
+                expectedBackground = backgroundColor()
+                expectedContent = contentColor()
+                expectedSecondaryContent = secondaryContentColor()
+                expectedIcon = iconColor()
+            } else {
+                expectedBackground =
+                    backgroundColor().copy(alpha = ContentAlpha.disabled)
+                        .compositeOver(testBackground)
+                expectedContent = contentColor().copy(alpha = ContentAlpha.disabled)
+                expectedSecondaryContent = secondaryContentColor()
+                    .copy(alpha = ContentAlpha.disabled)
+                expectedIcon = iconColor().copy(alpha = ContentAlpha.disabled)
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(expectedBackground)
+                    .background(testBackground)
             ) {
-                Chip(
-                    onClick = {},
-                    colors = testChipColors.chipColors(),
-                    label = { actualContent = LocalContentColor.current },
-                    secondaryLabel = { actualSecondaryContent = LocalContentColor.current },
-                    icon = { actualIcon = LocalContentColor.current },
-                    enabled = status.enabled(),
-                    modifier = Modifier.testTag("test-item")
-                )
+                if (compactChip) {
+                    CompactChip(
+                        onClick = {},
+                        colors = testChipColors.chipColors(),
+                        label = { actualContent = LocalContentColor.current },
+                        icon = { actualIcon = LocalContentColor.current },
+                        enabled = status.enabled(),
+                        modifier = Modifier.testTag("test-item")
+                    )
+                } else {
+                    Chip(
+                        onClick = {},
+                        colors = testChipColors.chipColors(),
+                        label = { actualContent = LocalContentColor.current },
+                        secondaryLabel = { actualSecondaryContent = LocalContentColor.current },
+                        icon = { actualIcon = LocalContentColor.current },
+                        enabled = status.enabled(),
+                        modifier = Modifier.testTag("test-item")
+                    )
+                }
             }
         }
 
-        if (status.enabled()) {
-            assertEquals(expectedContent, actualContent)
+        assertEquals(expectedContent, actualContent)
+        if (! compactChip) {
             assertEquals(expectedSecondaryContent, actualSecondaryContent)
-            assertEquals(expectedIcon, actualIcon)
-        } else {
-            assertEquals(expectedContent.copy(alpha = expectedAlpha), actualContent)
-            assertEquals(
-                expectedSecondaryContent.copy(alpha = expectedAlpha),
-                actualSecondaryContent
-            )
-            assertEquals(expectedIcon.copy(alpha = expectedAlpha), actualIcon)
         }
+        assertEquals(expectedIcon, actualIcon)
 
-        if (expectedBackground != Color.Transparent) {
-            rule.onNodeWithTag("test-item").onChildAt(0)
-                .captureToImage()
-                .assertContainsColor(expectedBackground, 50.0f)
-        }
+        rule.onNodeWithTag("test-item")
+            .captureToImage()
+            .assertContainsColor(
+                if (expectedBackground != Color.Transparent) expectedBackground else testBackground,
+                50.0f
+            )
     }
 }
 
@@ -620,8 +832,10 @@ class ChipFontTest {
         var actualLabelTextStyle = TextStyle.Default
         var actualSecondaryLabelTextStyle = TextStyle.Default
         var expectedTextStyle = TextStyle.Default
+        var expectedSecondaryTextStyle = TextStyle.Default
         rule.setContentWithTheme {
             expectedTextStyle = MaterialTheme.typography.button
+            expectedSecondaryTextStyle = MaterialTheme.typography.caption2
             Chip(
                 onClick = {},
                 colors = ChipDefaults.primaryChipColors(),
@@ -636,7 +850,7 @@ class ChipFontTest {
             )
         }
         assertEquals(expectedTextStyle, actualLabelTextStyle)
-        assertEquals(expectedTextStyle, actualSecondaryLabelTextStyle)
+        assertEquals(expectedSecondaryTextStyle, actualSecondaryLabelTextStyle)
     }
 }
 
@@ -695,9 +909,19 @@ private enum class TestChipColors {
             return ChipDefaults.primaryChipColors()
         }
     },
+    PrimaryGradient {
+        @Composable override fun chipColors(): ChipColors {
+            return ChipDefaults.gradientBackgroundChipColors()
+        }
+    },
     Secondary {
         @Composable override fun chipColors(): ChipColors {
             return ChipDefaults.secondaryChipColors()
+        }
+    },
+    Child {
+        @Composable override fun chipColors(): ChipColors {
+            return ChipDefaults.childChipColors()
         }
     };
 

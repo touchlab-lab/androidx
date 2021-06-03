@@ -55,11 +55,9 @@ package androidx.room {
     method protected abstract androidx.room.InvalidationTracker createInvalidationTracker();
     method protected abstract androidx.sqlite.db.SupportSQLiteOpenHelper createOpenHelper(androidx.room.DatabaseConfiguration!);
     method @Deprecated public void endTransaction();
-    method protected java.util.List<androidx.room.migration.Migration!> getAutoMigrations();
     method public androidx.room.InvalidationTracker getInvalidationTracker();
     method public androidx.sqlite.db.SupportSQLiteOpenHelper getOpenHelper();
     method public java.util.concurrent.Executor getQueryExecutor();
-    method @RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP) protected java.util.Map<java.lang.Class<?>!,java.util.List<java.lang.Class<?>!>!> getRequiredTypeConverters();
     method public java.util.concurrent.Executor getTransactionExecutor();
     method public <T> T? getTypeConverter(Class<T!>);
     method public boolean inTransaction();
