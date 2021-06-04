@@ -23,6 +23,10 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlin.js.Promise
+import kotlinx.coroutines.promise
 
 internal actual open class ThreadLocal<T> actual constructor(
     initialValue: () -> T
@@ -128,3 +132,8 @@ internal actual fun <T> createSnapshotMutableState(
     value: T,
     policy: SnapshotMutationPolicy<T>
 ): SnapshotMutableState<T> = SnapshotMutableStateImpl(value, policy)
+
+private val testScope = MainScope()
+actual internal fun _runBlocking(block: suspend CoroutineScope.() -> Unit): dynamic = testScope.promise {
+    block()
+}

@@ -18,6 +18,8 @@ package androidx.compose.runtime
 
 import androidx.compose.runtime.internal.ThreadMap
 import androidx.compose.runtime.internal.emptyThreadMap
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.EmptyCoroutineContext
 
 internal actual typealias AtomicReference<V> = java.util.concurrent.atomic.AtomicReference<V>
 
@@ -63,3 +65,7 @@ internal actual inline fun <R> synchronized(lock: Any, block: () -> R): R {
 }
 
 internal actual typealias TestOnly = org.jetbrains.annotations.TestOnly
+
+actual internal fun _runBlocking(
+    block: suspend CoroutineScope.() -> Unit
+): Unit = kotlinx.coroutines.runBlocking(EmptyCoroutineContext, block)

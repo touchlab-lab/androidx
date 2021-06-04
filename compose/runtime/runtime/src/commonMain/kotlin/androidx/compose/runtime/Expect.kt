@@ -16,6 +16,8 @@
 
 package androidx.compose.runtime
 
+import kotlinx.coroutines.CoroutineScope
+
 // TODO(aelias): Mark the typealiases internal when https://youtrack.jetbrains.com/issue/KT-36695 is fixed.
 // Currently, they behave as internal because the actual is internal, even though the expect is public.
 
@@ -84,3 +86,7 @@ expect annotation class CheckResult(
         "Use an appropriate local clock."
 )
 expect val DefaultMonotonicFrameClock: MonotonicFrameClock
+
+internal expect fun _runBlocking(
+    block: suspend CoroutineScope.() -> Unit
+): Unit
