@@ -136,7 +136,9 @@ val KOTLIN_TEST_JUNIT get() = "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer
 val KOTLIN_TEST_JS get() = "org.jetbrains.kotlin:kotlin-test-js:$kotlinVersion"
 val KOTLIN_REFLECT get() = "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
 
-val KOTLIN_NATIVE_VERSION get() = KOTLIN_VERSION
+// val KOTLIN_NATIVE_VERSION get() = KOTLIN_VERSION
+// A special K/N build capable of Skia interop and Compose plugin at the same time
+val KOTLIN_NATIVE_VERSION get() = "1.5.10-eap-85"
 
 internal lateinit var kotlinCoroutinesVersion: String
 
