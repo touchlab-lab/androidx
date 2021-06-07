@@ -142,6 +142,7 @@ if(AndroidXComposePlugin.isMultiplatformEnabled(project)) {
     }
 }
 
+/*
 publishing {
      repositories {
         maven {
@@ -153,6 +154,7 @@ publishing {
         }
     }
 }
+*/
 
 android {
     defaultConfig {
