@@ -7,6 +7,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import kotlinx.coroutines.*
 
 /*
 import androidx.compose.material.Text
@@ -19,9 +20,11 @@ import androidx.compose.runtime.setValue
 */
 
 fun main() {
-    NSApplication.sharedApplication()
-    createWindow("Compose/Native sample")
-    NSApp?.run()
+    runBlocking {
+        NSApplication.sharedApplication()
+        createWindow("Compose/Native sample")
+        NSApp?.run()
+    }
 }
 
 fun createWindow(title: String) {
