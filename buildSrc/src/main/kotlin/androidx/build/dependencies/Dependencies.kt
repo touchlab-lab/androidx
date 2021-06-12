@@ -58,6 +58,7 @@ const val MULTIDEX = "androidx.multidex:multidex:2.0.1"
 val SKIKO_VERSION = System.getenv("SKIKO_VERSION") ?: "0.3.3"
 val SKIKO = "org.jetbrains.skiko:skiko-jvm:$SKIKO_VERSION"
 val SKIKO_LINUX_X64 = "org.jetbrains.skiko:skiko-jvm-runtime-linux-x64:$SKIKO_VERSION"
+val SKIKO_LINUX_ARM64 = "org.jetbrains.skiko:skiko-jvm-runtime-linux-arm64:$SKIKO_VERSION"
 val SKIKO_MACOS_X64 = "org.jetbrains.skiko:skiko-jvm-runtime-macos-x64:$SKIKO_VERSION"
 val SKIKO_MACOS_ARM64 = "org.jetbrains.skiko:skiko-jvm-runtime-macos-arm64:$SKIKO_VERSION"
 val SKIKO_WINDOWS_X64 = "org.jetbrains.skiko:skiko-jvm-runtime-windows-x64:$SKIKO_VERSION"
@@ -70,7 +71,10 @@ val SKIKO_CURRENT_OS by lazy {
             else -> SKIKO_MACOS_X64
         }
         OperatingSystem.WINDOWS -> SKIKO_WINDOWS_X64
-        OperatingSystem.LINUX -> SKIKO_LINUX_X64
+        OperatingSystem.LINUX -> when (arch) {
+            "aarch64" -> SKIKO_LINUX_ARM64
+            else -> SKIKO_LINUX_X64
+        }
     }
 }
 const val TRUTH = "com.google.truth:truth:1.0.1"

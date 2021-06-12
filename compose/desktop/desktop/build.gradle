@@ -23,6 +23,7 @@ import androidx.build.SupportConfigKt
 import static androidx.build.AndroidXPlugin.BUILD_ON_SERVER_TASK
 import static androidx.build.dependencies.DependenciesKt.SKIKO_CURRENT_OS
 import static androidx.build.dependencies.DependenciesKt.SKIKO_LINUX_X64
+import static androidx.build.dependencies.DependenciesKt.SKIKO_LINUX_ARM64
 import static androidx.build.dependencies.DependenciesKt.SKIKO_MACOS_X64
 import static androidx.build.dependencies.DependenciesKt.SKIKO_MACOS_ARM64
 import static androidx.build.dependencies.DependenciesKt.SKIKO_WINDOWS_X64
@@ -125,6 +126,7 @@ afterEvaluate {
     publishing {
         publications {
             it.jvmOs("linux-x64", [SKIKO_LINUX_X64])
+            it.jvmOs("linux-arm64", [SKIKO_LINUX_ARM64])
             it.jvmOs("macos-x64", [SKIKO_MACOS_X64])
             it.jvmOs("macos-arm64", [SKIKO_MACOS_ARM64])
             it.jvmOs("windows-x64", [SKIKO_WINDOWS_X64])
