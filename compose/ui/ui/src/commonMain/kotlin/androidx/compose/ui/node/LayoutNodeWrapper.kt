@@ -220,7 +220,7 @@ internal abstract class LayoutNodeWrapper(
         zIndex: Float,
         layerBlock: (GraphicsLayerScope.() -> Unit)?
     ) {
-        onLayerBlockUpdated(layerBlock)
+        //onLayerBlockUpdated(layerBlock)
         if (this.position != position) {
             this.position = position
             val layer = layer
