@@ -38,6 +38,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.RestrictsSuspension
 import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.resume
+import androidx.compose.runtime.synchronized
 
 /**
  * Receiver scope for awaiting pointer events in a call to [PointerInputScope.awaitPointerEventScope].

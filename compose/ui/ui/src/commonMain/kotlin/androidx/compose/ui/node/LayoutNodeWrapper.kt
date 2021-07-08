@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.minus
 import androidx.compose.ui.unit.plus
+import kotlin.native.concurrent.ThreadLocal
 
 /**
  * Measurable and Placeable type that has a position.
@@ -815,6 +816,7 @@ internal abstract class LayoutNodeWrapper(
         }
     }
 
+    @ThreadLocal
     internal companion object {
         const val ExpectAttachedLayoutCoordinates = "LayoutCoordinate operations are only valid " +
             "when isAttached is true"

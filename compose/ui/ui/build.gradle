@@ -31,6 +31,7 @@ AndroidXComposePlugin.applyAndConfigureKotlinPlugin(project)
 
 dependencies {
     kotlinPlugin(project(":compose:compiler:compiler"))
+    kotlinNativePlugin(project(":compose:compiler:compiler-hosted"))
 
     if(!AndroidXComposePlugin.isMultiplatformEnabled(project)) {
         /*
@@ -110,6 +111,12 @@ if(AndroidXComposePlugin.isMultiplatformEnabled(project)) {
     kotlin {
         android()
         jvm("desktop")
+//        if (System.getenv("SDK_NAME")?.startsWith("iphoneos") ?: false) {
+//            iosArm64("ios")
+//        } else {
+//            iosX64("ios")
+//        }
+        ios()
 
         /*
          * When updating dependencies, make sure to make the an an analogous update in the

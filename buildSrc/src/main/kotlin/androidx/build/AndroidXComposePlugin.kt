@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinMultiplatformPluginWrapper
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 const val composeSourceOption =
     "plugin:androidx.compose.compiler.plugins.kotlin:sourceInformation=true"
@@ -74,22 +75,44 @@ class AndroidXComposePlugin : Plugin<Project> {
                             )
                         }
                     }.files
-
-                    project.tasks.withType(KotlinCompile::class.java).configureEach { compile ->
-                        // TODO(b/157230235): remove when this is enabled by default
-                        compile.kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-                        compile.inputs.files({ kotlinPlugin })
-                            .withPropertyName("composeCompilerExtension")
-                            .withNormalizer(ClasspathNormalizer::class.java)
-                        compile.doFirst {
-                            if (!kotlinPlugin.isEmpty) {
-                                compile.kotlinOptions.freeCompilerArgs +=
-                                    "-Xplugin=${kotlinPlugin.first()}"
-                            }
+                    val kotlinNativePluginConf = project.configurations.create("kotlinNativePlugin")
+                    val kotlinNativePlugin = kotlinNativePluginConf.incoming.artifactView { view ->
+                        view.attributes { attributes ->
+                            attributes.attribute(
+                                Attribute.of("artifactType", String::class.java),
+                                    ArtifactTypeDefinition.JAR_TYPE
+                            )
                         }
-                    }
+                    }.files
 
                     project.afterEvaluate {
+                        project.tasks.withType(KotlinCompile::class.java).configureEach { compile ->
+                            // TODO(b/157230235): remove when this is enabled by default
+                            compile.kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+                            if (compile is KotlinNativeCompile) {
+
+                                compile.inputs.files({ kotlinNativePlugin })
+                                    .withPropertyName("composeCompilerExtension")
+                                    .withNormalizer(ClasspathNormalizer::class.java)
+                                compile.doFirst {
+                                    if (!kotlinNativePlugin.isEmpty) {
+                                        compile.kotlinOptions.freeCompilerArgs +=
+                                            "-Xplugin=${kotlinNativePlugin.first()}"
+                                    }
+                                }
+                            } else {
+                                compile.inputs.files({ kotlinPlugin })
+                                    .withPropertyName("composeCompilerExtension")
+                                    .withNormalizer(ClasspathNormalizer::class.java)
+                                compile.doFirst {
+                                    if (!kotlinPlugin.isEmpty) {
+                                        compile.kotlinOptions.freeCompilerArgs +=
+                                            "-Xplugin=${kotlinPlugin.first()}"
+                                    }
+                                }
+                            }
+                        }
+
                         val androidXExtension =
                             project.extensions.findByType(AndroidXExtension::class.java)
                         if (androidXExtension != null) {
@@ -97,9 +120,12 @@ class AndroidXComposePlugin : Plugin<Project> {
                                 project.tasks.withType(KotlinCompile::class.java)
                                     .configureEach { compile ->
                                         compile.doFirst {
-                                            if (!kotlinPlugin.isEmpty) {
+                                            if (!kotlinPlugin.isEmpty || !kotlinNativePlugin.isEmpty) {
                                                 compile.kotlinOptions.freeCompilerArgs +=
-                                                    listOf("-P", composeSourceOption)
+                                                    listOf(
+                                                            "-P", composeSourceOption,
+                                                            "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
+                                                    )
                                             }
                                         }
                                     }
@@ -149,15 +175,17 @@ class AndroidXComposePlugin : Plugin<Project> {
                 configureForKotlinMultiplatformSourceStructure()
             }
 
-            tasks.withType(KotlinCompile::class.java).configureEach { compile ->
-                // Needed to enable `expect` and `actual` keywords
-                compile.kotlinOptions.freeCompilerArgs += "-Xmulti-platform"
-            }
+            afterEvaluate {
+                tasks.withType(KotlinCompile::class.java).configureEach { compile ->
+                    // Needed to enable `expect` and `actual` keywords
+                    compile.kotlinOptions.freeCompilerArgs += "-Xmulti-platform"
+                }
 
-            tasks.withType(KotlinJsCompile::class.java).configureEach { compile ->
-                compile.kotlinOptions.freeCompilerArgs += listOf(
-                    "-P", "plugin:androidx.compose.compiler.plugins.kotlin:generateDecoys=true"
-                )
+                tasks.withType(KotlinJsCompile::class.java).configureEach { compile ->
+                    compile.kotlinOptions.freeCompilerArgs += listOf(
+                            "-P", "plugin:androidx.compose.compiler.plugins.kotlin:generateDecoys=true"
+                    )
+                }
             }
         }
 

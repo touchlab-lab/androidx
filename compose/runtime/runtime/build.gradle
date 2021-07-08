@@ -30,6 +30,7 @@ AndroidXComposePlugin.applyAndConfigureKotlinPlugin(project)
 
 dependencies {
     kotlinPlugin(project(":compose:compiler:compiler"))
+    kotlinNativePlugin(project(":compose:compiler:compiler-hosted"))
 
     if(!AndroidXComposePlugin.isMultiplatformEnabled(project)) {
         /*
@@ -77,6 +78,7 @@ if(AndroidXComposePlugin.isMultiplatformEnabled(project)) {
                 }
             }
         }
+        ios()
 
         /*
          * When updating dependencies, make sure to make the an an analogous update in the
