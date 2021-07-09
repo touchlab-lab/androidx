@@ -25,6 +25,8 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.InspectorInfo
@@ -92,79 +94,98 @@ internal fun rememberBoxMeasurePolicy(
 internal val DefaultBoxMeasurePolicy: MeasurePolicy = boxMeasurePolicy(Alignment.TopStart, false)
 
 internal fun boxMeasurePolicy(alignment: Alignment, propagateMinConstraints: Boolean) =
-    MeasurePolicy { measurables, constraints ->
-        if (measurables.isEmpty()) {
-            return@MeasurePolicy layout(
-                constraints.minWidth,
-                constraints.minHeight
-            ) {}
-        }
+    object: MeasurePolicy {
+        override fun MeasureScope.measure(
+            measurables: List<Measurable>,
+            constraints: Constraints
+        ): MeasureResult {
+            if (measurables.isEmpty()) {
+                return layout(
+                    constraints.minWidth,
+                    constraints.minHeight
+                ) {}
+            }
 
-        val contentConstraints = if (propagateMinConstraints) {
-            constraints
-        } else {
-            constraints.copy(minWidth = 0, minHeight = 0)
-        }
-
-        if (measurables.size == 1) {
-            val measurable = measurables[0]
-            val boxWidth: Int
-            val boxHeight: Int
-            val placeable: Placeable
-            if (!measurable.matchesParentSize) {
-                placeable = measurable.measure(contentConstraints)
-                boxWidth = max(constraints.minWidth, placeable.width)
-                boxHeight = max(constraints.minHeight, placeable.height)
+            val contentConstraints = if (propagateMinConstraints) {
+                constraints
             } else {
-                boxWidth = constraints.minWidth
-                boxHeight = constraints.minHeight
-                placeable = measurable.measure(
-                    Constraints.fixed(constraints.minWidth, constraints.minHeight)
-                )
+                constraints.copy(minWidth = 0, minHeight = 0)
             }
-            return@MeasurePolicy layout(boxWidth, boxHeight) {
-                placeInBox(placeable, measurable, layoutDirection, boxWidth, boxHeight, alignment)
-            }
-        }
 
-        val placeables = arrayOfNulls<Placeable>(measurables.size)
-        // First measure non match parent size children to get the size of the Box.
-        var hasMatchParentSizeChildren = false
-        var boxWidth = constraints.minWidth
-        var boxHeight = constraints.minHeight
-        measurables.fastForEachIndexed { index, measurable ->
-            if (!measurable.matchesParentSize) {
-                val placeable = measurable.measure(contentConstraints)
-                placeables[index] = placeable
-                boxWidth = max(boxWidth, placeable.width)
-                boxHeight = max(boxHeight, placeable.height)
-            } else {
-                hasMatchParentSizeChildren = true
-            }
-        }
-
-        // Now measure match parent size children, if any.
-        if (hasMatchParentSizeChildren) {
-            // The infinity check is needed for default intrinsic measurements.
-            val matchParentSizeConstraints = Constraints(
-                minWidth = if (boxWidth != Constraints.Infinity) boxWidth else 0,
-                minHeight = if (boxHeight != Constraints.Infinity) boxHeight else 0,
-                maxWidth = boxWidth,
-                maxHeight = boxHeight
-            )
-            measurables.fastForEachIndexed { index, measurable ->
-                if (measurable.matchesParentSize) {
-                    placeables[index] = measurable.measure(matchParentSizeConstraints)
+            if (measurables.size == 1) {
+                val measurable = measurables[0]
+                val boxWidth: Int
+                val boxHeight: Int
+                val placeable: Placeable
+                if (!measurable.matchesParentSize) {
+                    placeable = measurable.measure(contentConstraints)
+                    boxWidth = max(constraints.minWidth, placeable.width)
+                    boxHeight = max(constraints.minHeight, placeable.height)
+                } else {
+                    boxWidth = constraints.minWidth
+                    boxHeight = constraints.minHeight
+                    placeable = measurable.measure(
+                        Constraints.fixed(constraints.minWidth, constraints.minHeight)
+                    )
+                }
+                return layout(boxWidth, boxHeight) {
+                    placeInBox(
+                        placeable,
+                        measurable,
+                        layoutDirection,
+                        boxWidth,
+                        boxHeight,
+                        alignment
+                    )
                 }
             }
-        }
 
-        // Specify the size of the Box and position its children.
-        layout(boxWidth, boxHeight) {
-            placeables.forEachIndexed { index, placeable ->
-                placeable as Placeable
-                val measurable = measurables[index]
-                placeInBox(placeable, measurable, layoutDirection, boxWidth, boxHeight, alignment)
+            val placeables = arrayOfNulls<Placeable>(measurables.size)
+            // First measure non match parent size children to get the size of the Box.
+            var hasMatchParentSizeChildren = false
+            var boxWidth = constraints.minWidth
+            var boxHeight = constraints.minHeight
+            measurables.fastForEachIndexed { index, measurable ->
+                if (!measurable.matchesParentSize) {
+                    val placeable = measurable.measure(contentConstraints)
+                    placeables[index] = placeable
+                    boxWidth = max(boxWidth, placeable.width)
+                    boxHeight = max(boxHeight, placeable.height)
+                } else {
+                    hasMatchParentSizeChildren = true
+                }
+            }
+
+            // Now measure match parent size children, if any.
+            if (hasMatchParentSizeChildren) {
+                // The infinity check is needed for default intrinsic measurements.
+                val matchParentSizeConstraints = Constraints(
+                    minWidth = if (boxWidth != Constraints.Infinity) boxWidth else 0,
+                    minHeight = if (boxHeight != Constraints.Infinity) boxHeight else 0,
+                    maxWidth = boxWidth,
+                    maxHeight = boxHeight
+                )
+                measurables.fastForEachIndexed { index, measurable ->
+                    if (measurable.matchesParentSize) {
+                        placeables[index] = measurable.measure(matchParentSizeConstraints)
+                    }
+                }
+            }
+
+            // Specify the size of the Box and position its children.
+            return layout(boxWidth, boxHeight) {
+                placeables.forEachIndexed { index, placeable ->
+                    placeable as Placeable
+                    val measurable = measurables[index]
+                    placeInBox(
+                        placeable,
+                        measurable,
+                        layoutDirection,
+                        boxWidth,
+                        boxHeight,
+                        alignment
+                    )
+                }
             }
         }
     }
