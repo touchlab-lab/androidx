@@ -2,6 +2,7 @@ package androidx.compose.ui.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Composition
+import androidx.compose.runtime.CompositionContext
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DefaultMonotonicFrameClock
 import androidx.compose.runtime.Recomposer
@@ -231,6 +232,8 @@ internal class CALayerLayer(
 @OptIn(ExperimentalComposeUiApi::class)
 internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
     val view: UIView = InnerView()
+
+    var composition: Composition? = null
 
     override val density: Density
         get() = Density(
@@ -495,7 +498,6 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
         drawBlock: (Canvas) -> Unit,
         invalidateParentLayer: () -> Unit
     ): OwnedLayer {
-//        TODO("Not yet implemented")
         return CALayerLayer(
             drawBlock
         )
@@ -645,41 +647,67 @@ abstract class BaseUIKitComposable: UIViewAttachable, UIViewConvertible {
     protected abstract fun Content()
 
     override fun attach(view: UIView) {
-        val composeView = toView()
-        view.addSubview(composeView)
-        composeView.apply {
-            translatesAutoresizingMaskIntoConstraints = false
-            listOf(
-                leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
-                topAnchor.constraintEqualToAnchor(view.topAnchor),
-                trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-                bottomAnchor.constraintEqualToAnchor(view.bottomAnchor),
-            ).forEach {
-                it.active = true
-            }
+        view.setContent {
+            Content()
         }
     }
 
     override fun toView(): UIView {
-        GlobalSnapshotManager.ensureStarted()
-        val context = DefaultMonotonicFrameClock + Dispatchers.Main // JsMicrotasksDispatcher()
-        val recomposer = Recomposer(context)
         val owner = UIKitComposeView()
-        val composition = Composition(DarwinUiApplier(owner.root), recomposer)
-        composition.setContent {
-            ProvideUIKitCompositionLocals(owner) {
-                Content()
-            }
+        owner.setContent {
+            Content()
         }
-
-        CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            recomposer.runRecomposeAndApplyChanges()
-        }
-
         return owner.view
     }
 }
 
+fun UIView.setContent(
+    parent: CompositionContext? = null,
+    content: @Composable () -> Unit,
+): Composition {
+    val owner = UIKitComposeView()
+    addSubview(owner.view)
+    owner.view.apply {
+        translatesAutoresizingMaskIntoConstraints = false
+        listOf(
+            leadingAnchor.constraintEqualToAnchor(this@setContent.leadingAnchor),
+            topAnchor.constraintEqualToAnchor(this@setContent.topAnchor),
+            trailingAnchor.constraintEqualToAnchor(this@setContent.trailingAnchor),
+            bottomAnchor.constraintEqualToAnchor(this@setContent.bottomAnchor),
+        ).forEach {
+            it.active = true
+        }
+    }
+    return owner.setContent(
+        parent,
+        content,
+    )
+}
+
+internal fun UIKitComposeView.setContent(
+    parent: CompositionContext? = null,
+    content: @Composable () -> Unit,
+): Composition {
+    val parentContext = parent ?: run {
+        val context = DefaultMonotonicFrameClock + Dispatchers.Main
+        val recomposer = Recomposer(context)
+        CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
+            recomposer.runRecomposeAndApplyChanges()
+        }
+        recomposer
+    }
+
+    val owner = this
+    val composition = Composition(DarwinUiApplier(owner.root), parentContext).also {
+        composition = it
+    }
+    composition.setContent {
+        ProvideUIKitCompositionLocals(owner) {
+            content()
+        }
+    }
+    return composition
+}
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
