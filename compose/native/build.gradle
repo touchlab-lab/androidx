@@ -1,0 +1,62 @@
+import androidx.build.AndroidXComposePlugin
+import androidx.build.LibraryGroups
+import androidx.build.Publish
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+
+plugins {
+    id("AndroidXPlugin")
+    id("AndroidXComposePlugin")
+    id("kotlin-multiplatform")
+}
+
+AndroidXComposePlugin.applyAndConfigureKotlinPlugin(project)
+dependencies {
+    kotlinPlugin project(":compose:compiler:compiler")
+    kotlinNativeCompilerPluginClasspath(project(":compose:compiler:compiler-hosted"))
+}
+
+kotlin {
+    ios()
+//    if (System.getenv("SDK_NAME")?.startsWith("iphoneos") ?: false) {
+//        iosArm64("ios")
+//    } else {
+//        iosX64("ios")
+//    }
+    jvm()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation project(":compose:foundation:foundation-layout")
+                implementation project(":compose:runtime:runtime")
+                implementation project(":compose:ui:ui")
+                implementation project(":compose:ui:ui-graphics")
+            }
+        }
+
+        nativeMain.dependsOn(commonMain)
+
+        iosMain {
+            dependsOn(nativeMain)
+            dependencies {
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation(libs.skikoCurrentOs)
+                implementation(project(":compose:desktop:desktop"))
+            }
+        }
+    }
+}
+
+
+
+tasks.withType(KotlinNativeCompile) {
+    kotlinOptions {
+        freeCompilerArgs += [
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true",
+        ]
+    }
+}

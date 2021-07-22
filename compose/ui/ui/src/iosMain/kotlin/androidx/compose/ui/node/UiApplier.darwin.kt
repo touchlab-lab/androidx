@@ -1,7 +1,7 @@
 package androidx.compose.ui.node
 
 import androidx.compose.runtime.AbstractApplier
-import androidx.compose.ui.platform.UIKitComposeView
+import androidx.compose.ui.platform.UIKitComposeOwner
 
 internal class DarwinUiApplier(
     root: LayoutNode
@@ -30,6 +30,6 @@ internal class DarwinUiApplier(
 
     override fun onEndChanges() {
         super.onEndChanges()
-        (root.owner as? UIKitComposeView)?.clearInvalidObservations()
+        (root.owner as? UIKitComposeOwner)?.clearInvalidObservations()
     }
 }

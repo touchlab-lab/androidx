@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.ObserverHandle
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.Autofill
@@ -65,6 +66,7 @@ import androidx.compose.ui.text.input.ImeOptions
 import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Constraints
+import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
@@ -74,9 +76,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import platform.CoreGraphics.CGContextRef
+import platform.CoreGraphics.CGPoint
 import platform.CoreGraphics.CGPointMake
+import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGRectZero
+import platform.CoreGraphics.CGSize
+import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSURL
 import platform.QuartzCore.CALayer
 import platform.QuartzCore.CATransform3DConcat
@@ -84,16 +90,29 @@ import platform.QuartzCore.CATransform3DMakeRotation
 import platform.QuartzCore.CATransform3DMakeScale
 import platform.QuartzCore.CATransform3DMakeTranslation
 import platform.UIKit.UIApplication
+import platform.UIKit.UIColor
+import platform.UIKit.UIContentContainerProtocol
 import platform.UIKit.UIFont
 import platform.UIKit.UIGraphicsPopContext
 import platform.UIKit.UIGraphicsPushContext
 import platform.UIKit.UIView
+import platform.UIKit.UIViewAutoresizingFlexibleHeight
+import platform.UIKit.UIViewAutoresizingFlexibleWidth
+import platform.UIKit.UIViewController
+import platform.UIKit.addChildViewController
 import platform.UIKit.addSubview
+import platform.UIKit.autoresizingMask
+import platform.UIKit.backgroundColor
 import platform.UIKit.bottomAnchor
+import platform.UIKit.childViewControllers
 import platform.UIKit.clipsToBounds
+import platform.UIKit.convertPoint
+import platform.UIKit.didMoveToParentViewController
 import platform.UIKit.drawViewHierarchyInRect
 import platform.UIKit.leadingAnchor
+import platform.UIKit.removeFromParentViewController
 import platform.UIKit.removeFromSuperview
+import platform.UIKit.setFrame
 import platform.UIKit.setNeedsDisplay
 import platform.UIKit.setNeedsLayout
 import platform.UIKit.subviews
@@ -101,6 +120,7 @@ import platform.UIKit.systemFontSize
 import platform.UIKit.topAnchor
 import platform.UIKit.trailingAnchor
 import platform.UIKit.translatesAutoresizingMaskIntoConstraints
+import platform.UIKit.willMoveToParentViewController
 import platform.UIKit.window
 import kotlin.math.roundToInt
 
@@ -213,13 +233,19 @@ internal class CALayerLayer(
         TODO("Not yet implemented")
     }
 
+    private val CValue<CGRect>.desc: String
+        get() = useContents { "(${origin.x}, ${origin.y}, ${size.width}, ${size.height})" }
+
     override fun mapOffset(point: Offset, inverse: Boolean): Offset {
-        println("mapOffset: $point, $inverse")
-        return point
+        return layer.frame.useContents {
+            point - Offset(origin.x.toFloat(), origin.y.toFloat())
+        }.also {
+            println("mapOffset: $point, $it - ${layer.frame.desc}")
+        }
     }
 
     override fun mapBounds(rect: MutableRect, inverse: Boolean) {
-        println("mapBounds: $rect, $inverse")
+        println("mapBounds: $rect, $inverse - ${layer.frame.desc}")
     }
 
     private class InnerLayer(private val doDrawInContext: (CGContextRef?) -> Unit): CALayer() {
@@ -229,16 +255,23 @@ internal class CALayerLayer(
     }
 }
 
+class ControllerDelegateFunctions(
+    val loadView: UIViewController.() -> Unit,
+)
+
 @OptIn(ExperimentalComposeUiApi::class)
-internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
-    val view: UIView = InnerView()
+internal class UIKitComposeOwner(private val delegate: ControllerDelegateFunctions): Owner, PositionCalculator,
+    RootForTest {
+    val controller = Controller(this)
+    val view: UIView
+        get() = controller.view
 
     var composition: Composition? = null
 
     override val density: Density
         get() = Density(
-            view.traitCollection.displayScale.toFloat(),
-            view.traitCollection.displayScale.toFloat(),
+            controller.traitCollection.displayScale.toFloat(),
+            controller.traitCollection.displayScale.toFloat(),
         )
 
     private val semanticsModifier = SemanticsModifierCore(
@@ -250,10 +283,11 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
 
     override val focusManager: FocusManager = object: FocusManager {
         override fun clearFocus(force: Boolean) {
-
+            controller.resignFirstResponder()
         }
 
         override fun moveFocus(focusDirection: FocusDirection): Boolean {
+            // TODO: Implement focus move
             return false
         }
     }
@@ -277,7 +311,7 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
 
     override val autofillTree = AutofillTree()
 
-//    private val _autofill = if (autofillSupported()) Da
+    //    private val _autofill = if (autofillSupported()) Da
     override val autofill: Autofill?
         get() = null
 
@@ -377,6 +411,7 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
         }
     }
 
+
     override val textToolbar: TextToolbar = object: TextToolbar {
         override fun showMenu(
             rect: Rect,
@@ -400,10 +435,12 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
     }
 
     override fun screenToLocal(positionOnScreen: Offset): Offset {
+        println("screenToLocal: $positionOnScreen")
         return positionOnScreen
     }
 
     override fun localToScreen(localPosition: Offset): Offset {
+        println("localToScreen: $localPosition")
         return localPosition
     }
 
@@ -449,26 +486,28 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
             snapshotObserver.clearInvalidObservations()
             observationClearRequested = false
         }
-        clearChildInvalidObservations(view)
+        clearChildInvalidObservations(controller)
     }
 
-    private fun clearChildInvalidObservations(view: UIView) {
-        for (subview in view.subviews) {
-            if (subview is UIKitComposeView) {
-                subview.clearInvalidObservations()
-            } else if (subview is UIView) {
-                clearChildInvalidObservations(subview)
+    private fun clearChildInvalidObservations(controller: UIViewController) {
+        for (childViewController in controller.childViewControllers) {
+            if (childViewController is UIKitComposeOwner) {
+                childViewController.clearInvalidObservations()
+            } else if (childViewController is UIViewController) {
+                clearChildInvalidObservations(childViewController)
             }
         }
     }
 
-    override fun calculatePositionInWindow(localPosition: Offset): Offset {
-        TODO("Not yet implemented")
-    }
+    fun Offset.toCGPoint(): CValue<CGPoint> = CGPointMake(x.toDouble(), y.toDouble())
 
-    override fun calculateLocalPosition(positionInWindow: Offset): Offset {
-        TODO("Not yet implemented")
-    }
+    fun CValue<CGPoint>.toOffset(): Offset = useContents { Offset(x.toFloat(), y.toFloat()) }
+
+    override fun calculatePositionInWindow(localPosition: Offset): Offset =
+        view.convertPoint(localPosition.toCGPoint(), toView = view.window).toOffset()
+
+    override fun calculateLocalPosition(positionInWindow: Offset): Offset =
+        view.convertPoint(positionInWindow.toCGPoint(), fromView = view.window).toOffset()
 
     override fun requestFocus(): Boolean {
         return view.becomeFirstResponder()
@@ -509,6 +548,8 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
 
     override fun onLayoutChange(layoutNode: LayoutNode) {
 //        accessibilityDelegate.onLayoutChange(layoutNode)
+
+        println("onLayoutChange: $layoutNode - ${layoutNode.coordinates.size}")
     }
 
     override fun getFocusDirection(keyEvent: KeyEvent): FocusDirection? {
@@ -533,13 +574,48 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
 //        return keyInputModifier.processKeyInput()
     }
 
-    fun drawUIView(viewHolder: UIKitViewHolder<*>, nativeCanvas: NativeCanvas) {
+    fun drawUIViewController(holder: UIKitControllerHolder<*>, nativeCanvas: NativeCanvas) {
         UIGraphicsPushContext(nativeCanvas.context)
-        viewHolder.drawViewHierarchyInRect(view.bounds, true)
+        holder.controller.view.drawViewHierarchyInRect(view.bounds, true)
+        UIGraphicsPopContext()
+    }
+
+    fun drawUIView(view: UIView, nativeCanvas: NativeCanvas) {
+        UIGraphicsPushContext(nativeCanvas.context)
+        view.drawViewHierarchyInRect(controller.view.bounds, true)
         UIGraphicsPopContext()
     }
 
     private val uiViewNodes = mutableMapOf<UIKitViewHolder<*>, LayoutNode>()
+    private val controllerNodes = mutableMapOf<UIKitControllerHolder<*>, LayoutNode>()
+
+    fun addUIViewController(holder: UIKitControllerHolder<*>, layoutNode: LayoutNode) {
+        controllerNodes[holder] = layoutNode
+
+        controller.addChildViewController(holder.controller)
+        controller.view.addSubview(holder.controller.view)
+        view.setFrame(controller.view.bounds)
+//        view.apply {
+//            translatesAutoresizingMaskIntoConstraints = false
+//            listOf(
+//                leadingAnchor.constraintEqualToAnchor(controller.view.leadingAnchor),
+//                topAnchor.constraintEqualToAnchor(controller.view.topAnchor),
+//                trailingAnchor.constraintEqualToAnchor(controller.view.trailingAnchor),
+//                bottomAnchor.constraintEqualToAnchor(controller.view.bottomAnchor),
+//            ).forEach {
+//                it.active = true
+//            }
+//        }
+        holder.controller.didMoveToParentViewController(controller)
+    }
+
+    fun removeUIViewController(holder: UIKitControllerHolder<*>) {
+        holder.controller.willMoveToParentViewController(null)
+        holder.controller.view.removeFromSuperview()
+        holder.controller.removeFromParentViewController()
+
+        controllerNodes.remove(holder)
+    }
 
     fun addUIView(viewHolder: UIKitViewHolder<*>, layoutNode: LayoutNode) {
         uiViewNodes[viewHolder] = layoutNode
@@ -552,9 +628,11 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
         uiViewNodes.remove(viewHolder)
     }
 
+    private var constraints: Constraints? = null
+
     private fun layoutUiViewNodes() {
-        val constraints = view.bounds.useContents {
-            Constraints(0, size.width.roundToInt(), 0, size.height.roundToInt())
+        val constraints = constraints ?: view.bounds.useContents {
+            Constraints(0, size.width.roundUpToInt(), 0, size.height.roundUpToInt())
         }
 
         measureAndLayoutDelegate.updateRootConstraints(constraints)
@@ -566,15 +644,96 @@ internal class UIKitComposeView: Owner, PositionCalculator, RootForTest {
         }
     }
 
-    private inner class InnerView(): UIView(CGRectZero.readValue()) {
-//        @ObjCAction
-//        fun didMoveToSuperview() {
-//            originalDidMoveToSuperview()
-//        }
+    private fun willLayoutSubviews() {
+        for (childViewController in controller.childViewControllers) {
+            if (childViewController is Controller) {
+                childViewController.owner.constraints = constraints ?: view.bounds.useContents {
+                    Constraints(0, size.width.roundUpToInt(), 0, size.height.roundUpToInt())
+                }
+            }
+        }
 
-        @ObjCAction
-        fun layoutSubviews() {
-            layoutUiViewNodes()
+        layoutUiViewNodes()
+    }
+
+    inner class Controller(internal val owner: UIKitComposeOwner): UIViewController(null, null) {
+
+        override fun viewWillLayoutSubviews() {
+            super.viewWillLayoutSubviews()
+            willLayoutSubviews()
+            println("viewWillLayoutSubviews()")
+        }
+
+        override fun viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+            println("viewDidLayoutSubviews()")
+        }
+
+        override fun viewDidLoad() {
+            super.viewDidLoad()
+            println("viewDidLoad()")
+        }
+
+        override fun viewWillAppear(animated: Boolean) {
+            super.viewWillAppear(animated)
+            println("viewWillAppear(animated: $animated)")
+        }
+
+        override fun loadView() {
+//            super.loadView()
+            this@UIKitComposeOwner.delegate.loadView(this)
+        }
+
+        override fun isMovingToParentViewController(): Boolean {
+            return super.isMovingToParentViewController().also {
+                println("isMovingToParentViewController() = $it")
+            }
+        }
+
+        override fun isMovingFromParentViewController(): Boolean {
+            return super.isMovingFromParentViewController().also {
+                println("isMovingFromParentViewController() = $it")
+            }
+        }
+
+        override fun preferredContentSizeDidChangeForChildContentContainer(container: UIContentContainerProtocol) {
+            super.preferredContentSizeDidChangeForChildContentContainer(container)
+            println("preferredContentSizeDidChangeForChildContentContainer($container)")
+        }
+
+        override fun sizeForChildContentContainer(
+            container: UIContentContainerProtocol,
+            withParentContainerSize: CValue<CGSize>
+        ): CValue<CGSize> {
+            val knownContainer = container as? Controller ?:
+                return super.sizeForChildContentContainer(container, withParentContainerSize)
+
+            val constraints = withParentContainerSize.useContents {
+                Constraints(
+                    minWidth = 0,
+                    maxWidth = width.roundUpToInt(),
+                    minHeight = 0,
+                    maxHeight = height.roundUpToInt(),
+                )
+            }
+            val measureDelegate = knownContainer.owner.measureAndLayoutDelegate
+            measureDelegate.updateRootConstraints(constraints)
+            measureDelegate.measureAndLayout()
+            val measured = knownContainer.owner.root
+            return CGSizeMake(measured.width.toDouble(), measured.height.toDouble()).also {
+                println("x sizeForChildContentContainer($container, ${withParentContainerSize
+                    .useContents { "($width, $height)" }}) = ${it.useContents { "($width, $height)"
+                }}")
+            }
+
+//            return super.sizeForChildContentContainer(container, withParentContainerSize).also {
+//
+//            }
+        }
+
+        override fun systemLayoutFittingSizeDidChangeForChildContentContainer(container: UIContentContainerProtocol) {
+            super.systemLayoutFittingSizeDidChangeForChildContentContainer(container)
+            println("systemLayoutFittingSizeDidChangeForChildContentContainer($container)")
         }
     }
 }
@@ -626,68 +785,48 @@ internal class UIViewsHandler : UIView(CGRectZero.readValue()) {
 //    }
 }
 
-
 class IosUriHandler(): UriHandler {
     override fun openUri(uri: String) {
         UIApplication.sharedApplication.openURL(NSURL(string = uri))
     }
 }
 
-interface UIViewAttachable {
-    fun attach(view: UIView)
+interface UIViewControllerConvertible<T: UIViewController> {
+    val viewController: T
 }
 
-interface UIViewConvertible {
-    fun toView(): UIView
-}
+abstract class BaseUIKitComposable(private val parent: CompositionContext? = null):
+    UIViewControllerConvertible<UIViewController> {
 
-abstract class BaseUIKitComposable: UIViewAttachable, UIViewConvertible {
+    override val viewController: UIViewController by lazy {
+        val owner = UIKitComposeOwner(delegateFunctions)
+        owner.setContent(parent) {
+            Content()
+        }
+        owner.controller
+    }
+
+    private val delegateFunctions: ControllerDelegateFunctions
+        get() = ControllerDelegateFunctions(
+            loadView = ::loadView,
+        )
 
     @Composable
     protected abstract fun Content()
 
-    override fun attach(view: UIView) {
-        view.setContent {
-            Content()
+    protected open fun loadView(controller: UIViewController) {
+        controller.view = UIView().apply {
+            autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
         }
-    }
-
-    override fun toView(): UIView {
-        val owner = UIKitComposeView()
-        owner.setContent {
-            Content()
-        }
-        return owner.view
     }
 }
 
-fun UIView.setContent(
+internal fun UIKitComposeOwner.setContent(
     parent: CompositionContext? = null,
     content: @Composable () -> Unit,
 ): Composition {
-    val owner = UIKitComposeView()
-    addSubview(owner.view)
-    owner.view.apply {
-        translatesAutoresizingMaskIntoConstraints = false
-        listOf(
-            leadingAnchor.constraintEqualToAnchor(this@setContent.leadingAnchor),
-            topAnchor.constraintEqualToAnchor(this@setContent.topAnchor),
-            trailingAnchor.constraintEqualToAnchor(this@setContent.trailingAnchor),
-            bottomAnchor.constraintEqualToAnchor(this@setContent.bottomAnchor),
-        ).forEach {
-            it.active = true
-        }
-    }
-    return owner.setContent(
-        parent,
-        content,
-    )
-}
+    GlobalSnapshotManager.ensureStarted()
 
-internal fun UIKitComposeView.setContent(
-    parent: CompositionContext? = null,
-    content: @Composable () -> Unit,
-): Composition {
     val parentContext = parent ?: run {
         val context = DefaultMonotonicFrameClock + Dispatchers.Main
         val recomposer = Recomposer(context)
@@ -709,10 +848,23 @@ internal fun UIKitComposeView.setContent(
     return composition
 }
 
+//@Composable
+//fun SubComposable(
+//    subcontent: @Composable () -> Unit,
+//) {
+//    UIKitControllerHolder(
+//
+//    )
+//}
+
+internal val LocalUIKitComposeOwner = staticCompositionLocalOf<UIKitComposeOwner> {
+    error("No owner set!")
+}
+
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
 internal fun ProvideUIKitCompositionLocals(
-    owner: UIKitComposeView,
+    owner: UIKitComposeOwner,
     content: @Composable () -> Unit
 ) {
     val view = owner
@@ -729,7 +881,13 @@ internal fun ProvideUIKitCompositionLocals(
 
 
     CompositionLocalProvider(
-
+        LocalUIKitComposeOwner provides owner,
+        LocalParentController provides ParentController(
+            owner.controller,
+            willAddSubview = { },
+            didAddSubview = { },
+            owner.root,
+        ),
     ) {
         ProvideCommonCompositionLocals(
             owner = owner,

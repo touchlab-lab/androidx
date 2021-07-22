@@ -1,0 +1,5 @@
+DarwinExample/Pods
+DarwinExample/*.xcworkspace
+DarwinExample/*.xcodeproj/xcuserdata
+.build/
+demo.podspec

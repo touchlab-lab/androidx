@@ -3,26 +3,22 @@ package androidx.compose.ui.platform
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
 import androidx.compose.runtime.CompositionContext
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.currentComposer
-import androidx.compose.runtime.currentCompositeKeyHash
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCompositionContext
-import androidx.compose.runtime.saveable.LocalSaveableStateRegistry
 import androidx.compose.runtime.snapshots.SnapshotStateObserver
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
-import androidx.compose.ui.layout.IntrinsicWidthHeight
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.materialize
 import androidx.compose.ui.node.DarwinUiApplier
@@ -31,17 +27,12 @@ import androidx.compose.ui.node.Ref
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.cinterop.CPointed
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.interpretCPointer
 import kotlinx.cinterop.objcPtr
-import kotlinx.cinterop.pin
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
-import kotlinx.cinterop.usePinned
-import platform.CoreGraphics.CGPointMake
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGRectZero
 import platform.CoreGraphics.CGSizeMake
@@ -50,16 +41,15 @@ import platform.UIKit.UILayoutFittingCompressedSize
 import platform.UIKit.UILayoutFittingExpandedSize
 import platform.UIKit.UIView
 import platform.UIKit.UIViewAutoresizingNone
+import platform.UIKit.UIViewController
 import platform.UIKit.addSubview
 import platform.UIKit.autoresizingMask
 import platform.UIKit.bottomAnchor
 import platform.UIKit.heightAnchor
-import platform.UIKit.intrinsicContentSize
 import platform.UIKit.layoutIfNeeded
 import platform.UIKit.leadingAnchor
 import platform.UIKit.removeFromSuperview
 import platform.UIKit.setFrame
-import platform.UIKit.sizeThatFits
 import platform.UIKit.subviews
 import platform.UIKit.superview
 import platform.UIKit.systemLayoutSizeFittingSize
@@ -71,20 +61,18 @@ import platform.UIKit.window
 import platform.darwin.UInt8
 import platform.objc.OBJC_ASSOCIATION_RETAIN
 import platform.objc.objc_getAssociatedObject
-import platform.objc.objc_removeAssociatedObjects
 import platform.objc.objc_setAssociatedObject
-import kotlin.math.roundToInt
+import kotlin.native.concurrent.ensureNeverFrozen
 
-internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): UIView(CGRectZero
-    .readValue
-    ()) {
+internal class UIKitViewHolder<T: UIView>(
+    parentContext: CompositionContext,
+    private val parentController: ParentController,
+): UIView(CGRectZero.readValue()) {
     init {
         // Any [Abstract]ComposeViews that are descendants of this view will host
         // subcompositions of the host composition.
         // UiApplier doesn't supply this, only AndroidView.
-        parentContext?.let {
-            compositionContext = it
-        }
+        compositionContext = parentContext
 
         autoresizingMask = UIViewAutoresizingNone
         translatesAutoresizingMaskIntoConstraints = true
@@ -113,10 +101,20 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
             }
         }
 
-    var updateBlock: (T) -> Unit = NoOpUpdate
+    private val updateScope = object: UIViewUpdateScope {
+        override fun requestRemeasure() {
+            layoutNode.requestRemeasure()
+        }
+    }
+
+    var updateBlock: UIViewUpdateScope.(T) -> Unit = NoOpUpdate
         set(value) {
             field = value
-            update = { typedView?.apply(updateBlock) }
+            update = {
+                typedView?.let {
+                    updateScope.updateBlock(it)
+                }
+            }
         }
 
     /**
@@ -157,9 +155,6 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
     private val sizingView: UIView
         get() = (view ?: this).also { println("Sizing view: $it") }
 
-    /**
-     * The update logic of the [View].
-     */
     var update: () -> Unit = {}
         protected set(value) {
             field = value
@@ -168,10 +163,6 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
         }
     private var hasUpdateBlock = false
 
-
-    /**
-     * The modifier of the `LayoutNode` corresponding to this [View].
-     */
     var modifier: Modifier = Modifier
         set(value) {
             if (value !== field) {
@@ -182,10 +173,6 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
 
     internal var onModifierChanged: ((Modifier) -> Unit)? = null
 
-
-    /**
-     * The screen density of the layout.
-     */
     var density: Density = Density(1f)
         set(value) {
             if (value !== field) {
@@ -198,7 +185,7 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
 
     private val snapshotObserver = SnapshotStateObserver { command ->
         command()
-    }
+    }.also { it.ensureNeverFrozen() }
 
     private val onCommitAffectingUpdate: (UIKitViewHolder<T>) -> Unit = {
         runUpdate()
@@ -223,10 +210,21 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
         }
     }
 
-    /**
-     * A [LayoutNode] tree representation for this Android [View] holder.
-     * The [LayoutNode] will proxy the Compose core calls to the [View].
-     */
+    private fun UIView.layoutAccordingTo(layoutNode: LayoutNode) {
+        val position = parentController.localPositionOf(layoutNode)
+        val size = layoutNode.coordinates.size
+        val x = position.x.toDouble()
+        val y = position.y.toDouble()
+        val width = size.width.toDouble()
+        val height = size.height.toDouble()
+        setFrame(
+            frame.useContents {
+                CGRectMake(x, y, width, height)
+            }
+        )
+        println("layoutAccordingTo($layoutNode): ($x, $y), ($width x $height)")
+    }
+
     val layoutNode: LayoutNode = run {
         // Prepare layout node that proxies measure and layout passes to the View.
         val layoutNode = LayoutNode()
@@ -234,12 +232,13 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
         val coreModifier = Modifier
             .drawBehind {
                 drawIntoCanvas { canvas ->
-                    (layoutNode.owner as? UIKitComposeView)
+                    (layoutNode.owner as? UIKitComposeOwner)
                         ?.drawUIView(this@UIKitViewHolder, canvas.nativeCanvas)
                 }
             }.onGloballyPositioned {
                 // The global position of this LayoutNode can change with it being replaced. For
                 // these cases, we need to inform the View.
+                println("onGloballyPositioned: $this, $layoutNode, $it")
                 layoutAccordingTo(layoutNode)
             }
         layoutNode.modifier = modifier.then(coreModifier)
@@ -251,11 +250,12 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
         var viewRemovedOnDetach: UIView? = null
         layoutNode.onAttach = { owner ->
             println("Debug attached")
-            (owner as? UIKitComposeView)?.addUIView(this, layoutNode)
             if (viewRemovedOnDetach != null) view = viewRemovedOnDetach
+            parentController.addSubview(this)
+            owner.root.requestRemeasure()
         }
         layoutNode.onDetach = { owner ->
-            (owner as? UIKitComposeView)?.removeUIView(this)
+            removeFromSuperview()
             viewRemovedOnDetach = view
             view = null
         }
@@ -318,7 +318,7 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
                 layoutIfNeeded()
                 val (width, height) = bounds.useContents { size.width to size.height }
                 println("W: $width, H: $height")
-                return layout(width.roundToInt(), height.roundToInt()) {
+                return layout(width.roundUpToInt(), height.roundUpToInt()) {
                     layoutAccordingTo(layoutNode)
                     translatesAutoresizingMaskIntoConstraints = true
                 }
@@ -329,77 +329,39 @@ internal class UIKitViewHolder<T: UIView>(parentContext: CompositionContext?): U
                 height: Int
             ) = sizingView.systemLayoutSizeFittingSize(
                 CGSizeMake(UILayoutFittingCompressedSize.width, height.toDouble())
-            ).useContents { width.roundToInt() }
+            ).useContents { width.roundUpToInt() }
 
             override fun IntrinsicMeasureScope.maxIntrinsicWidth(
                 measurables: List<IntrinsicMeasurable>,
                 height: Int
             ) = sizingView.systemLayoutSizeFittingSize(
                 CGSizeMake(UILayoutFittingExpandedSize.width, height.toDouble())
-            ).useContents { width.roundToInt() }
+            ).useContents { width.roundUpToInt() }
 
             override fun IntrinsicMeasureScope.minIntrinsicHeight(
                 measurables: List<IntrinsicMeasurable>,
                 width: Int
             ) = sizingView.systemLayoutSizeFittingSize(
                 CGSizeMake(width.toDouble(), UILayoutFittingCompressedSize.height)
-            ).useContents { height.roundToInt() }
+            ).useContents { height.roundUpToInt() }
 
             override fun IntrinsicMeasureScope.maxIntrinsicHeight(
                 measurables: List<IntrinsicMeasurable>,
                 width: Int
             ) = sizingView.systemLayoutSizeFittingSize(
                 CGSizeMake(width.toDouble(), UILayoutFittingExpandedSize.height)
-            ).useContents { height.roundToInt() }
+            ).useContents { height.roundUpToInt() }
         }
         layoutNode
     }
 
 }
 
-
-private fun UIView.layoutAccordingTo(layoutNode: LayoutNode) {
-    val position = layoutNode.coordinates.positionInRoot()
-    val x = position.x.toDouble()
-    val y = position.y.toDouble()
-    setFrame(
-        frame.useContents {
-            CGRectMake(x, y, size.width, size.height)
-        }
-    )
-    println("layoutAccordingTo($layoutNode): ($x, $y)")
-}
-
-
-/**
- * Composes an Android [View] obtained from [factory]. The [factory] block will be called
- * exactly once to obtain the [View] to be composed, and it is also guaranteed to be invoked on
- * the UI thread. Therefore, in addition to creating the [factory], the block can also be used
- * to perform one-off initializations and [View] constant properties' setting.
- * The [update] block can be run multiple times (on the UI thread as well) due to recomposition,
- * and it is the right place to set [View] properties depending on state. When state changes,
- * the block will be reexecuted to set the new properties. Note the block will also be ran once
- * right after the [factory] block completes.
- *
- * [AndroidView] is commonly needed for using Views that are infeasible to be reimplemented in
- * Compose and there is no corresponding Compose API. Common examples for the moment are
- * WebView, SurfaceView, AdView, etc.
- *
- * [AndroidView] will clip its content to the layout bounds, as being clipped is a common
- * assumption made by [View]s - keeping clipping disabled might lead to unexpected drawing behavior.
- * Note this deviates from Compose's practice of keeping clipping opt-in, disabled by default.
- *
- * @sample androidx.compose.ui.samples.AndroidViewSample
- *
- * @param factory The block creating the [View] to be composed.
- * @param modifier The modifier to be applied to the layout.
- * @param update The callback to be invoked after the layout is inflated.
- */
 @Composable
 fun <T : UIView> UIKitView(
     factory: () -> T,
     modifier: Modifier = Modifier,
-    update: (T) -> Unit = NoOpUpdate
+    update: UIViewUpdateScope.(T) -> Unit = NoOpUpdate
 ) {
     // Create a semantics node for accessibility. Semantics modifier is composed and need to be
     // materialized. So it can't be added in AndroidViewHolder when assigning modifier to layout
@@ -409,12 +371,13 @@ fun <T : UIView> UIKitView(
     val density = LocalDensity.current
 //    val layoutDirection = LocalLayoutDirection.current
     val parentReference = rememberCompositionContext()
+    val parentController = LocalParentController.current
 //    val stateRegistry = LocalSaveableStateRegistry.current
 //    val stateKey = currentCompositeKeyHash.toString()
     val viewFactoryHolderRef = remember { Ref<UIKitViewHolder<T>>() }
     ComposeNode<LayoutNode, DarwinUiApplier>(
         factory = {
-            val viewFactoryHolder = UIKitViewHolder<T>(parentReference)
+            val viewFactoryHolder = UIKitViewHolder<T>(parentReference, parentController)
             viewFactoryHolder.factory = factory
             @Suppress("UNCHECKED_CAST")
 //            val savedState = stateRegistry?.consumeRestored(stateKey) as? SparseArray<Parcelable>
@@ -450,8 +413,11 @@ fun <T : UIView> UIKitView(
 //    }
 }
 
-val NoOpUpdate: UIView.() -> Unit = {}
+interface UIViewUpdateScope {
+    fun requestRemeasure()
+}
 
+val NoOpUpdate: UIViewUpdateScope.(UIView) -> Unit = {}
 
 /**
  * The [CompositionContext] that should be used as a parent for compositions at or below
@@ -464,6 +430,15 @@ val NoOpUpdate: UIView.() -> Unit = {}
 private var compositionContextKey: UInt8 = 0u
 private val compositionContextKeyPtr = interpretCPointer<CPointed>(compositionContextKey.objcPtr())
 var UIView.compositionContext: CompositionContext?
+    get() = objc_getAssociatedObject(this, compositionContextKeyPtr) as? CompositionContext
+    set(value) {
+        objc_setAssociatedObject(this, compositionContextKeyPtr, value, OBJC_ASSOCIATION_RETAIN)
+    }
+
+
+//private var compositionContextKey: UInt8 = 0u
+//private val compositionContextKeyPtr = interpretCPointer<CPointed>(compositionContextKey.objcPtr())
+var UIViewController.compositionContext: CompositionContext?
     get() = objc_getAssociatedObject(this, compositionContextKeyPtr) as? CompositionContext
     set(value) {
         objc_setAssociatedObject(this, compositionContextKeyPtr, value, OBJC_ASSOCIATION_RETAIN)
